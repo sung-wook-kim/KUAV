@@ -1,0 +1,2 @@
+Quaternion.c:9:6:Quaternion_Update	40	static
+Quaternion.c:44:7:invSqrt	32	static

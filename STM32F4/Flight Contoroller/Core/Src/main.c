@@ -680,7 +680,55 @@ altitude.out.kd = 0;
 		  Double_Roll_Pitch_PID_Calculation(&pitch, (iBus.RV - 1500)*0.07f, BNO080_Pitch, ICM20602.gyro_x);
 		  Double_Roll_Pitch_PID_Calculation(&roll, (iBus.RH - 1500)*0.07f, BNO080_Roll, ICM20602.gyro_y);
 
-		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 1000)
+		  if(iBus.SwA == 2000 && iBus.SwD == 2000 && iBus.LV < 1550 && iBus.LV > 1450) //Altitude Holding Mode
+		  {
+			  if(iBus.LV < 1030 || motor_arming_flag == 0)
+			  {
+				  Reset_All_PID_Integrator();
+			  }
+
+			  Double_Altitude_PID_Calculation(&altitude, last_altitude, actual_pressure_fast);
+
+			  if(iBus.LH < 1485 || iBus.LH > 1515)
+			  {
+			  yaw_heading_reference = BNO080_Yaw;
+			  Single_Yaw_Rate_PID_Calculation(&yaw_rate, (iBus.LH-1500), ICM20602.gyro_z);
+
+	  		  ccr1 = 84000 + landing_throttle - pitch.in.pid_result + roll.in.pid_result -yaw_rate.pid_result+altitude.in.pid_result;
+	  		  ccr2 = 84000 + landing_throttle + pitch.in.pid_result + roll.in.pid_result +yaw_rate.pid_result+altitude.in.pid_result;
+	  		  ccr2 = (unsigned int)((float)ccr2 * 0.91f);
+	  		  ccr3 = 84000 + landing_throttle + pitch.in.pid_result - roll.in.pid_result -yaw_rate.pid_result+altitude.in.pid_result;
+	  		  ccr4 = 84000 + landing_throttle - pitch.in.pid_result - roll.in.pid_result +yaw_rate.pid_result+altitude.in.pid_result;
+	  		  ccr4 = (unsigned int)((float)ccr4 * 0.91f);
+			  }
+			  else
+			  {
+			  Single_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference, BNO080_Yaw, ICM20602.gyro_z);
+			  ccr1 = 84000 + landing_throttle - pitch.in.pid_result + roll.in.pid_result -yaw_heading.pid_result+altitude.in.pid_result;
+			  ccr2 = 84000 + landing_throttle + pitch.in.pid_result + roll.in.pid_result +yaw_heading.pid_result+altitude.in.pid_result;
+			  ccr2 = (unsigned int)((float)ccr2 * 0.91f);
+			  ccr3 = 84000 + landing_throttle + pitch.in.pid_result - roll.in.pid_result -yaw_heading.pid_result+altitude.in.pid_result;
+			  ccr4 = 84000 + landing_throttle - pitch.in.pid_result - roll.in.pid_result +yaw_heading.pid_result+altitude.in.pid_result;
+			  ccr4 = (unsigned int)((float)ccr4 * 0.91f);
+			  }
+		  }
+		  else if(iBus.SwA == 2000 && iBus.SwB == 2000) //GPS holding Mode
+		  	  {
+		  		  Double_GPS_PID_Calculation(&gps_lon, last_lon, posllh.lon);
+		  		  Double_GPS_PID_Calculation(&gps_lat, last_lat, posllh.lat);
+
+		  		  if(iBus.LV < 1030 || motor_arming_flag == 0)
+		  		  {
+		  			  Reset_All_PID_Integrator();
+		  		  }
+
+		  		  Single_Yaw_Heading_PID_Calculation(&yaw_heading, 0 , BNO080_Yaw, ICM20602.gyro_z);
+		  		  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 - gps_lat.in.pid_result + gps_lon.in.pid_result -yaw_heading.pid_result ;
+		  		  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 + gps_lat.in.pid_result + gps_lon.in.pid_result +yaw_heading.pid_result ;
+		  		  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 + gps_lat.in.pid_result - gps_lon.in.pid_result -yaw_heading.pid_result ;
+		  		  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 - gps_lat.in.pid_result - gps_lon.in.pid_result +yaw_heading.pid_result ;
+		  	  }
+		  else
 		  {
 			  if(iBus.LV < 1030 || motor_arming_flag == 0)
 			  {
@@ -713,80 +761,16 @@ altitude.out.kd = 0;
 
 			  last_lat = posllh.lat;
 			  last_lon = posllh.lon;
+			  last_altitude = actual_pressure_fast;
 		  }
 
-		  if(iBus.SwA == 2000 && iBus.SwD == 2000) //Altitude Holding Mode
+		  if(iBus.SwD != 2000)
 		  {
-			  if(last_altitude ==0)last_altitude = actual_pressure_fast;
-			  manual_throttle = 0;
-
-			  if(iBus.LV < 1030 || motor_arming_flag == 0)
-			  {
-				  Reset_All_PID_Integrator();
-			  }
-
-			  if(iBus.LV >1600)
-			  {
-				  manual_throttle = (iBus.LV - 1600) * 150;
-				  last_altitude = actual_pressure_fast;
-
-			  }
-			  else if(iBus.LV < 1400)
-			  {
-				  manual_throttle = (iBus.LV - 1400) * 150;
-				  last_altitude = actual_pressure_fast;
-			  }
-
-			  Double_Altitude_PID_Calculation(&altitude, last_altitude, actual_pressure_fast);
-
-			  if(iBus.LH < 1485 || iBus.LH > 1515)
-			  {
-			  yaw_heading_reference = BNO080_Yaw;
-			  Single_Yaw_Rate_PID_Calculation(&yaw_rate, (iBus.LH-1500), ICM20602.gyro_z);
-
-	  		  ccr1 = 84000 + landing_throttle + manual_throttle - pitch.in.pid_result + roll.in.pid_result -yaw_rate.pid_result+altitude.in.pid_result;
-	  		  ccr2 = 84000 + landing_throttle + manual_throttle + pitch.in.pid_result + roll.in.pid_result +yaw_rate.pid_result+altitude.in.pid_result;
-	  		  ccr2 = (unsigned int)((float)ccr2 * 0.91f);
-	  		  ccr3 = 84000 + landing_throttle + manual_throttle + pitch.in.pid_result - roll.in.pid_result -yaw_rate.pid_result+altitude.in.pid_result;
-	  		  ccr4 = 84000 + landing_throttle + manual_throttle - pitch.in.pid_result - roll.in.pid_result +yaw_rate.pid_result+altitude.in.pid_result;
-	  		  ccr4 = (unsigned int)((float)ccr4 * 0.91f);
-			  }
-			  else
-			  {
-			  Single_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference, BNO080_Yaw, ICM20602.gyro_z);
-			  ccr1 = 84000 + landing_throttle + manual_throttle - pitch.in.pid_result + roll.in.pid_result -yaw_heading.pid_result+altitude.in.pid_result;
-			  ccr2 = 84000 + landing_throttle + manual_throttle + pitch.in.pid_result + roll.in.pid_result +yaw_heading.pid_result+altitude.in.pid_result;
-			  ccr2 = (unsigned int)((float)ccr2 * 0.91f);
-			  ccr3 = 84000 + landing_throttle + manual_throttle + pitch.in.pid_result - roll.in.pid_result -yaw_heading.pid_result+altitude.in.pid_result;
-			  ccr4 = 84000 + landing_throttle + manual_throttle - pitch.in.pid_result - roll.in.pid_result +yaw_heading.pid_result+altitude.in.pid_result;
-			  ccr4 = (unsigned int)((float)ccr4 * 0.91f);
-			  }
-		  }
-		  else if(iBus.SwD != 2000)
-		  {
-			  last_altitude = 0;
 			  Reset_PID_Integrator(&altitude.out);
 			  Reset_PID_Integrator(&altitude.in);
 		  }
-
-		  if(iBus.SwA == 2000 && iBus.SwB == 2000) //GPS holding Mode
-		  	  {
-
-		  		  Double_GPS_PID_Calculation(&gps_lon, last_lon, posllh.lon);
-		  		  Double_GPS_PID_Calculation(&gps_lat, last_lat, posllh.lat);
-
-		  		  if(iBus.LV < 1030 || motor_arming_flag == 0)
-		  		  {
-		  			  Reset_All_PID_Integrator();
-		  		  }
-
-		  		  Single_Yaw_Heading_PID_Calculation(&yaw_heading, 0 , BNO080_Yaw, ICM20602.gyro_z);
-		  		  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 - gps_lat.in.pid_result + gps_lon.in.pid_result -yaw_heading.pid_result ;
-		  		  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 + gps_lat.in.pid_result + gps_lon.in.pid_result +yaw_heading.pid_result ;
-		  		  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 + gps_lat.in.pid_result - gps_lon.in.pid_result -yaw_heading.pid_result ;
-		  		  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 - gps_lat.in.pid_result - gps_lon.in.pid_result +yaw_heading.pid_result ;
-		  	  }
 	  }
+
 
 	  /********************* Motor Arming State ************************/
 	  if(iBus.SwA == 2000 && iBus_SwA_Prev != 2000)
