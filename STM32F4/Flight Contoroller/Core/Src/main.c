@@ -366,7 +366,7 @@ Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 5, yaw_rate.kp, yaw_rate.ki, yaw_rate.
 HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
 
 
-altitude.out.kp = 70;
+altitude.out.kp = 30;
 altitude.out.ki = 0;
 altitude.out.kd = 0;
 altitude.in.kp = 10;
@@ -866,7 +866,7 @@ gps_lat.in.kd = 0;
 //		  Encode_Msg_GPS(&telemetry_tx_buf[20]);
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
 		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
-		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 8);
+		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 14);
 	  }
 
 
@@ -1406,10 +1406,10 @@ void Encode_Msg_Altitude(unsigned char* telemetry_tx_buf)
 	telemetry_tx_buf[8] = ((int)last_altitude) >> 8;
 	telemetry_tx_buf[9] = ((int)last_altitude);
 
-	telemetry_tx_buf[10] = ((int)(last_altitude - actual_pressure_fast)) >> 24;
-	telemetry_tx_buf[11] = ((int)(last_altitude - actual_pressure_fast)) >> 16;
-	telemetry_tx_buf[12] = ((int)(last_altitude - actual_pressure_fast)) >> 8;
-	telemetry_tx_buf[13] = ((int)(last_altitude - actual_pressure_fast));
+	telemetry_tx_buf[10] = ((int)(altitude.out.error)) >> 24;
+	telemetry_tx_buf[11] = ((int)(altitude.out.error)) >> 16;
+	telemetry_tx_buf[12] = ((int)(altitude.out.error)) >> 8;
+	telemetry_tx_buf[13] = ((int)(altitude.out.error));
 
 }
 /* USER CODE END 4 */
