@@ -194,7 +194,7 @@ void Double_Altitude_PID_Calculation(PIDDouble* axis, float set_point_altitude, 
 
 	/************ Double PID Inner Begin (Roll and Pitch Angular Rate Control) **************/
 	axis->in.reference = axis->out.pid_result;	//Set point of inner PID control is the PID result of outer loop (for double PID control)
-	axis->in.meas_value = -axis->out.error_deriv;					//ICM-20602 angular rate
+	axis->in.meas_value = -(axis->out.error_deriv);					//ICM-20602 angular rate
 
 	axis->in.error = axis->in.reference - axis->in.meas_value;	//Define error of inner loop
 	axis->in.p_result = axis->in.error * axis->in.kp;			//Calculate P result of inner loop
@@ -259,7 +259,7 @@ void Double_GPS_PID_Calculation(PIDDouble* axis, float set_point_gps, float gps)
 
    /************ Double PID Inner Begin (Roll and Pitch Angular Rate Control) **************/
    axis->in.reference = axis->out.pid_result;   //Set point of inner PID control is the PID result of outer loop (for double PID control)
-   axis->in.meas_value = -axis->out.error_deriv;
+   axis->in.meas_value = -(axis->out.error_deriv);
 
    axis->in.error = axis->in.reference - axis->in.meas_value;   //Define error of inner loop
    axis->in.p_result = axis->in.error * axis->in.kp;         //Calculate P result of inner loop

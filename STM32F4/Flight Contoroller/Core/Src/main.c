@@ -372,6 +372,20 @@ altitude.out.kp = 70;
 altitude.out.ki = 0;
 altitude.out.kd = 0;
 
+gps_lon.out.kp = 5;
+gps_lon.out.ki = 0;
+gps_lon.out.kd = 0;
+gps_lon.in.kp = 1;
+gps_lon.in.ki = 0;
+gps_lon.in.kd = 0;
+
+gps_lat.out.kp = 6;
+gps_lat.out.ki = 0;
+gps_lat.out.kd = 0;
+gps_lat.in.kp = 4;
+gps_lat.in.ki = 0;
+gps_lat.in.kd = 0;
+
 /*Receiver Detection*/
   while(Is_iBus_Received() == 0)
   {
@@ -532,20 +546,16 @@ altitude.out.kd = 0;
 			  LL_GPIO_TogglePin(GPIOC, LL_GPIO_PIN_2);
 			  M8N_UBX_NAV_POSLLH_Parsing(&m8n_rx_buf[0], &posllh);
 			  posllh.height -= gps_height_offset;
+
+			  if((posllh.lon - posllh.lon_prev > 500) || (posllh.lon - posllh.lon_prev < -500)) posllh.lon = posllh.lon_prev;
+			  if((posllh.lat - posllh.lat_prev > 500) || (posllh.lat - posllh.lat_prev < -500)) posllh.lat = posllh.lat_prev;
+
+			  posllh.lon_prev = posllh.lon;
+			  posllh.lat_prev = posllh.lat;
 //			  printf("%d %ld %ld %d %d %d %ld\n", mode, posllh.lat, posllh.lon, (int)LPS22HH.baroAltFilt, (int)BNO080_Yaw, (int)XAVIER.mode, XAVIER.lat);
 //			  printf(" ", XAVIER.mode);
 		  }
 	  }
-
-	  /********************* Height Sensor fusion ************************/
-//	  if(iBus.SwC == 2000) //when GPS is used
-//	  {
-//		  altitude_filt = Sensor_fusion((float)posllh.height*0.1f, LPS22HH.baroAltFilt*10.f, 0.5);
-//	  }
-//	  else
-//	  {
-//		  altitude_filt = LPS22HH.baroAltFilt*10.f;
-//	  }
 
 	  /********************* Telemetry Communication ************************/
 	  if(telemetry_rx_cplt_flag == 1) //Receive GCS Message
@@ -665,7 +675,6 @@ altitude.out.kd = 0;
 	  						  break;
 	  					  }
 	  					  break;
-
 	  				  }
 	  			  }
 	  		  }
