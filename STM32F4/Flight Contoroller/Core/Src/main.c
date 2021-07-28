@@ -298,36 +298,10 @@ float BNO080_Roll_Offset = 0;
   	  }
     }
 
-
-
   /*GNSS Initialization*/
   M8N_Initialization();
 
-
-  /*ICM20602 Initial Bias Correction*/
-//  for(int i=0; i<250; i++)
-//  {
-//	  ICM20602_Get3AxisGyroRawData(&ICM20602.gyro_x_raw);
-//
-//	  ICM20602.gyro_x = ICM20602.gyro_x_raw * 2000.f / 32768.f;
-//	  ICM20602.gyro_y = ICM20602.gyro_y_raw * 2000.f / 32768.f;
-//	  ICM20602.gyro_z = ICM20602.gyro_z_raw * 2000.f / 32768.f;
-//
-//	  ICM20602.gyro_x = -ICM20602.gyro_x;
-//	  ICM20602.gyro_z = -ICM20602.gyro_z;
-//
-//	  gyro_x_offset += ICM20602.gyro_x;
-//	  gyro_y_offset += ICM20602.gyro_y;
-//	  gyro_z_offset += ICM20602.gyro_z;
-//
-//	  HAL_Delay(2);
-//  }
-//  gyro_x_offset = gyro_x_offset/250.f;
-//  gyro_y_offset = gyro_y_offset/250.f;
-//  gyro_z_offset = gyro_z_offset/250.f;
-//
-//  HAL_Delay(5);
-
+  /*ICM20602 Bias Correction*/
   ICM20602_Writebyte(0x13, (gyro_x_offset*-2)>>8);
   ICM20602_Writebyte(0x14, (gyro_x_offset*-2));
 
@@ -507,7 +481,7 @@ gps_lat.in.kd = 0;
 
   /********************* FC Ready to Fly ************************/
 
-  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4); //Enable Timer Counting
+  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4);
 
   TIM3->PSC = 2000;
   HAL_Delay(100);
@@ -544,7 +518,7 @@ gps_lat.in.kd = 0;
 
 		  if(M8N_UBX_CHKSUM_Check(&m8n_rx_buf[0], 36) == 1)
 		  {
-			  LL_GPIO_TogglePin(GPIOC, LL_GPIO_PIN_2);
+//			  LL_GPIO_TogglePin(GPIOC, LL_GPIO_PIN_2);
 			  M8N_UBX_NAV_POSLLH_Parsing(&m8n_rx_buf[0], &posllh);
 			  posllh.height -= gps_height_offset;
 
@@ -942,7 +916,7 @@ gps_lat.in.kd = 0;
 		  ibus_rx_cplt_flag=0;
 		  if(iBus_Check_CHKSUM(&ibus_rx_buf[0],32)==1)
 		  {
-			  LL_GPIO_TogglePin(GPIOC,LL_GPIO_PIN_2);
+//			  LL_GPIO_TogglePin(GPIOC,LL_GPIO_PIN_2);
 
 			  iBus_Parsing(&ibus_rx_buf, &iBus);
 			  iBus_rx_cnt++;
