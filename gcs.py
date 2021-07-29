@@ -142,6 +142,7 @@ class window(QtWidgets.QMainWindow):
         msgR = f"6\n{self.RTH_LAT}\n{self.RTH_LON}"
         self.client_socket.sendall(msgR.encode())
         self.u = self.client_socket.recv(1024)
+        
     # 강제종료
     def forceTerminate(self):
         self.client_socket.sendall(b"9\n")

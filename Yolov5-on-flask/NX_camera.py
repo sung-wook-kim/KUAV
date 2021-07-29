@@ -247,7 +247,7 @@ class NX(BaseCamera):
         while True:
             try:
                 time.sleep(1)
-                sendingMsg = self.q[-1]  # sendingmsg = 'mode \n lat_drone \n lon_drone \n lat_person \n lon_person \n altitude'
+                sendingMsg = self.q.pop(-1)  # sendingmsg = 'mode \n lat_drone \n lon_drone \n GPS_time \n lat_person \n lon_person \n altitude'
                 plag = self.client_socket.recv(1024).decode()[0]
                 if plag == '1' and self.plag_1 == False:
                     self.mode = 1  # 임무 장소 이동 , 30M 고도 유지
@@ -265,10 +265,6 @@ class NX(BaseCamera):
                 print("connection error")
                 self.client_socket.close()
                 self.client_socket, self.addr = self.server_socket.accept()
-
-
-
-
 
     def connectSTM(self):
         i = 0
@@ -291,6 +287,11 @@ class NX(BaseCamera):
             #         lon_2 = int(self.ser.read(1).hex(),16) & 0xff
             #         lon_3 = int(self.ser.read(1).hex(),16) & 0xff
             #         lon_4 = int(self.ser.read(1).hex(),16) & 0xff
+            
+            #         time_1 = int(self.ser.read(1).hex(),16) & 0xff
+            #         time_2 = int(self.ser.read(1).hex(),16) & 0xff
+            #         time_3 = int(self.ser.read(1).hex(),16) & 0xff
+            #         time_4 = int(self.ser.read(1).hex(),16) & 0xff
 
             #         roll = int(self.ser.read(1).hex(),16) & 0xff
             #         pitch = int(self.ser.read(1).hex(),16) & 0xff
@@ -299,16 +300,16 @@ class NX(BaseCamera):
 
             #         lat_drone = lat_1 << 24 | lat_2 << 16 | lat_3 << 8 | lat_4
             #         lon_drone = lon_1 << 24 | lon_2 << 16 | lon_3 << 8 | lon_4
+            #         GPS_time = time_1 << 24 | time_2 << 16 | time_3 << 8 | time_4
 
-            #         print(mode_echo,lat_drone,lon_drone,roll,pitch,heading_angle,altitude)
-            temp = [1, 370001000, 38000000, 120, 130, 150, 200]
+            #         print(mode_echo,lat_drone,lon_drone,GPS_time,roll,pitch,heading_angle,altitude)
+            temp = [1, 370001000,  38000000, 82134223414, 120, 130, 150, 200]
             mode_echo = temp[0] ; lat_drone = temp[1]; lon_drone = temp[2]; 
-            roll = temp[3]; pitch = temp[4]; heading_angle = temp[5]; altitude = temp[6]
+            GPS_time = temp[3]
+            roll = temp[4]; pitch = temp[5]; heading_angle = temp[6]; altitude = temp[7]
             # if time.time() - start >= 3 and plag_2 == False:
             #    mode = 2 # yaw를 회전하며 탐색 모드
             #    plag_2 = True
-
-
             if self.plag_2 == False and self.MISSION_LAT == lat_drone and self.MISSION_LON == lon_drone:
                 self.mode = 2  # yaw를 회전하며 탐색 모드
                 self.plag_2 = True
@@ -344,12 +345,11 @@ class NX(BaseCamera):
             new_lon_fourth = new_gps_lon & 0xff
             yaw_error = 0x05
 
-            read = str(self.mode) + '\n' + str(lat_drone) + '\n' + str(lon_drone) + '\n' + str(lat_person) + '\n' + str(
+            read = str(self.mode) + '\n' + str(lat_drone) + '\n' + str(lon_drone) + '\n' + str(GPS_time) +'\n' +  str(lat_person) + '\n' + str(
                 lon_person) + '\n' + str(altitude)
             self.q.append(read)
-            time.sleep(0.5)
 
-            if i % 111 == 0:
+            if yaw_error  <= 20 : ## GPS홀딩
                 # ser.write(
                 #     [header_1,header_2,mode,\
                 #     new_lat_first,new_lat_second,new_lat_third,new_lat_fourth,\

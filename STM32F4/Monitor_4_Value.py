@@ -39,7 +39,7 @@ def connect():
             df['alt'] = alt_li
             df['target'] = target_li
             df['error'] = error_li
-            df.to_csv(f"{timevar}_data.csv")
+            df.to_csv(f"{timevar}_alt_data.csv")
 
         a = int(ser.read(1).hex(), 16)
         if a == 0x88:
