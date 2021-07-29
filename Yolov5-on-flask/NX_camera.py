@@ -22,8 +22,12 @@ class NX(BaseCamera):
     def __init__(self):
         #self.ser = serial.Serial('/dev/ttyUSB0' , 115200,timeout=1)
         #self.ser.flush()
-        self.MISSION_LAT = 32000000
-        self.MISSION_LON = 31000000
+        self.MISSION_LAT = 0
+        self.MISSION_LON = 0
+        self.plag_MISSION = False;
+        self.RTH_LAT = 0
+        self.RTH_LON = 0
+        self.plag_RTH = False;
         self.mode = 0  # default = 0
         self.plag_1 = False; self.plag_2 = False; self.plag_3 = False
         self.plag_4 = False; self.plag_5 = False; self.plag_6 = False
@@ -31,7 +35,8 @@ class NX(BaseCamera):
         self.AVOID = False; self.HIDE = False; self.MIDPOINT = False
         self.q = [0, 0, 0]
         # NX - GCS socket , NX = server
-        self.HOST = '192.168.43.185'
+        #self.HOST = '192.168.43.185'
+        self.HOST = '127.0.0.1'
         self.PORT = 9999
         print("Waiting")
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -246,15 +251,22 @@ class NX(BaseCamera):
     def connectGCS(self):
         while True:
             try:
-                time.sleep(1)
                 sendingMsg = self.q.pop(-1)  # sendingmsg = 'mode \n lat_drone \n lon_drone \n GPS_time \n lat_person \n lon_person \n altitude'
-                plag = self.client_socket.recv(1024).decode()[0]
+                gcs = self.client_socket.recv(1024).decode().split('\n')
+                print(gcs)
+                plag = gcs[0]
                 if plag == '1' and self.plag_1 == False:
                     self.mode = 1  # 임무 장소 이동 , 30M 고도 유지
                     self.plag_1 = True
+                    self.MISSION_LAT = plag[1]
+                    self.MISSION_LON = plag[2]
+                    self.plag_MISSION = True
                 elif plag == '6' and self.plag_6 == False:
                     self.mode = 6  # RTH = 착륙
                     self.plag_6 = True
+                    self.RTH_LAT = plag[1]
+                    self.RTH_LAT = plag[2]
+                    self.plag_RTH = True
                 elif plag == '9' and self.plag_9 == False:
                     self.mode = 9  # 비상 모터 정지
                     self.plag_9 = True
@@ -272,47 +284,49 @@ class NX(BaseCamera):
         header_2 = 0x77
         while True:
             i += 1
-            # sync1 = int(self.ser.read(1).hex(),16)
-            # if sync1 == 0x88:
-            #     sync2 = int(self.ser.read(1).hex(),16)
-            #     if sync2 == 0x18:
-            #         mode_echo = int(self.ser.read(1).hex(),16) & 0xff
+            sync1 = int(self.ser.read(1).hex(),16)
+            if sync1 == 0x88:
+                sync2 = int(self.ser.read(1).hex(),16)
+                if sync2 == 0x18:
+                    mode_echo = int(self.ser.read(1).hex(),16) & 0xff
 
-            #         lat_1 = int(self.ser.read(1).hex(),16) & 0xff
-            #         lat_2 = int(self.ser.read(1).hex(),16) & 0xff 
-            #         lat_3 = int(self.ser.read(1).hex(),16) & 0xff
-            #         lat_4 = int(self.ser.read(1).hex(),16) & 0xff
+                    lat_1 = int(self.ser.read(1).hex(),16) & 0xff
+                    lat_2 = int(self.ser.read(1).hex(),16) & 0xff 
+                    lat_3 = int(self.ser.read(1).hex(),16) & 0xff
+                    lat_4 = int(self.ser.read(1).hex(),16) & 0xff
 
-            #         lon_1 = int(self.ser.read(1).hex(),16) & 0xff
-            #         lon_2 = int(self.ser.read(1).hex(),16) & 0xff
-            #         lon_3 = int(self.ser.read(1).hex(),16) & 0xff
-            #         lon_4 = int(self.ser.read(1).hex(),16) & 0xff
+                    lon_1 = int(self.ser.read(1).hex(),16) & 0xff
+                    lon_2 = int(self.ser.read(1).hex(),16) & 0xff
+                    lon_3 = int(self.ser.read(1).hex(),16) & 0xff
+                    lon_4 = int(self.ser.read(1).hex(),16) & 0xff
             
-            #         time_1 = int(self.ser.read(1).hex(),16) & 0xff
-            #         time_2 = int(self.ser.read(1).hex(),16) & 0xff
-            #         time_3 = int(self.ser.read(1).hex(),16) & 0xff
-            #         time_4 = int(self.ser.read(1).hex(),16) & 0xff
+                    time_1 = int(self.ser.read(1).hex(),16) & 0xff
+                    time_2 = int(self.ser.read(1).hex(),16) & 0xff
+                    time_3 = int(self.ser.read(1).hex(),16) & 0xff
+                    time_4 = int(self.ser.read(1).hex(),16) & 0xff
 
-            #         roll = int(self.ser.read(1).hex(),16) & 0xff
-            #         pitch = int(self.ser.read(1).hex(),16) & 0xff
-            #         heading_angle = int(self.ser.read(1).hex(),16) & 0xff
-            #         altitude = int(self.ser.read(1).hex(),16) & 0xff
+                    roll = int(self.ser.read(1).hex(),16) & 0xff
+                    pitch = int(self.ser.read(1).hex(),16) & 0xff
+                    heading_angle = int(self.ser.read(1).hex(),16) & 0xff
+                    altitude = int(self.ser.read(1).hex(),16) & 0xff
 
-            #         lat_drone = lat_1 << 24 | lat_2 << 16 | lat_3 << 8 | lat_4
-            #         lon_drone = lon_1 << 24 | lon_2 << 16 | lon_3 << 8 | lon_4
-            #         GPS_time = time_1 << 24 | time_2 << 16 | time_3 << 8 | time_4
+                    lat_drone = lat_1 << 24 | lat_2 << 16 | lat_3 << 8 | lat_4
+                    lon_drone = lon_1 << 24 | lon_2 << 16 | lon_3 << 8 | lon_4
+                    GPS_time = time_1 << 24 | time_2 << 16 | time_3 << 8 | time_4
 
-            #         print(mode_echo,lat_drone,lon_drone,GPS_time,roll,pitch,heading_angle,altitude)
-            temp = [1, 370001000,  38000000, 82134223414, 120, 130, 150, 200]
-            mode_echo = temp[0] ; lat_drone = temp[1]; lon_drone = temp[2]; 
-            GPS_time = temp[3]
-            roll = temp[4]; pitch = temp[5]; heading_angle = temp[6]; altitude = temp[7]
+                    print(mode_echo,lat_drone,lon_drone,GPS_time,roll,pitch,heading_angle,altitude)
+            # temp = [1, 370001000,  38000000, 82134223414, 120, 130, 150, 200]
+            # mode_echo = temp[0] ; lat_drone = temp[1]; lon_drone = temp[2]; 
+            # GPS_time = temp[3]
+            # roll = temp[4]; pitch = temp[5]; heading_angle = temp[6]; altitude = temp[7]
             # if time.time() - start >= 3 and plag_2 == False:
             #    mode = 2 # yaw를 회전하며 탐색 모드
             #    plag_2 = True
-            if self.plag_2 == False and self.MISSION_LAT == lat_drone and self.MISSION_LON == lon_drone:
+
+            if self.plag_2 == False and  lat_drone == self.MISSION_LAT and lon_drone == self.MISSION_LON:
                 self.mode = 2  # yaw를 회전하며 탐색 모드
                 self.plag_2 = True
+                self.plag_MISSION = False
 
             elif self.plag_3 == False and self.MIDPOINT == True and self.AVOID == False:
                 self.mode = 3  # 추적 모드
@@ -327,13 +341,48 @@ class NX(BaseCamera):
                 self.plag_5 = True
                 self.plag_3 = False  # 추적 모드 재 가동을 위한 플래그 off
 
-            ## new_gps code , person gps _code
-            new_gps_lat = lat_drone + 1;
-            new_gps_lon = lon_drone + 1;
-            yaw_error = 500000000
-            lat_person = 500000;
-            lon_person = 500000
+            # 2번 임무의 경우 2번이 가장문제네
+            if self.mode ==2:
+                pass
+            
+            # 금지구역 모드 X 
+            if self.AVOID == False: 
+                new_gps_lat = lat_drone + 1 # 계산필요
+                new_gps_lon = lon_drone + 1 # 계산필요
+                
+                lat_person = 500000 # 계산필요
+                lon_person = 500000 # 계산필요
+                
+                yaw_error = 500000000 # yolo를 통해 인식
 
+                if yaw_error <= 20: # 안전범위 이내라고 판단된다면
+                    yaw_error = 0 # 과도한 조절을 하지 않기 위해 설정
+
+            # 금지구역 모드
+            else:
+                new_gps_lat = lat_drone + 1 # 계산필요
+                new_gps_lon = lon_drone + 1 # 계산필요
+                
+                lat_person = 500000 # 계산필요
+                lon_person = 500000 # 계산필요
+     
+                yaw_error = 500000000 # yolo를 통해 인식
+
+                if yaw_error <= 20: # 안전범위 이내라고 판단된다면
+                    yaw_error = 0 # 과도한 조절을 하지 않기 위해 설정
+                
+                
+            ## 1번 , 6번 수행중이라면
+            if self.plag_MISSION == True:
+                new_gps_lat = self.MISSION_LAT
+                new_gps_lon = self.MISSION_LON
+                yaw_error = 0
+
+            if self.plag_RTH == True:
+                new_gps_lat = self.RTH_LAT
+                new_gps_lon = self.RTH_LON 
+                yaw_error = 0
+            
             new_lat_first = (new_gps_lat >> 24) & 0xff;
             new_lat_second = (new_gps_lat >> 16) & 0xff
             new_lat_third = (new_gps_lat >> 8) & 0xff;
@@ -343,22 +392,21 @@ class NX(BaseCamera):
             new_lon_second = (new_gps_lon >> 16) & 0xff
             new_lon_third = (new_gps_lon >> 8) & 0xff;
             new_lon_fourth = new_gps_lon & 0xff
-            yaw_error = 0x05
-
+            
             read = str(self.mode) + '\n' + str(lat_drone) + '\n' + str(lon_drone) + '\n' + str(GPS_time) +'\n' +  str(lat_person) + '\n' + str(
                 lon_person) + '\n' + str(altitude)
             self.q.append(read)
 
-            if yaw_error  <= 20 : ## GPS홀딩
-                # ser.write(
-                #     [header_1,header_2,mode,\
-                #     new_lat_first,new_lat_second,new_lat_third,new_lat_fourth,\
-                #     new_lon_first,new_lon_second,new_lon_third,new_lon_fourth,\
-                #     yaw_error]
-                # )
-                pass
-                # df = pd.DataFrame()
-                # df['gps_lat'] = gps_lat
-                # df['gps_lon'] = gps_lon
-                # df['alt'] = alt
-                # df.to_csv("GPSdata.csv")
+            ## 연산 후 바로 next_gps 전달
+            # ser.write(
+            #     [header_1,header_2,self.mode,\
+            #     new_lat_first,new at_second,new_lat_third,new_lat_fourth,\
+            #     new_lon_first,new_lon_second,new_lon_third,new_lon_fourth,\
+            #     yaw_error]
+            # )
+        
+            # df = pd.DataFrame()
+            # df['gps_lat'] = gps_lat
+            # df['gps_lon'] = gps_lon
+            # df['alt'] = alt
+            # df.to_csv("GPSdata.csv")
