@@ -105,8 +105,9 @@ float actual_pressure_diff;
 float actual_pressure_fast = 0, actual_pressure_slow = 0;
 
 uint8_t ccr[18];
-
 unsigned int ccr1 ,ccr2, ccr3, ccr4;
+
+float theta, theta_radian;
 
 /* USER CODE END PV */
 
@@ -735,11 +736,11 @@ gps_lat.in.kd = 0;
 		  		  }
 
 		  		  Single_Yaw_Heading_PID_Calculation(&yaw_heading, 0 , BNO080_Yaw, ICM20602.gyro_z);
-		  		  ccr1 = 84000 + landing_throttle - gps_lat.in.pid_result + gps_lon.in.pid_result -yaw_heading.pid_result  + altitude.in.pid_result;
-		  		  ccr2 = 84000 + landing_throttle + gps_lat.in.pid_result + gps_lon.in.pid_result +yaw_heading.pid_result  + altitude.in.pid_result;
+		  		  ccr1 = 84000 + landing_throttle - gps_lon.in.pid_result * (-sin(theta_radian)) + gps_lat.in.pid_result * cos(theta_radian) + gps_lon.in.pid_result * cos(theta_radian) + gps_lat.in.pid_result * sin(theta_radian) -yaw_heading.pid_result  + altitude.in.pid_result;
+		  		  ccr2 = 84000 + landing_throttle + gps_lon.in.pid_result * (-sin(theta_radian)) + gps_lat.in.pid_result * cos(theta_radian) + gps_lon.in.pid_result * cos(theta_radian) + gps_lat.in.pid_result * sin(theta_radian) +yaw_heading.pid_result  + altitude.in.pid_result;
 		  		  ccr2 = (unsigned int)((float)ccr2 * 0.91f);
-		  		  ccr3 = 84000 + landing_throttle + gps_lat.in.pid_result - gps_lon.in.pid_result -yaw_heading.pid_result  + altitude.in.pid_result;
-		  		  ccr4 = 84000 + landing_throttle - gps_lat.in.pid_result - gps_lon.in.pid_result +yaw_heading.pid_result  + altitude.in.pid_result;
+		  		  ccr3 = 84000 + landing_throttle + gps_lon.in.pid_result * (-sin(theta_radian)) + gps_lat.in.pid_result * cos(theta_radian) - gps_lon.in.pid_result * cos(theta_radian) + gps_lat.in.pid_result * sin(theta_radian) -yaw_heading.pid_result  + altitude.in.pid_result;
+		  		  ccr4 = 84000 + landing_throttle - gps_lon.in.pid_result * (-sin(theta_radian)) + gps_lat.in.pid_result * cos(theta_radian) - gps_lon.in.pid_result * cos(theta_radian) + gps_lat.in.pid_result * sin(theta_radian) +yaw_heading.pid_result  + altitude.in.pid_result;
 				  ccr4 = (unsigned int)((float)ccr4 * 0.91f);
 		  	  }
 		  else
@@ -888,6 +889,9 @@ gps_lat.in.kd = 0;
 		  BNO080_Roll -= BNO080_Roll_Offset;
 		  BNO080_Pitch = -BNO080_Pitch;
 		  BNO080_Pitch -= BNO080_Pitch_Offset;
+
+		  float theta = 360.f - BNO080_Yaw;
+		  float theta_radian = theta * 0.01745329252f;
 
 //		  Check BNO080 Calibration value
 //		  printf("%f\t%f\n", BNO080_Roll, BNO080_Pitch);

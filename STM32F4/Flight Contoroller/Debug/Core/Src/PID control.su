@@ -4,4 +4,4 @@ PID control.c:122:6:Single_Yaw_Rate_PID_Calculation	24	static
 PID control.c:142:6:Reset_PID_Integrator	16	static
 PID control.c:147:6:Reset_All_PID_Integrator	8	static
 PID control.c:166:6:Double_Altitude_PID_Calculation	24	static
-PID control.c:223:6:Double_GPS_PID_Calculation	24	static
+PID control.c:226:6:Double_GPS_PID_Calculation	24	static
