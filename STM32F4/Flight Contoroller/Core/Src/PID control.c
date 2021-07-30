@@ -212,12 +212,15 @@ void Double_Altitude_PID_Calculation(PIDDouble* axis, float set_point_altitude, 
 #if !INNER_DERIV_FILT_ENABLE
 	axis->in.d_result = axis->in.error_deriv * axis->in.kd;				//Calculate D result of inner loop
 #else
-	axis->in.error_deriv_filt = axis->in.error_deriv_filt * 0.5f + axis->in.error_deriv * 0.5f;	//filter for derivative
+	axis->in.error_deriv_filt = axis->in.error_deriv_filt * 0.7f + axis->in.error_deriv * 0.3f;	//filter for derivative
 	axis->in.d_result = axis->in.error_deriv_filt * axis->in.kd;								//Calculate D result of inner loop
 #endif
 
 	axis->in.pid_result = axis->in.p_result + axis->in.i_result + axis->in.d_result; //Calculate PID result of inner loop
 	/****************************************************************************************/
+if (axis->in.pid_result < -5000) axis->in.pid_result = -5000;
+if (axis->in.pid_result > 16800) axis->in.pid_result = 16800;
+
 }
 
 void Double_GPS_PID_Calculation(PIDDouble* axis, float set_point_gps, float gps)
