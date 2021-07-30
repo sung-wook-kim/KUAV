@@ -351,7 +351,6 @@ void TIM7_IRQHandler(void)
 	static unsigned char tim7_1ms_count = 0;
 	static unsigned char tim7_20ms_count = 0;
 	static unsigned char tim7_100ms_count = 0;
-	static unsigned char tim7_500ms_count = 0;
 	static unsigned short tim7_1000ms_count = 0;
 	if(LL_TIM_IsActiveFlag_UPDATE(TIM7))
 	{

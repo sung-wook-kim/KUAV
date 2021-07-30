@@ -473,9 +473,10 @@ gps_lat.in.kd = 0;
 		  LPS22HH_GetPressure(&LPS22HH.pressure_raw);
 		  LPS22HH_GetTemperature(&LPS22HH.temperature_raw);
 
+		  //Default Unit = 1m
 		  LPS22HH.baroAlt = getAltitude2(LPS22HH.pressure_raw/4096.f, LPS22HH.temperature_raw/100.f);
 		  baro_offset += LPS22HH.baroAlt;
-		  HAL_Delay(200);
+		  HAL_Delay(100);
 
 		  baro_cnt++;
 	  }
@@ -866,7 +867,7 @@ gps_lat.in.kd = 0;
 //		  Encode_Msg_GPS(&telemetry_tx_buf[20]);
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
 		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
-		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 14);
+		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 14);
 	  }
 
 
@@ -917,7 +918,7 @@ gps_lat.in.kd = 0;
 		  LPS22HH_GetPressure(&LPS22HH.pressure_raw);
 		  LPS22HH_GetTemperature(&LPS22HH.temperature_raw);
 
-		  LPS22HH.baroAlt = getAltitude2(LPS22HH.pressure_raw/4096.f, LPS22HH.temperature_raw/100.f); //Default Unit = 10cm
+		  LPS22HH.baroAlt = getAltitude2(LPS22HH.pressure_raw/4096.f, LPS22HH.temperature_raw/100.f); //Default Unit = 1m
 
 		  pressure_total_average -= pressure_rotating_mem[pressure_rotating_mem_location];
 		  pressure_rotating_mem[pressure_rotating_mem_location] = LPS22HH.baroAlt - baro_offset;
