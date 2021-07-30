@@ -26,8 +26,10 @@ class NX(BaseCamera):
         self.MISSION_LON = 0
         self.plag_MISSION = False;
         self.RTH_LAT = 0
-        self.RTH_LON = 0
+        self.RTH_LON = 0 
         self.plag_RTH = False;
+        self.AVOID_LAT = 0
+        self.AVOID_LON = 0 
         self.mode = 0  # default = 0
         self.plag_1 = False; self.plag_2 = False; self.plag_3 = False
         self.plag_4 = False; self.plag_5 = False; self.plag_6 = False
@@ -101,7 +103,7 @@ class NX(BaseCamera):
         _ = model(img.half() if half else img) if device.type != 'cpu' else None  # run once
 
         # to check the detection
-        human_detect = False  # if the model do detect
+        NX.human_detect = False  # if the model do detect
         crop_detect = False  # if the model do detect in crop image
         total_detect = False  # if the model do detect in original image
         w, h = int(dataset.imgs[0].shape[1]), int(dataset.imgs[0].shape[0])
@@ -315,51 +317,47 @@ class NX(BaseCamera):
                     GPS_time = time_1 << 24 | time_2 << 16 | time_3 << 8 | time_4
 
                     print(mode_echo,lat_drone,lon_drone,GPS_time,roll,pitch,heading_angle,altitude)
-            # temp = [1, 370001000,  38000000, 82134223414, 120, 130, 150, 200]
-            # mode_echo = temp[0] ; lat_drone = temp[1]; lon_drone = temp[2]; 
-            # GPS_time = temp[3]
-            # roll = temp[4]; pitch = temp[5]; heading_angle = temp[6]; altitude = temp[7]
-            # if time.time() - start >= 3 and plag_2 == False:
-            #    mode = 2 # yaw를 회전하며 탐색 모드
-            #    plag_2 = True
 
+            # 특정 범위에 드론이 들어가면 , AVOID 모드 AVOID on ,off 이므로 확실히 구분 된 조건문
+            if lat_drone == self.AVOID_LAT and lon_drone == self.AVOID_LON:
+                self.AVOID = True
+            # 벗어나면 , 일반 추적
+            elif lat_drone == self.AVOID_LAT and lon_drone == self.AVOID_LON:
+                self.AVOID = False 
+
+            # 과도한 연산 방지를 위해 설정 ok
             if self.plag_2 == False and  lat_drone == self.MISSION_LAT and lon_drone == self.MISSION_LON:
                 self.mode = 2  # yaw를 회전하며 탐색 모드
                 self.plag_2 = True
                 self.plag_MISSION = False
 
-            elif self.plag_3 == False and self.MIDPOINT == True and self.AVOID == False:
-                self.mode = 3  # 추적 모드
-                self.plag_3 = True
 
-            elif self.plag_4 == False and self.AVOID == True:
-                self.mode = 4  # 금지 구역 모드
-                self.plag_4 = True
-                self.plag_3 = False
-            elif self.plag_5 == False and self.HIDE == True:
-                self.mode = 5  # 임무 대기 모드 ( 파라솔 )
-                self.plag_5 = True
-                self.plag_3 = False  # 추적 모드 재 가동을 위한 플래그 off
+            # 2번 임무 , 사람이 detect 되지 않았으면 임의의 값을 통해 회전 
+            if self.mode == 2 and NX.human_detect == False:
+                new_gps_lat = lat_drone
+                new_gps_lon = lon_drone
+                yaw_error = 20 
 
-            # 2번 임무의 경우 2번이 가장문제네
-            if self.mode ==2:
-                pass
-            
             # 금지구역 모드 X 
-            if self.AVOID == False: 
-                new_gps_lat = lat_drone + 1 # 계산필요
-                new_gps_lon = lon_drone + 1 # 계산필요
-                
-                lat_person = 500000 # 계산필요
-                lon_person = 500000 # 계산필요
-                
-                yaw_error = 500000000 # yolo를 통해 인식
-
-                if yaw_error <= 20: # 안전범위 이내라고 판단된다면
-                    yaw_error = 0 # 과도한 조절을 하지 않기 위해 설정
+            if self.AVOID == False:
+                if NX.human_detect == True:
+                    self.mode = 3 # 추적모드
+                    new_gps_lat = lat_drone + 1 # 계산필요
+                    new_gps_lon = lon_drone + 1 # 계산필요
+                    
+                    lat_person = 500000 # 계산필요
+                    lon_person = 500000 # 계산필요
+                    
+                    yaw_error = 500000000 # yolo를 통해 인식
+                else: 
+                    self.mode = 5 # 대기모드
+                    new_gps_lat = lat_drone
+                    new_gps_lon = lat_drone
+                    yaw_error = 0
 
             # 금지구역 모드
             else:
+                self.mode = 4
                 new_gps_lat = lat_drone + 1 # 계산필요
                 new_gps_lon = lon_drone + 1 # 계산필요
                 
@@ -367,46 +365,37 @@ class NX(BaseCamera):
                 lon_person = 500000 # 계산필요
      
                 yaw_error = 500000000 # yolo를 통해 인식
-
-                if yaw_error <= 20: # 안전범위 이내라고 판단된다면
-                    yaw_error = 0 # 과도한 조절을 하지 않기 위해 설정
-                
                 
             ## 1번 , 6번 수행중이라면
             if self.plag_MISSION == True:
                 new_gps_lat = self.MISSION_LAT
                 new_gps_lon = self.MISSION_LON
                 yaw_error = 0
+                self.mode = 1
 
             if self.plag_RTH == True:
                 new_gps_lat = self.RTH_LAT
                 new_gps_lon = self.RTH_LON 
                 yaw_error = 0
+                self.mode = 6
+            # if yaw_error <= 20: # 안전범위 이내라고 판단된다면
+            #         yaw_error = 0 # 과도한 조절을 하지 않기 위해 설정
             
-            new_lat_first = (new_gps_lat >> 24) & 0xff;
-            new_lat_second = (new_gps_lat >> 16) & 0xff
-            new_lat_third = (new_gps_lat >> 8) & 0xff;
-            new_lat_fourth = new_gps_lat & 0xff
+            # 통신을 위한 변경 코드
+            new_lat_first = (new_gps_lat >> 24) & 0xff ; new_lat_second = (new_gps_lat >> 16) & 0xff
+            new_lat_third = (new_gps_lat >> 8) & 0xff  ; new_lat_fourth = new_gps_lat & 0xff
 
-            new_lon_first = (new_gps_lon >> 24) & 0xff;
-            new_lon_second = (new_gps_lon >> 16) & 0xff
-            new_lon_third = (new_gps_lon >> 8) & 0xff;
-            new_lon_fourth = new_gps_lon & 0xff
+            new_lon_first = (new_gps_lon >> 24) & 0xff ; new_lon_second = (new_gps_lon >> 16) & 0xff
+            new_lon_third = (new_gps_lon >> 8) & 0xff  ; new_lon_fourth = new_gps_lon & 0xff
             
             read = str(self.mode) + '\n' + str(lat_drone) + '\n' + str(lon_drone) + '\n' + str(GPS_time) +'\n' +  str(lat_person) + '\n' + str(
                 lon_person) + '\n' + str(altitude)
             self.q.append(read)
 
-            ## 연산 후 바로 next_gps 전달
-            # ser.write(
-            #     [header_1,header_2,self.mode,\
-            #     new_lat_first,new at_second,new_lat_third,new_lat_fourth,\
-            #     new_lon_first,new_lon_second,new_lon_third,new_lon_fourth,\
-            #     yaw_error]
-            # )
-        
-            # df = pd.DataFrame()
-            # df['gps_lat'] = gps_lat
-            # df['gps_lon'] = gps_lon
-            # df['alt'] = alt
-            # df.to_csv("GPSdata.csv")
+            # 연산 후 바로 next_gps 전달
+            self.ser.write(
+                [header_1,header_2,self.mode,\
+                new_lat_first,new_lat_second,new_lat_third,new_lat_fourth,\
+                new_lon_first,new_lon_second,new_lon_third,new_lon_fourth,\
+                yaw_error]
+            )

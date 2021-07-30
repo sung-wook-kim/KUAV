@@ -24,11 +24,14 @@ class window(QtWidgets.QMainWindow):
         # streaming
         self.webview=QtWebEngineWidgets.QWebEngineView()
         self.webview.setUrl(QUrl("http://192.168.43.185:5001"))
-        #self.webview.seturl(QUrl.)
+
         # plot
         self.m = folium.Map(location=[37.5872530,127.0307692], tiles='cartodbpositron',zoom_start=13)
         self.data = io.BytesIO()
         self.m.save(self.data, close_file=False)
+
+
+
         self.statuslayout = QtWidgets.QHBoxLayout()
         self.altstatus = QtWidgets.QLabel("고도 : ",self)
         self.mission_lat = QtWidgets.QLineEdit("Mission lat",self)
@@ -75,32 +78,38 @@ class window(QtWidgets.QMainWindow):
         self.ser = 0
         self.header_1 = b'0x44'
         self.header_2 = b'0x77'
-        self.u = 0
-        self.mode_li = []
+
+
         self.MISSION_LAT = 0
         self.MISSION_LON = 0
         self.automatic = 1
+        self.mode_li = []
         self.automatic_li = []
         self.GPStime = []
-        # GCS - STM32 Serial ( telemetry )     
-        #self.ser = serial.Serial('COM5',115200,timeout=1)
-        #self.ser.flush()
+
+
     def missionlatFunction(self):
         self.MISSION_LAT = float(self.mission_lat.text())
         print(self.MISSION_LAT)
+
     def missionlonFunction(self):
         self.MISSION_LON = float(self.mission_lon.text())
         print(self.MISSION_LON)
+        
     def RTHlatFunction(self):
         self.RTH_LAT = float(self.RTH_lat.text())
         print(self.RTH_LAT)
+
     def RTHlonFunction(self):
         self.RTH_LON = float(self.RTH_lon.text())
         print(self.RTH_LON)
+
+    # GCS - STM32 serial ( telemetry maybe)
     def connectSerial(self):
         self.ser = serial.Serial('COM6', 115200, timeout=1)
         self.ser.flush()
         self.btnSerial.setText("connect FC with Serial ")
+
     # GCS - NX Socket ( wifi )
     def connectSocket(self):
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -135,18 +144,18 @@ class window(QtWidgets.QMainWindow):
     def takeoff(self):
         msgT = f"1\n{self.MISSION_LAT}\n{self.MISSION_LON}"
         self.client_socket.sendall(msgT.encode())
-        self.u = self.client_socket.recv(1024)
+        _ = self.client_socket.recv(1024) # don't need this
     
     # 리턴투홈
     def RTH(self):
         msgR = f"6\n{self.RTH_LAT}\n{self.RTH_LON}"
         self.client_socket.sendall(msgR.encode())
-        self.u = self.client_socket.recv(1024)
+        _ = self.client_socket.recv(1024)
         
     # 강제종료
     def forceTerminate(self):
         self.client_socket.sendall(b"9\n")
-        self.u = self.client_socket.recv(1024)
+        _ = self.client_socket.recv(1024)
     # 데이터 저장 
     # 비행 데이터  : (자동 : 0 , 수동 : 1) / mode / Gps time / lat / lon / alt
     def datasave(self):
