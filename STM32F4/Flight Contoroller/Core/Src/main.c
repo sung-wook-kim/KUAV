@@ -473,7 +473,7 @@ gps_lat.in.kd = 0;
 		  LPS22HH_GetPressure(&LPS22HH.pressure_raw);
 		  LPS22HH_GetTemperature(&LPS22HH.temperature_raw);
 
-		  LPS22HH.baroAlt = getAltitude2(LPS22HH.pressure_raw/4096.f, LPS22HH.temperature_raw-100.f);
+		  LPS22HH.baroAlt = getAltitude2(LPS22HH.pressure_raw/4096.f, LPS22HH.temperature_raw/100.f);
 		  baro_offset += LPS22HH.baroAlt;
 		  HAL_Delay(200);
 
@@ -917,10 +917,10 @@ gps_lat.in.kd = 0;
 		  LPS22HH_GetPressure(&LPS22HH.pressure_raw);
 		  LPS22HH_GetTemperature(&LPS22HH.temperature_raw);
 
-		  LPS22HH.baroAlt = getAltitude2(LPS22HH.pressure_raw/4096.f, LPS22HH.temperature_raw-100.f); //Default Unit = 10cm
+		  LPS22HH.baroAlt = getAltitude2(LPS22HH.pressure_raw/4096.f, LPS22HH.temperature_raw/100.f); //Default Unit = 10cm
 
 		  pressure_total_average -= pressure_rotating_mem[pressure_rotating_mem_location];
-		  pressure_rotating_mem[pressure_rotating_mem_location] = getAltitude2(LPS22HH.pressure_raw/4096.f, LPS22HH.temperature_raw-100.f) - baro_offset;
+		  pressure_rotating_mem[pressure_rotating_mem_location] = LPS22HH.baroAlt - baro_offset;
 		  pressure_total_average += pressure_rotating_mem[pressure_rotating_mem_location];
 		  pressure_rotating_mem_location++;
 		  if(pressure_rotating_mem_location ==20) pressure_rotating_mem_location = 0;
