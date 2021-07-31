@@ -78,8 +78,8 @@ void Double_Roll_Pitch_PID_Calculation(PIDDouble* axis, float set_point_angle, f
 	axis->in.error_sum = axis->in.error_sum + axis->in.error * DT;	//Define summation of inner loop
 #define IN_ERR_SUM_MAX 500
 #define IN_I_ERR_MIN -IN_ERR_SUM_MAX
-	if(axis->out.error_sum > IN_ERR_SUM_MAX) axis->out.error_sum = IN_ERR_SUM_MAX;
-	else if(axis->out.error_sum < IN_I_ERR_MIN) axis->out.error_sum = IN_I_ERR_MIN;
+	if(axis->in.error_sum > IN_ERR_SUM_MAX) axis->in.error_sum = IN_ERR_SUM_MAX;
+	else if(axis->in.error_sum < IN_I_ERR_MIN) axis->in.error_sum = IN_I_ERR_MIN;
 	axis->in.i_result = axis->in.error_sum * axis->in.ki;							//Calculate I result of inner loop
 
 	axis->in.error_deriv = -(axis->in.meas_value - axis->in.meas_value_prev) / DT;	//Define derivative of inner loop
@@ -202,8 +202,8 @@ void Double_Altitude_PID_Calculation(PIDDouble* axis, float set_point_altitude, 
 	axis->in.error_sum = axis->in.error_sum + axis->in.error * DT;	//Define summation of inner loop
 #define IN_ERR_SUM_MAX 500
 #define IN_I_ERR_MIN -IN_ERR_SUM_MAX
-	if(axis->out.error_sum > IN_ERR_SUM_MAX) axis->out.error_sum = IN_ERR_SUM_MAX;
-	else if(axis->out.error_sum < IN_I_ERR_MIN) axis->out.error_sum = IN_I_ERR_MIN;
+	if(axis->in.error_sum > IN_ERR_SUM_MAX) axis->in.error_sum = IN_ERR_SUM_MAX;
+	else if(axis->in.error_sum < IN_I_ERR_MIN) axis->in.error_sum = IN_I_ERR_MIN;
 	axis->in.i_result = axis->in.error_sum * axis->in.ki;							//Calculate I result of inner loop
 
 	axis->in.error_deriv = -(axis->in.meas_value - axis->in.meas_value_prev) / DT;	//Define derivative of inner loop
@@ -263,8 +263,8 @@ void Double_GPS_PID_Calculation(PIDDouble* axis, float set_point_gps, float gps)
    axis->in.error_sum = axis->in.error_sum + axis->in.error * DT;   //Define summation of inner loop
 #define IN_ERR_SUM_MAX 500
 #define IN_I_ERR_MIN -IN_ERR_SUM_MAX
-   if(axis->out.error_sum > IN_ERR_SUM_MAX) axis->out.error_sum = IN_ERR_SUM_MAX;
-   else if(axis->out.error_sum < IN_I_ERR_MIN) axis->out.error_sum = IN_I_ERR_MIN;
+   if(axis->in.error_sum > IN_ERR_SUM_MAX) axis->in.error_sum = IN_ERR_SUM_MAX;
+   else if(axis->in.error_sum < IN_I_ERR_MIN) axis->in.error_sum = IN_I_ERR_MIN;
    axis->in.i_result = axis->in.error_sum * axis->in.ki;                     //Calculate I result of inner loop
 
    axis->in.error_deriv = -(axis->in.meas_value - axis->in.meas_value_prev) / DT;   //Define derivative of inner loop
