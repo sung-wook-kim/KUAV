@@ -39,6 +39,7 @@ def connect():
             df['alt'] = alt_li
             df['target'] = target_li
             df['error'] = error_li
+            df['pid_result'] = value_li
             df.to_csv(f"{timevar}_alt_data.csv")
 
         a = int(ser.read(1).hex(), 16)
@@ -91,13 +92,13 @@ fig = plt.figure()
 # h , w 간격 조절
 fig.subplots_adjust(hspace=0.4, wspace=0.2)
 
-ax = plt.subplot(221, xlim=(0, 50), ylim=(-100, 150))
+ax = plt.subplot(221, xlim=(0, 50), ylim=(-1000, 1000))
 ax.set_title("altitude")
-ax_2 = plt.subplot(222, xlim=(0, 50), ylim=(-100, 150))
+ax_2 = plt.subplot(222, xlim=(0, 50), ylim=(-1000, 1000))
 ax_2.set_title("target")
-ax_3 = plt.subplot(223, xlim=(0, 50), ylim=(-100, 150))
+ax_3 = plt.subplot(223, xlim=(0, 50), ylim=(-1000, 1000))
 ax_3.set_title("error")
-ax_4 = plt.subplot(224, xlim=(0, 50), ylim=(-100, 150))
+ax_4 = plt.subplot(224, xlim=(0, 50), ylim=(-2100, 15000))
 ax_4.set_title("something you want")
 
 # 화면에 보여질 점의 개수 ( 길이 )

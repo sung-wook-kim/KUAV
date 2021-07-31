@@ -6,8 +6,9 @@
 		<item key="wholeword" value="false"/>
 		<item key="incremental" value="false"/>
 		<item key="isRegEx" value="false"/>
-		<item key="selection" value="PID_Calculation"/>
+		<item key="selection" value="ibus_rx_cplt_flag"/>
 		<list key="findhistory">
+			<item value="ibus_rx_cplt_flag"/>
 			<item value="pid_calculation"/>
 			<item value="pid_calculatipn"/>
 			<item value="pid"/>

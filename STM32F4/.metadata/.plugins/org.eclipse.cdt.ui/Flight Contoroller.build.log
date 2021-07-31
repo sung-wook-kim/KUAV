@@ -1,4 +1,4 @@
-17:06:42 **** Incremental Build of configuration Debug for project Flight Contoroller ****
+16:32:45 **** Incremental Build of configuration Debug for project Flight Contoroller ****
 make -j8 all 
 arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F405xx -DUSE_FULL_LL_DRIVER -c -I../Core/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
 In file included from ../Core/Src/main.c:33:
@@ -58,22 +58,28 @@ In file included from ../Core/Src/main.c:33:
   110 | #define TEMP_OUT_H 0x41
       | 
 ../Core/Src/main.c: In function 'main':
-../Core/Src/main.c:222:3: warning: implicit declaration of function 'printf' [-Wimplicit-function-declaration]
-  222 |   printf("Checking sensor connection!\n");
+../Core/Src/main.c:223:3: warning: implicit declaration of function 'printf' [-Wimplicit-function-declaration]
+  223 |   printf("Checking sensor connection!\n");
       |   ^~~~~~
-../Core/Src/main.c:222:3: warning: incompatible implicit declaration of built-in function 'printf'
+../Core/Src/main.c:223:3: warning: incompatible implicit declaration of built-in function 'printf'
 ../Core/Src/main.c:41:1: note: include '<stdio.h>' or provide a declaration of 'printf'
    40 | #include "XAVIER.h"
   +++ |+#include <stdio.h>
    41 | /* USER CODE END Includes */
-../Core/Src/main.c:331:3: warning: implicit declaration of function 'ICM20602_Writebyte' [-Wimplicit-function-declaration]
-  331 |   ICM20602_Writebyte(0x13, (gyro_x_offset*-2)>>8);
+../Core/Src/main.c:332:3: warning: implicit declaration of function 'ICM20602_Writebyte' [-Wimplicit-function-declaration]
+  332 |   ICM20602_Writebyte(0x13, (gyro_x_offset*-2)>>8);
       |   ^~~~~~~~~~~~~~~~~~
-../Core/Src/main.c:543:22: warning: statement with no effect [-Wunused-value]
-  543 |     m8n_rx_cplt_flag == 0;
+../Core/Src/main.c:546:22: warning: statement with no effect [-Wunused-value]
+  546 |     m8n_rx_cplt_flag == 0;
       |     ~~~~~~~~~~~~~~~~~^~~~
-../Core/Src/main.c:947:19: warning: passing argument 1 of 'iBus_Parsing' from incompatible pointer type [-Wincompatible-pointer-types]
-  947 |      iBus_Parsing(&ibus_rx_buf, &iBus);
+../Core/Src/main.c:729:12: warning: implicit declaration of function 'abs' [-Wimplicit-function-declaration]
+  729 |      if ( (abs(iBus.RH-1500) < 50) && (abs(iBus.RV-1500) <50))
+      |            ^~~
+../Core/Src/main.c:893:11: warning: unused variable 'theta_radian' [-Wunused-variable]
+  893 |     float theta_radian = theta * 0.01745329252f;
+      |           ^~~~~~~~~~~~
+../Core/Src/main.c:951:19: warning: passing argument 1 of 'iBus_Parsing' from incompatible pointer type [-Wincompatible-pointer-types]
+  951 |      iBus_Parsing(&ibus_rx_buf, &iBus);
       |                   ^~~~~~~~~~~~
       |                   |
       |                   uint8_t (*)[32] {aka unsigned char (*)[32]}
@@ -81,21 +87,21 @@ In file included from ../Core/Src/main.c:34:
 ../Core/Inc/FS-iA6B.h:28:34: note: expected 'unsigned char *' but argument is of type 'uint8_t (*)[32]' {aka 'unsigned char (*)[32]'}
    28 | void iBus_Parsing(unsigned char* data, FSiA6B_iBus* iBus);
       |                   ~~~~~~~~~~~~~~~^~~~
-../Core/Src/main.c:156:9: warning: unused variable 'mode' [-Wunused-variable]
-  156 | uint8_t mode = 0;
+../Core/Src/main.c:157:9: warning: unused variable 'mode' [-Wunused-variable]
+  157 | uint8_t mode = 0;
       |         ^~~~
-../Core/Src/main.c:151:5: warning: unused variable 'gps_cnt' [-Wunused-variable]
-  151 | int gps_cnt = 0;
+../Core/Src/main.c:152:5: warning: unused variable 'gps_cnt' [-Wunused-variable]
+  152 | int gps_cnt = 0;
       |     ^~~~~~~
-../Core/Src/main.c:150:5: warning: unused variable 'manual_throttle' [-Wunused-variable]
-  150 | int manual_throttle;
+../Core/Src/main.c:151:5: warning: unused variable 'manual_throttle' [-Wunused-variable]
+  151 | int manual_throttle;
       |     ^~~~~~~~~~~~~~~
-../Core/Src/main.c:142:7: warning: variable 'quatRadianAccuracy' set but not used [-Wunused-but-set-variable]
-  142 | float quatRadianAccuracy;
+../Core/Src/main.c:143:7: warning: variable 'quatRadianAccuracy' set but not used [-Wunused-but-set-variable]
+  143 | float quatRadianAccuracy;
       |       ^~~~~~~~~~~~~~~~~~
 ../Core/Src/main.c: In function 'Is_iBus_Throttle_min':
-../Core/Src/main.c:1034:17: warning: passing argument 1 of 'iBus_Parsing' from incompatible pointer type [-Wincompatible-pointer-types]
- 1034 |    iBus_Parsing(&ibus_rx_buf, &iBus);
+../Core/Src/main.c:1038:17: warning: passing argument 1 of 'iBus_Parsing' from incompatible pointer type [-Wincompatible-pointer-types]
+ 1038 |    iBus_Parsing(&ibus_rx_buf, &iBus);
       |                 ^~~~~~~~~~~~
       |                 |
       |                 uint8_t (*)[32] {aka unsigned char (*)[32]}
@@ -104,8 +110,8 @@ In file included from ../Core/Src/main.c:34:
    28 | void iBus_Parsing(unsigned char* data, FSiA6B_iBus* iBus);
       |                   ~~~~~~~~~~~~~~~^~~~
 ../Core/Src/main.c: In function 'Is_iBus_Received':
-../Core/Src/main.c:1064:18: warning: passing argument 1 of 'iBus_Parsing' from incompatible pointer type [-Wincompatible-pointer-types]
- 1064 |     iBus_Parsing(&ibus_rx_buf, &iBus);
+../Core/Src/main.c:1068:18: warning: passing argument 1 of 'iBus_Parsing' from incompatible pointer type [-Wincompatible-pointer-types]
+ 1068 |     iBus_Parsing(&ibus_rx_buf, &iBus);
       |                  ^~~~~~~~~~~~
       |                  |
       |                  uint8_t (*)[32] {aka unsigned char (*)[32]}
@@ -114,19 +120,19 @@ In file included from ../Core/Src/main.c:34:
    28 | void iBus_Parsing(unsigned char* data, FSiA6B_iBus* iBus);
       |                   ~~~~~~~~~~~~~~~^~~~
 ../Core/Src/main.c: In function 'BNO080_Calibration':
-../Core/Src/main.c:1085:4: warning: incompatible implicit declaration of built-in function 'printf'
- 1085 |    printf("Calibrating BNO080. Pull up FS-i6 SWC to end calibration and save to flash\n");
+../Core/Src/main.c:1089:4: warning: incompatible implicit declaration of built-in function 'printf'
+ 1089 |    printf("Calibrating BNO080. Pull up FS-i6 SWC to end calibration and save to flash\n");
       |    ^~~~~~
-../Core/Src/main.c:1085:4: note: include '<stdio.h>' or provide a declaration of 'printf'
-../Core/Src/main.c:1103:10: warning: unused variable 'quatK' [-Wunused-variable]
- 1103 |    float quatK = BNO080_getQuatK();
+../Core/Src/main.c:1089:4: note: include '<stdio.h>' or provide a declaration of 'printf'
+../Core/Src/main.c:1107:10: warning: unused variable 'quatK' [-Wunused-variable]
+ 1107 |    float quatK = BNO080_getQuatK();
       |          ^~~~~
-../Core/Src/main.c:1102:10: warning: unused variable 'quatJ' [-Wunused-variable]
- 1102 |    float quatJ = BNO080_getQuatJ();
+../Core/Src/main.c:1106:10: warning: unused variable 'quatJ' [-Wunused-variable]
+ 1106 |    float quatJ = BNO080_getQuatJ();
       |          ^~~~~
 ../Core/Src/main.c: In function 'HAL_UART_RxCpltCallback':
-../Core/Src/main.c:1196:5: warning: suggest parentheses around assignment used as truth value [-Wparentheses]
- 1196 |  if(huart->Instance = USART1)
+../Core/Src/main.c:1200:5: warning: suggest parentheses around assignment used as truth value [-Wparentheses]
+ 1200 |  if(huart->Instance = USART1)
       |     ^~~~~
 ../Core/Src/main.c: In function '_write':
 ../Core/Src/main.c:53:1: warning: control reaches end of non-void function [-Wreturn-type]
@@ -139,7 +145,7 @@ arm-none-eabi-objdump -h -S  Flight\ Contoroller.elf  > "Flight Contoroller.list
 arm-none-eabi-objcopy  -O binary  Flight\ Contoroller.elf  "Flight Contoroller.bin"
 arm-none-eabi-size   Flight\ Contoroller.elf 
    text	   data	    bss	    dec	    hex	filename
-  67916	    492	   3296	  71704	  11818	Flight Contoroller.elf
+  75164	    492	   3304	  78960	  13470	Flight Contoroller.elf
 Finished building: default.size.stdout
  
 Finished building: Flight Contoroller.bin
@@ -147,5 +153,5 @@ Finished building: Flight Contoroller.bin
 Finished building: Flight Contoroller.list
  
 
-17:06:44 Build Finished. 0 errors, 23 warnings. (took 1s.497ms)
+16:32:46 Build Finished. 0 errors, 25 warnings. (took 1s.386ms)
 
