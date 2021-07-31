@@ -50,7 +50,7 @@ void Double_Roll_Pitch_PID_Calculation(PIDDouble* axis, float set_point_angle, f
 	axis->out.p_result = axis->out.error * axis->out.kp;			//Calculate P result of outer loop
 
 	axis->out.error_sum = axis->out.error_sum + axis->out.error * DT;	//Define summation of outer loop
-#define OUT_ERR_SUM_MAX 500
+#define OUT_ERR_SUM_MAX 2000
 #define OUT_I_ERR_MIN -OUT_ERR_SUM_MAX
 	if(axis->out.error_sum > OUT_ERR_SUM_MAX) axis->out.error_sum = OUT_ERR_SUM_MAX;
 	else if(axis->out.error_sum < OUT_I_ERR_MIN) axis->out.error_sum = OUT_I_ERR_MIN;

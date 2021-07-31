@@ -369,10 +369,10 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
 
 altitude.out.kp = 0.3;
 altitude.out.ki = 0;
-altitude.out.kd = 0.01;
+altitude.out.kd = 0;
 altitude.in.kp = 150;
-altitude.in.ki = 0;
-altitude.in.kd = 1;
+altitude.in.ki = 0.1;
+altitude.in.kd = 0.1;
 
 gps_lon.out.kp = 50;
 gps_lon.out.ki = 0;
@@ -556,8 +556,6 @@ gps_lat.in.kd = 0;
 
 			  posllh.lon_prev = posllh.lon;
 			  posllh.lat_prev = posllh.lat;
-//			  printf("%d %ld %ld %d %d %d %ld\n", mode, posllh.lat, posllh.lon, (int)LPS22HH.baroAltFilt, (int)BNO080_Yaw, (int)XAVIER.mode, XAVIER.lat);
-//			  printf(" ", XAVIER.mode);
 		  }
 	  }
 
@@ -752,53 +750,48 @@ gps_lat.in.kd = 0;
 
 		  else // Default Angle Mode
 		  {
-			  if(iBus.LV < 1030 || motor_arming_flag == 0)
+			  //			  if (iBus.LV < 1050)
+			  //			  {
+			  //				  ccr1 = 84000 + (iBus.LV - 1000) * 83.9;
+			  //				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9;
+			  //				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9;
+			  //				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9;
+			  //			  }
+			  //			  else
+			  //			  {
+			  if(iBus.LH < 1485 || iBus.LH > 1515)
 			  {
-				  Reset_All_PID_Integrator();
-			  }
-			  else if (iBus.LV < 1050)
-			  {
-				  ccr1 = 84000 + (iBus.LV - 1000) * 83.9;
-				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9;
-				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9;
-				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9;
+				  yaw_heading_reference = BNO080_Yaw;
+				  Single_Yaw_Rate_PID_Calculation(&yaw_rate, (iBus.LH-1500), ICM20602.gyro_z);
+
+				  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result + roll.in.pid_result -yaw_rate.pid_result;
+				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result + roll.in.pid_result +yaw_rate.pid_result;
+				  ccr2 = (unsigned int)((float)ccr2 * 0.91f);
+				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result - roll.in.pid_result -yaw_rate.pid_result;
+				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result - roll.in.pid_result +yaw_rate.pid_result;
+				  ccr4 = (unsigned int)((float)ccr4 * 0.91f);
 			  }
 			  else
 			  {
-				  if(iBus.LH < 1485 || iBus.LH > 1515)
-				  {
-					  yaw_heading_reference = BNO080_Yaw;
-					  Single_Yaw_Rate_PID_Calculation(&yaw_rate, (iBus.LH-1500), ICM20602.gyro_z);
-
-					  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result + roll.in.pid_result -yaw_rate.pid_result;
-					  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result + roll.in.pid_result +yaw_rate.pid_result;
-					  ccr2 = (unsigned int)((float)ccr2 * 0.91f);
-					  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result - roll.in.pid_result -yaw_rate.pid_result;
-					  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result - roll.in.pid_result +yaw_rate.pid_result;
-					  ccr4 = (unsigned int)((float)ccr4 * 0.91f);
-
-				  }
-				  else
-				  {
-					  Single_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference, BNO080_Yaw, ICM20602.gyro_z);
-					  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result + roll.in.pid_result -yaw_heading.pid_result;
-					  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result + roll.in.pid_result +yaw_heading.pid_result;
-					  ccr2 = (unsigned int)((float)ccr2 * 0.91f);
-					  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result - roll.in.pid_result -yaw_heading.pid_result;
-					  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result - roll.in.pid_result +yaw_heading.pid_result;
-					  ccr4 = (unsigned int)((float)ccr4 * 0.91f);
-				  }
+				  Single_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference, BNO080_Yaw, ICM20602.gyro_z);
+				  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result + roll.in.pid_result -yaw_heading.pid_result;
+				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result + roll.in.pid_result +yaw_heading.pid_result;
+				  ccr2 = (unsigned int)((float)ccr2 * 0.91f);
+				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result - roll.in.pid_result -yaw_heading.pid_result;
+				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result - roll.in.pid_result +yaw_heading.pid_result;
+				  ccr4 = (unsigned int)((float)ccr4 * 0.91f);
 			  }
+
 			  last_lat = posllh.lat;
 			  last_lon = posllh.lon;
 			  last_altitude = actual_pressure_fast;
 		  }
+	  }
 
-		  if(iBus.SwD != 2000)
-		  {
-			  Reset_PID_Integrator(&altitude.out);
-			  Reset_PID_Integrator(&altitude.in);
-		  }
+
+	  if(iBus.LV < 1030 || motor_arming_flag == 0)
+	  {
+		  Reset_All_PID_Integrator();
 	  }
 
 
@@ -833,11 +826,21 @@ gps_lat.in.kd = 0;
 	  {
 		  if(failsafe_flag == 0)
 		  {
-//			  printf("%d\t%d\t%d\t%d\n", ccr1, ccr2, ccr3, ccr4);
-			  TIM5->CCR1 = ccr1 > 167999 ? 167999 : ccr1 < 84000 ? 84000 : ccr1;
-			  TIM5->CCR2 = ccr2 > 167999 ? 167999 : ccr2 < 84000 ? 84000 : ccr2;
-			  TIM5->CCR3 = ccr3 > 167999 ? 167999 : ccr3 < 84000 ? 84000 : ccr3;
-			  TIM5->CCR4 = ccr4 > 167999 ? 167999 : ccr4 < 84000 ? 84000 : ccr4;
+			  if(iBus.LV > 1050)
+			  {
+				  //			  printf("%d\t%d\t%d\t%d\n", ccr1, ccr2, ccr3, ccr4);
+				  TIM5->CCR1 = ccr1 > 167999 ? 167999 : ccr1 < 84000 ? 84000 : ccr1;
+				  TIM5->CCR2 = ccr2 > 167999 ? 167999 : ccr2 < 84000 ? 84000 : ccr2;
+				  TIM5->CCR3 = ccr3 > 167999 ? 167999 : ccr3 < 84000 ? 84000 : ccr3;
+				  TIM5->CCR4 = ccr4 > 167999 ? 167999 : ccr4 < 84000 ? 84000 : ccr4;
+			  }
+			  else
+			  {
+				  TIM5->CCR1 = 84000;
+				  TIM5->CCR2 = 84000;
+				  TIM5->CCR3 = 84000;
+				  TIM5->CCR4 = 84000;
+			  }
 		  }
 		  else
 		  {
@@ -847,6 +850,7 @@ gps_lat.in.kd = 0;
 			  TIM5->CCR4 = 84000;
 		  }
 	  }
+
 	  else
 	  {
 		  TIM5->CCR1 = 84000;
