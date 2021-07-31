@@ -7683,7 +7683,7 @@ void Double_Altitude_PID_Calculation(PIDDouble* axis, float set_point_altitude, 
  800398a:	68fb      	ldr	r3, [r7, #12]
  800398c:	edc3 7a0e 	vstr	s15, [r3, #56]	; 0x38
 	/****************************************************************************************/
-if (axis->in.pid_result < -5000) axis->in.pid_result = -5000;
+if (axis->in.pid_result < -5000) axis->in.pid_result = -8400;
  8003990:	68fb      	ldr	r3, [r7, #12]
  8003992:	edd3 7a0e 	vldr	s15, [r3, #56]	; 0x38
  8003996:	ed9f 7a16 	vldr	s14, [pc, #88]	; 80039f0 <Double_Altitude_PID_Calculation+0x2cc>
@@ -7722,7 +7722,7 @@ if (axis->in.pid_result > 16800) axis->in.pid_result = 16800;
  80039e8:	3ecccccd 	.word	0x3ecccccd
  80039ec:	3f19999a 	.word	0x3f19999a
  80039f0:	c59c4000 	.word	0xc59c4000
- 80039f4:	c59c4000 	.word	0xc59c4000
+ 80039f4:	c6034000 	.word	0xc6034000
  80039f8:	46834000 	.word	0x46834000
  80039fc:	46834000 	.word	0x46834000
 
@@ -9066,357 +9066,357 @@ unsigned int last_lat;
 uint8_t mode = 0;
  8004414:	2300      	movs	r3, #0
  8004416:	f887 3033 	strb.w	r3, [r7, #51]	; 0x33
-float BNO080_Pitch_Offset = 1.1f;
- 800441a:	4b9d      	ldr	r3, [pc, #628]	; (8004690 <main+0x2b8>)
+float BNO080_Pitch_Offset = 1.9f;
+ 800441a:	4b9c      	ldr	r3, [pc, #624]	; (800468c <main+0x2b4>)
  800441c:	62fb      	str	r3, [r7, #44]	; 0x2c
-float BNO080_Roll_Offset = 0;
- 800441e:	f04f 0300 	mov.w	r3, #0
- 8004422:	62bb      	str	r3, [r7, #40]	; 0x28
+float BNO080_Roll_Offset = 0.8f;
+ 800441e:	4b9c      	ldr	r3, [pc, #624]	; (8004690 <main+0x2b8>)
+ 8004420:	62bb      	str	r3, [r7, #40]	; 0x28
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
- 8004424:	f004 face 	bl	80089c4 <HAL_Init>
+ 8004422:	f004 facf 	bl	80089c4 <HAL_Init>
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
- 8004428:	f002 fc68 	bl	8006cfc <SystemClock_Config>
+ 8004426:	f002 fc69 	bl	8006cfc <SystemClock_Config>
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
- 800442c:	f7ff fe06 	bl	800403c <MX_GPIO_Init>
+ 800442a:	f7ff fe07 	bl	800403c <MX_GPIO_Init>
   MX_DMA_Init();
- 8004430:	f7ff fdae 	bl	8003f90 <MX_DMA_Init>
+ 800442e:	f7ff fdaf 	bl	8003f90 <MX_DMA_Init>
   MX_TIM3_Init();
- 8004434:	f003 fe6e 	bl	8008114 <MX_TIM3_Init>
+ 8004432:	f003 fe6f 	bl	8008114 <MX_TIM3_Init>
   MX_USART6_UART_Init();
- 8004438:	f004 f9b8 	bl	80087ac <MX_USART6_UART_Init>
+ 8004436:	f004 f9b9 	bl	80087ac <MX_USART6_UART_Init>
   MX_SPI2_Init();
- 800443c:	f003 f8c0 	bl	80075c0 <MX_SPI2_Init>
+ 800443a:	f003 f8c1 	bl	80075c0 <MX_SPI2_Init>
   MX_SPI1_Init();
- 8004440:	f003 f86c 	bl	800751c <MX_SPI1_Init>
+ 800443e:	f003 f86d 	bl	800751c <MX_SPI1_Init>
   MX_UART5_Init();
- 8004444:	f004 f910 	bl	8008668 <MX_UART5_Init>
+ 8004442:	f004 f911 	bl	8008668 <MX_UART5_Init>
   MX_TIM5_Init();
- 8004448:	f003 fed6 	bl	80081f8 <MX_TIM5_Init>
+ 8004446:	f003 fed7 	bl	80081f8 <MX_TIM5_Init>
   MX_TIM7_Init();
- 800444c:	f003 ff78 	bl	8008340 <MX_TIM7_Init>
+ 800444a:	f003 ff79 	bl	8008340 <MX_TIM7_Init>
   MX_USART1_UART_Init();
- 8004450:	f004 f982 	bl	8008758 <MX_USART1_UART_Init>
+ 800444e:	f004 f983 	bl	8008758 <MX_USART1_UART_Init>
   MX_SPI3_Init();
- 8004454:	f003 f908 	bl	8007668 <MX_SPI3_Init>
+ 8004452:	f003 f909 	bl	8007668 <MX_SPI3_Init>
   MX_I2C1_Init();
- 8004458:	f7ff fe70 	bl	800413c <MX_I2C1_Init>
+ 8004456:	f7ff fe71 	bl	800413c <MX_I2C1_Init>
   MX_UART4_Init();
- 800445c:	f004 f8a2 	bl	80085a4 <MX_UART4_Init>
+ 800445a:	f004 f8a3 	bl	80085a4 <MX_UART4_Init>
   /* USER CODE BEGIN 2 */
   LL_TIM_EnableCounter(TIM3); //Buzzer
- 8004460:	488c      	ldr	r0, [pc, #560]	; (8004694 <main+0x2bc>)
- 8004462:	f7ff fee1 	bl	8004228 <LL_TIM_EnableCounter>
+ 800445e:	488d      	ldr	r0, [pc, #564]	; (8004694 <main+0x2bc>)
+ 8004460:	f7ff fee2 	bl	8004228 <LL_TIM_EnableCounter>
 
   LL_USART_EnableIT_RXNE(UART4); //GPS
- 8004466:	488c      	ldr	r0, [pc, #560]	; (8004698 <main+0x2c0>)
- 8004468:	f7ff ff34 	bl	80042d4 <LL_USART_EnableIT_RXNE>
+ 8004464:	488c      	ldr	r0, [pc, #560]	; (8004698 <main+0x2c0>)
+ 8004466:	f7ff ff35 	bl	80042d4 <LL_USART_EnableIT_RXNE>
   LL_USART_EnableIT_RXNE(UART5); //FS-iA6B;
- 800446c:	488b      	ldr	r0, [pc, #556]	; (800469c <main+0x2c4>)
- 800446e:	f7ff ff31 	bl	80042d4 <LL_USART_EnableIT_RXNE>
+ 800446a:	488c      	ldr	r0, [pc, #560]	; (800469c <main+0x2c4>)
+ 800446c:	f7ff ff32 	bl	80042d4 <LL_USART_EnableIT_RXNE>
   LL_USART_EnableIT_RXNE(USART6); //Debug UART
- 8004472:	488b      	ldr	r0, [pc, #556]	; (80046a0 <main+0x2c8>)
- 8004474:	f7ff ff2e 	bl	80042d4 <LL_USART_EnableIT_RXNE>
+ 8004470:	488b      	ldr	r0, [pc, #556]	; (80046a0 <main+0x2c8>)
+ 8004472:	f7ff ff2f 	bl	80042d4 <LL_USART_EnableIT_RXNE>
 
   HAL_UART_Receive_IT(&huart1, &uart1_rx_data, 1); // Telemetry
- 8004478:	2201      	movs	r2, #1
- 800447a:	498a      	ldr	r1, [pc, #552]	; (80046a4 <main+0x2cc>)
- 800447c:	488a      	ldr	r0, [pc, #552]	; (80046a8 <main+0x2d0>)
- 800447e:	f006 ff3f 	bl	800b300 <HAL_UART_Receive_IT>
+ 8004476:	2201      	movs	r2, #1
+ 8004478:	498a      	ldr	r1, [pc, #552]	; (80046a4 <main+0x2cc>)
+ 800447a:	488b      	ldr	r0, [pc, #556]	; (80046a8 <main+0x2d0>)
+ 800447c:	f006 ff40 	bl	800b300 <HAL_UART_Receive_IT>
 
   LL_TIM_EnableCounter(TIM5); //Motor PWM
- 8004482:	488a      	ldr	r0, [pc, #552]	; (80046ac <main+0x2d4>)
- 8004484:	f7ff fed0 	bl	8004228 <LL_TIM_EnableCounter>
+ 8004480:	488a      	ldr	r0, [pc, #552]	; (80046ac <main+0x2d4>)
+ 8004482:	f7ff fed1 	bl	8004228 <LL_TIM_EnableCounter>
   LL_TIM_CC_EnableChannel(TIM5, LL_TIM_CHANNEL_CH1); //Enable Timer Counting
- 8004488:	2101      	movs	r1, #1
- 800448a:	4888      	ldr	r0, [pc, #544]	; (80046ac <main+0x2d4>)
- 800448c:	f7ff fedc 	bl	8004248 <LL_TIM_CC_EnableChannel>
+ 8004486:	2101      	movs	r1, #1
+ 8004488:	4888      	ldr	r0, [pc, #544]	; (80046ac <main+0x2d4>)
+ 800448a:	f7ff fedd 	bl	8004248 <LL_TIM_CC_EnableChannel>
   LL_TIM_CC_EnableChannel(TIM5, LL_TIM_CHANNEL_CH2); //Enable Timer Counting
- 8004490:	2110      	movs	r1, #16
- 8004492:	4886      	ldr	r0, [pc, #536]	; (80046ac <main+0x2d4>)
- 8004494:	f7ff fed8 	bl	8004248 <LL_TIM_CC_EnableChannel>
+ 800448e:	2110      	movs	r1, #16
+ 8004490:	4886      	ldr	r0, [pc, #536]	; (80046ac <main+0x2d4>)
+ 8004492:	f7ff fed9 	bl	8004248 <LL_TIM_CC_EnableChannel>
   LL_TIM_CC_EnableChannel(TIM5, LL_TIM_CHANNEL_CH3); //Enable Timer Counting
- 8004498:	f44f 7180 	mov.w	r1, #256	; 0x100
- 800449c:	4883      	ldr	r0, [pc, #524]	; (80046ac <main+0x2d4>)
- 800449e:	f7ff fed3 	bl	8004248 <LL_TIM_CC_EnableChannel>
+ 8004496:	f44f 7180 	mov.w	r1, #256	; 0x100
+ 800449a:	4884      	ldr	r0, [pc, #528]	; (80046ac <main+0x2d4>)
+ 800449c:	f7ff fed4 	bl	8004248 <LL_TIM_CC_EnableChannel>
   LL_TIM_CC_EnableChannel(TIM5, LL_TIM_CHANNEL_CH4); //Enable Timer Counting
- 80044a2:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 80044a6:	4881      	ldr	r0, [pc, #516]	; (80046ac <main+0x2d4>)
- 80044a8:	f7ff fece 	bl	8004248 <LL_TIM_CC_EnableChannel>
+ 80044a0:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 80044a4:	4881      	ldr	r0, [pc, #516]	; (80046ac <main+0x2d4>)
+ 80044a6:	f7ff fecf 	bl	8004248 <LL_TIM_CC_EnableChannel>
 
   LL_TIM_EnableCounter(TIM7); //10Hz, 50Hz, 1kHz loop
- 80044ac:	4880      	ldr	r0, [pc, #512]	; (80046b0 <main+0x2d8>)
- 80044ae:	f7ff febb 	bl	8004228 <LL_TIM_EnableCounter>
+ 80044aa:	4881      	ldr	r0, [pc, #516]	; (80046b0 <main+0x2d8>)
+ 80044ac:	f7ff febc 	bl	8004228 <LL_TIM_EnableCounter>
   LL_TIM_EnableIT_UPDATE(TIM7);
- 80044b2:	487f      	ldr	r0, [pc, #508]	; (80046b0 <main+0x2d8>)
- 80044b4:	f7ff feeb 	bl	800428e <LL_TIM_EnableIT_UPDATE>
+ 80044b0:	487f      	ldr	r0, [pc, #508]	; (80046b0 <main+0x2d8>)
+ 80044b2:	f7ff feec 	bl	800428e <LL_TIM_EnableIT_UPDATE>
 
 
   TIM3->PSC = 1000;
- 80044b8:	4b76      	ldr	r3, [pc, #472]	; (8004694 <main+0x2bc>)
- 80044ba:	f44f 727a 	mov.w	r2, #1000	; 0x3e8
- 80044be:	629a      	str	r2, [r3, #40]	; 0x28
+ 80044b6:	4b77      	ldr	r3, [pc, #476]	; (8004694 <main+0x2bc>)
+ 80044b8:	f44f 727a 	mov.w	r2, #1000	; 0x3e8
+ 80044bc:	629a      	str	r2, [r3, #40]	; 0x28
   LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4);
- 80044c0:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 80044c4:	4873      	ldr	r0, [pc, #460]	; (8004694 <main+0x2bc>)
- 80044c6:	f7ff febf 	bl	8004248 <LL_TIM_CC_EnableChannel>
+ 80044be:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 80044c2:	4874      	ldr	r0, [pc, #464]	; (8004694 <main+0x2bc>)
+ 80044c4:	f7ff fec0 	bl	8004248 <LL_TIM_CC_EnableChannel>
   HAL_Delay(60);
- 80044ca:	203c      	movs	r0, #60	; 0x3c
- 80044cc:	f004 faec 	bl	8008aa8 <HAL_Delay>
+ 80044c8:	203c      	movs	r0, #60	; 0x3c
+ 80044ca:	f004 faed 	bl	8008aa8 <HAL_Delay>
   LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
- 80044d0:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 80044d4:	486f      	ldr	r0, [pc, #444]	; (8004694 <main+0x2bc>)
- 80044d6:	f7ff fec8 	bl	800426a <LL_TIM_CC_DisableChannel>
+ 80044ce:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 80044d2:	4870      	ldr	r0, [pc, #448]	; (8004694 <main+0x2bc>)
+ 80044d4:	f7ff fec9 	bl	800426a <LL_TIM_CC_DisableChannel>
   HAL_Delay(60);
- 80044da:	203c      	movs	r0, #60	; 0x3c
- 80044dc:	f004 fae4 	bl	8008aa8 <HAL_Delay>
+ 80044d8:	203c      	movs	r0, #60	; 0x3c
+ 80044da:	f004 fae5 	bl	8008aa8 <HAL_Delay>
   LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4);
- 80044e0:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 80044e4:	486b      	ldr	r0, [pc, #428]	; (8004694 <main+0x2bc>)
- 80044e6:	f7ff feaf 	bl	8004248 <LL_TIM_CC_EnableChannel>
+ 80044de:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 80044e2:	486c      	ldr	r0, [pc, #432]	; (8004694 <main+0x2bc>)
+ 80044e4:	f7ff feb0 	bl	8004248 <LL_TIM_CC_EnableChannel>
   HAL_Delay(60);
- 80044ea:	203c      	movs	r0, #60	; 0x3c
- 80044ec:	f004 fadc 	bl	8008aa8 <HAL_Delay>
+ 80044e8:	203c      	movs	r0, #60	; 0x3c
+ 80044ea:	f004 fadd 	bl	8008aa8 <HAL_Delay>
   LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
- 80044f0:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 80044f4:	4867      	ldr	r0, [pc, #412]	; (8004694 <main+0x2bc>)
- 80044f6:	f7ff feb8 	bl	800426a <LL_TIM_CC_DisableChannel>
+ 80044ee:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 80044f2:	4868      	ldr	r0, [pc, #416]	; (8004694 <main+0x2bc>)
+ 80044f4:	f7ff feb9 	bl	800426a <LL_TIM_CC_DisableChannel>
   HAL_Delay(60);
- 80044fa:	203c      	movs	r0, #60	; 0x3c
- 80044fc:	f004 fad4 	bl	8008aa8 <HAL_Delay>
+ 80044f8:	203c      	movs	r0, #60	; 0x3c
+ 80044fa:	f004 fad5 	bl	8008aa8 <HAL_Delay>
 
 
   printf("Checking sensor connection!\n");
- 8004500:	486c      	ldr	r0, [pc, #432]	; (80046b4 <main+0x2dc>)
- 8004502:	f009 fb19 	bl	800db38 <puts>
+ 80044fe:	486d      	ldr	r0, [pc, #436]	; (80046b4 <main+0x2dc>)
+ 8004500:	f009 fb1a 	bl	800db38 <puts>
 
   if(BNO080_Initialization() != 0)
- 8004506:	f7fd f81f 	bl	8001548 <BNO080_Initialization>
- 800450a:	4603      	mov	r3, r0
- 800450c:	2b00      	cmp	r3, #0
- 800450e:	d03a      	beq.n	8004586 <main+0x1ae>
+ 8004504:	f7fd f820 	bl	8001548 <BNO080_Initialization>
+ 8004508:	4603      	mov	r3, r0
+ 800450a:	2b00      	cmp	r3, #0
+ 800450c:	d03a      	beq.n	8004584 <main+0x1ac>
   {
 	  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4);
- 8004510:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 8004514:	485f      	ldr	r0, [pc, #380]	; (8004694 <main+0x2bc>)
- 8004516:	f7ff fe97 	bl	8004248 <LL_TIM_CC_EnableChannel>
+ 800450e:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 8004512:	4860      	ldr	r0, [pc, #384]	; (8004694 <main+0x2bc>)
+ 8004514:	f7ff fe98 	bl	8004248 <LL_TIM_CC_EnableChannel>
 
 	  TIM3->PSC = 1000;
- 800451a:	4b5e      	ldr	r3, [pc, #376]	; (8004694 <main+0x2bc>)
- 800451c:	f44f 727a 	mov.w	r2, #1000	; 0x3e8
- 8004520:	629a      	str	r2, [r3, #40]	; 0x28
+ 8004518:	4b5e      	ldr	r3, [pc, #376]	; (8004694 <main+0x2bc>)
+ 800451a:	f44f 727a 	mov.w	r2, #1000	; 0x3e8
+ 800451e:	629a      	str	r2, [r3, #40]	; 0x28
 	  HAL_Delay(100);
- 8004522:	2064      	movs	r0, #100	; 0x64
- 8004524:	f004 fac0 	bl	8008aa8 <HAL_Delay>
+ 8004520:	2064      	movs	r0, #100	; 0x64
+ 8004522:	f004 fac1 	bl	8008aa8 <HAL_Delay>
 	  TIM3->PSC = 1500;
- 8004528:	4b5a      	ldr	r3, [pc, #360]	; (8004694 <main+0x2bc>)
- 800452a:	f240 52dc 	movw	r2, #1500	; 0x5dc
- 800452e:	629a      	str	r2, [r3, #40]	; 0x28
+ 8004526:	4b5b      	ldr	r3, [pc, #364]	; (8004694 <main+0x2bc>)
+ 8004528:	f240 52dc 	movw	r2, #1500	; 0x5dc
+ 800452c:	629a      	str	r2, [r3, #40]	; 0x28
 	  HAL_Delay(100);
- 8004530:	2064      	movs	r0, #100	; 0x64
- 8004532:	f004 fab9 	bl	8008aa8 <HAL_Delay>
+ 800452e:	2064      	movs	r0, #100	; 0x64
+ 8004530:	f004 faba 	bl	8008aa8 <HAL_Delay>
 	  TIM3->PSC = 2000;
- 8004536:	4b57      	ldr	r3, [pc, #348]	; (8004694 <main+0x2bc>)
- 8004538:	f44f 62fa 	mov.w	r2, #2000	; 0x7d0
- 800453c:	629a      	str	r2, [r3, #40]	; 0x28
+ 8004534:	4b57      	ldr	r3, [pc, #348]	; (8004694 <main+0x2bc>)
+ 8004536:	f44f 62fa 	mov.w	r2, #2000	; 0x7d0
+ 800453a:	629a      	str	r2, [r3, #40]	; 0x28
 	  HAL_Delay(100);
- 800453e:	2064      	movs	r0, #100	; 0x64
- 8004540:	f004 fab2 	bl	8008aa8 <HAL_Delay>
+ 800453c:	2064      	movs	r0, #100	; 0x64
+ 800453e:	f004 fab3 	bl	8008aa8 <HAL_Delay>
 
 	  LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
- 8004544:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 8004548:	4852      	ldr	r0, [pc, #328]	; (8004694 <main+0x2bc>)
- 800454a:	f7ff fe8e 	bl	800426a <LL_TIM_CC_DisableChannel>
+ 8004542:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 8004546:	4853      	ldr	r0, [pc, #332]	; (8004694 <main+0x2bc>)
+ 8004548:	f7ff fe8f 	bl	800426a <LL_TIM_CC_DisableChannel>
 
 	  printf("\nBNO080 failed. Program shutting down...");
- 800454e:	485a      	ldr	r0, [pc, #360]	; (80046b8 <main+0x2e0>)
- 8004550:	f009 fa6c 	bl	800da2c <iprintf>
+ 800454c:	485a      	ldr	r0, [pc, #360]	; (80046b8 <main+0x2e0>)
+ 800454e:	f009 fa6d 	bl	800da2c <iprintf>
 	  while(1)
 	  {
 		  LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
- 8004554:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 8004558:	484e      	ldr	r0, [pc, #312]	; (8004694 <main+0x2bc>)
- 800455a:	f7ff fe86 	bl	800426a <LL_TIM_CC_DisableChannel>
+ 8004552:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 8004556:	484f      	ldr	r0, [pc, #316]	; (8004694 <main+0x2bc>)
+ 8004558:	f7ff fe87 	bl	800426a <LL_TIM_CC_DisableChannel>
 		  LL_GPIO_TogglePin(GPIOC, LL_GPIO_PIN_0);
- 800455e:	2101      	movs	r1, #1
- 8004560:	4856      	ldr	r0, [pc, #344]	; (80046bc <main+0x2e4>)
- 8004562:	f7ff fef3 	bl	800434c <LL_GPIO_TogglePin>
+ 800455c:	2101      	movs	r1, #1
+ 800455e:	4857      	ldr	r0, [pc, #348]	; (80046bc <main+0x2e4>)
+ 8004560:	f7ff fef4 	bl	800434c <LL_GPIO_TogglePin>
 		  HAL_Delay(200);
- 8004566:	20c8      	movs	r0, #200	; 0xc8
- 8004568:	f004 fa9e 	bl	8008aa8 <HAL_Delay>
+ 8004564:	20c8      	movs	r0, #200	; 0xc8
+ 8004566:	f004 fa9f 	bl	8008aa8 <HAL_Delay>
 		  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4);
- 800456c:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 8004570:	4848      	ldr	r0, [pc, #288]	; (8004694 <main+0x2bc>)
- 8004572:	f7ff fe69 	bl	8004248 <LL_TIM_CC_EnableChannel>
+ 800456a:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 800456e:	4849      	ldr	r0, [pc, #292]	; (8004694 <main+0x2bc>)
+ 8004570:	f7ff fe6a 	bl	8004248 <LL_TIM_CC_EnableChannel>
 		  LL_GPIO_TogglePin(GPIOC, LL_GPIO_PIN_0);
- 8004576:	2101      	movs	r1, #1
- 8004578:	4850      	ldr	r0, [pc, #320]	; (80046bc <main+0x2e4>)
- 800457a:	f7ff fee7 	bl	800434c <LL_GPIO_TogglePin>
+ 8004574:	2101      	movs	r1, #1
+ 8004576:	4851      	ldr	r0, [pc, #324]	; (80046bc <main+0x2e4>)
+ 8004578:	f7ff fee8 	bl	800434c <LL_GPIO_TogglePin>
 		  HAL_Delay(200);
- 800457e:	20c8      	movs	r0, #200	; 0xc8
- 8004580:	f004 fa92 	bl	8008aa8 <HAL_Delay>
+ 800457c:	20c8      	movs	r0, #200	; 0xc8
+ 800457e:	f004 fa93 	bl	8008aa8 <HAL_Delay>
 		  LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
- 8004584:	e7e6      	b.n	8004554 <main+0x17c>
+ 8004582:	e7e6      	b.n	8004552 <main+0x17a>
 	  }
   }
   BNO080_enableRotationVector(2500);
- 8004586:	f640 10c4 	movw	r0, #2500	; 0x9c4
- 800458a:	f7fd fb1c 	bl	8001bc6 <BNO080_enableRotationVector>
+ 8004584:	f640 10c4 	movw	r0, #2500	; 0x9c4
+ 8004588:	f7fd fb1d 	bl	8001bc6 <BNO080_enableRotationVector>
 
   if(ICM20602_Initialization() !=0 )
- 800458e:	f7fe f80f 	bl	80025b0 <ICM20602_Initialization>
- 8004592:	4603      	mov	r3, r0
- 8004594:	2b00      	cmp	r3, #0
- 8004596:	d03a      	beq.n	800460e <main+0x236>
+ 800458c:	f7fe f810 	bl	80025b0 <ICM20602_Initialization>
+ 8004590:	4603      	mov	r3, r0
+ 8004592:	2b00      	cmp	r3, #0
+ 8004594:	d03a      	beq.n	800460c <main+0x234>
   {
 	  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4); //Enable Timer Counting
- 8004598:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 800459c:	483d      	ldr	r0, [pc, #244]	; (8004694 <main+0x2bc>)
- 800459e:	f7ff fe53 	bl	8004248 <LL_TIM_CC_EnableChannel>
+ 8004596:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 800459a:	483e      	ldr	r0, [pc, #248]	; (8004694 <main+0x2bc>)
+ 800459c:	f7ff fe54 	bl	8004248 <LL_TIM_CC_EnableChannel>
 
 	  	  TIM3->PSC = 1000;
- 80045a2:	4b3c      	ldr	r3, [pc, #240]	; (8004694 <main+0x2bc>)
- 80045a4:	f44f 727a 	mov.w	r2, #1000	; 0x3e8
- 80045a8:	629a      	str	r2, [r3, #40]	; 0x28
+ 80045a0:	4b3c      	ldr	r3, [pc, #240]	; (8004694 <main+0x2bc>)
+ 80045a2:	f44f 727a 	mov.w	r2, #1000	; 0x3e8
+ 80045a6:	629a      	str	r2, [r3, #40]	; 0x28
 	  	  HAL_Delay(100);
- 80045aa:	2064      	movs	r0, #100	; 0x64
- 80045ac:	f004 fa7c 	bl	8008aa8 <HAL_Delay>
+ 80045a8:	2064      	movs	r0, #100	; 0x64
+ 80045aa:	f004 fa7d 	bl	8008aa8 <HAL_Delay>
 	  	  TIM3->PSC = 1500;
- 80045b0:	4b38      	ldr	r3, [pc, #224]	; (8004694 <main+0x2bc>)
- 80045b2:	f240 52dc 	movw	r2, #1500	; 0x5dc
- 80045b6:	629a      	str	r2, [r3, #40]	; 0x28
+ 80045ae:	4b39      	ldr	r3, [pc, #228]	; (8004694 <main+0x2bc>)
+ 80045b0:	f240 52dc 	movw	r2, #1500	; 0x5dc
+ 80045b4:	629a      	str	r2, [r3, #40]	; 0x28
 	  	  HAL_Delay(100);
- 80045b8:	2064      	movs	r0, #100	; 0x64
- 80045ba:	f004 fa75 	bl	8008aa8 <HAL_Delay>
+ 80045b6:	2064      	movs	r0, #100	; 0x64
+ 80045b8:	f004 fa76 	bl	8008aa8 <HAL_Delay>
 	  	  TIM3->PSC = 2000;
- 80045be:	4b35      	ldr	r3, [pc, #212]	; (8004694 <main+0x2bc>)
- 80045c0:	f44f 62fa 	mov.w	r2, #2000	; 0x7d0
- 80045c4:	629a      	str	r2, [r3, #40]	; 0x28
+ 80045bc:	4b35      	ldr	r3, [pc, #212]	; (8004694 <main+0x2bc>)
+ 80045be:	f44f 62fa 	mov.w	r2, #2000	; 0x7d0
+ 80045c2:	629a      	str	r2, [r3, #40]	; 0x28
 	  	  HAL_Delay(100);
- 80045c6:	2064      	movs	r0, #100	; 0x64
- 80045c8:	f004 fa6e 	bl	8008aa8 <HAL_Delay>
+ 80045c4:	2064      	movs	r0, #100	; 0x64
+ 80045c6:	f004 fa6f 	bl	8008aa8 <HAL_Delay>
 
 	  	  LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
- 80045cc:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 80045d0:	4830      	ldr	r0, [pc, #192]	; (8004694 <main+0x2bc>)
- 80045d2:	f7ff fe4a 	bl	800426a <LL_TIM_CC_DisableChannel>
+ 80045ca:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 80045ce:	4831      	ldr	r0, [pc, #196]	; (8004694 <main+0x2bc>)
+ 80045d0:	f7ff fe4b 	bl	800426a <LL_TIM_CC_DisableChannel>
 
 	  	  printf("\nICM20602 failed. Program shutting down...");
- 80045d6:	483a      	ldr	r0, [pc, #232]	; (80046c0 <main+0x2e8>)
- 80045d8:	f009 fa28 	bl	800da2c <iprintf>
+ 80045d4:	483a      	ldr	r0, [pc, #232]	; (80046c0 <main+0x2e8>)
+ 80045d6:	f009 fa29 	bl	800da2c <iprintf>
 	  	  while(1)
 	  	  {
 	  		  LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
- 80045dc:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 80045e0:	482c      	ldr	r0, [pc, #176]	; (8004694 <main+0x2bc>)
- 80045e2:	f7ff fe42 	bl	800426a <LL_TIM_CC_DisableChannel>
+ 80045da:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 80045de:	482d      	ldr	r0, [pc, #180]	; (8004694 <main+0x2bc>)
+ 80045e0:	f7ff fe43 	bl	800426a <LL_TIM_CC_DisableChannel>
 	  		  LL_GPIO_TogglePin(GPIOC, LL_GPIO_PIN_1);
- 80045e6:	2102      	movs	r1, #2
- 80045e8:	4834      	ldr	r0, [pc, #208]	; (80046bc <main+0x2e4>)
- 80045ea:	f7ff feaf 	bl	800434c <LL_GPIO_TogglePin>
+ 80045e4:	2102      	movs	r1, #2
+ 80045e6:	4835      	ldr	r0, [pc, #212]	; (80046bc <main+0x2e4>)
+ 80045e8:	f7ff feb0 	bl	800434c <LL_GPIO_TogglePin>
 	  		  HAL_Delay(200);
- 80045ee:	20c8      	movs	r0, #200	; 0xc8
- 80045f0:	f004 fa5a 	bl	8008aa8 <HAL_Delay>
+ 80045ec:	20c8      	movs	r0, #200	; 0xc8
+ 80045ee:	f004 fa5b 	bl	8008aa8 <HAL_Delay>
 	  		  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4);
- 80045f4:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 80045f8:	4826      	ldr	r0, [pc, #152]	; (8004694 <main+0x2bc>)
- 80045fa:	f7ff fe25 	bl	8004248 <LL_TIM_CC_EnableChannel>
+ 80045f2:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 80045f6:	4827      	ldr	r0, [pc, #156]	; (8004694 <main+0x2bc>)
+ 80045f8:	f7ff fe26 	bl	8004248 <LL_TIM_CC_EnableChannel>
 	  		  LL_GPIO_TogglePin(GPIOC, LL_GPIO_PIN_1);
- 80045fe:	2102      	movs	r1, #2
- 8004600:	482e      	ldr	r0, [pc, #184]	; (80046bc <main+0x2e4>)
- 8004602:	f7ff fea3 	bl	800434c <LL_GPIO_TogglePin>
+ 80045fc:	2102      	movs	r1, #2
+ 80045fe:	482f      	ldr	r0, [pc, #188]	; (80046bc <main+0x2e4>)
+ 8004600:	f7ff fea4 	bl	800434c <LL_GPIO_TogglePin>
 	  		  HAL_Delay(200);
- 8004606:	20c8      	movs	r0, #200	; 0xc8
- 8004608:	f004 fa4e 	bl	8008aa8 <HAL_Delay>
+ 8004604:	20c8      	movs	r0, #200	; 0xc8
+ 8004606:	f004 fa4f 	bl	8008aa8 <HAL_Delay>
 	  		  LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
- 800460c:	e7e6      	b.n	80045dc <main+0x204>
+ 800460a:	e7e6      	b.n	80045da <main+0x202>
 	  	  }
   }
 
   /*LPS22HH Initialization*/
   if(LPS22HH_Initialization() != 0)
- 800460e:	f7fe fa59 	bl	8002ac4 <LPS22HH_Initialization>
- 8004612:	4603      	mov	r3, r0
- 8004614:	2b00      	cmp	r3, #0
- 8004616:	d057      	beq.n	80046c8 <main+0x2f0>
+ 800460c:	f7fe fa5a 	bl	8002ac4 <LPS22HH_Initialization>
+ 8004610:	4603      	mov	r3, r0
+ 8004612:	2b00      	cmp	r3, #0
+ 8004614:	d058      	beq.n	80046c8 <main+0x2f0>
     {
   	  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4);
- 8004618:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 800461c:	481d      	ldr	r0, [pc, #116]	; (8004694 <main+0x2bc>)
- 800461e:	f7ff fe13 	bl	8004248 <LL_TIM_CC_EnableChannel>
+ 8004616:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 800461a:	481e      	ldr	r0, [pc, #120]	; (8004694 <main+0x2bc>)
+ 800461c:	f7ff fe14 	bl	8004248 <LL_TIM_CC_EnableChannel>
 
   	  TIM3->PSC = 1000;
- 8004622:	4b1c      	ldr	r3, [pc, #112]	; (8004694 <main+0x2bc>)
- 8004624:	f44f 727a 	mov.w	r2, #1000	; 0x3e8
- 8004628:	629a      	str	r2, [r3, #40]	; 0x28
+ 8004620:	4b1c      	ldr	r3, [pc, #112]	; (8004694 <main+0x2bc>)
+ 8004622:	f44f 727a 	mov.w	r2, #1000	; 0x3e8
+ 8004626:	629a      	str	r2, [r3, #40]	; 0x28
   	  HAL_Delay(100);
- 800462a:	2064      	movs	r0, #100	; 0x64
- 800462c:	f004 fa3c 	bl	8008aa8 <HAL_Delay>
+ 8004628:	2064      	movs	r0, #100	; 0x64
+ 800462a:	f004 fa3d 	bl	8008aa8 <HAL_Delay>
   	  TIM3->PSC = 1500;
- 8004630:	4b18      	ldr	r3, [pc, #96]	; (8004694 <main+0x2bc>)
- 8004632:	f240 52dc 	movw	r2, #1500	; 0x5dc
- 8004636:	629a      	str	r2, [r3, #40]	; 0x28
+ 800462e:	4b19      	ldr	r3, [pc, #100]	; (8004694 <main+0x2bc>)
+ 8004630:	f240 52dc 	movw	r2, #1500	; 0x5dc
+ 8004634:	629a      	str	r2, [r3, #40]	; 0x28
   	  HAL_Delay(100);
- 8004638:	2064      	movs	r0, #100	; 0x64
- 800463a:	f004 fa35 	bl	8008aa8 <HAL_Delay>
+ 8004636:	2064      	movs	r0, #100	; 0x64
+ 8004638:	f004 fa36 	bl	8008aa8 <HAL_Delay>
   	  TIM3->PSC = 2000;
- 800463e:	4b15      	ldr	r3, [pc, #84]	; (8004694 <main+0x2bc>)
- 8004640:	f44f 62fa 	mov.w	r2, #2000	; 0x7d0
- 8004644:	629a      	str	r2, [r3, #40]	; 0x28
+ 800463c:	4b15      	ldr	r3, [pc, #84]	; (8004694 <main+0x2bc>)
+ 800463e:	f44f 62fa 	mov.w	r2, #2000	; 0x7d0
+ 8004642:	629a      	str	r2, [r3, #40]	; 0x28
   	  HAL_Delay(100);
- 8004646:	2064      	movs	r0, #100	; 0x64
- 8004648:	f004 fa2e 	bl	8008aa8 <HAL_Delay>
+ 8004644:	2064      	movs	r0, #100	; 0x64
+ 8004646:	f004 fa2f 	bl	8008aa8 <HAL_Delay>
 
   	  LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
- 800464c:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 8004650:	4810      	ldr	r0, [pc, #64]	; (8004694 <main+0x2bc>)
- 8004652:	f7ff fe0a 	bl	800426a <LL_TIM_CC_DisableChannel>
+ 800464a:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 800464e:	4811      	ldr	r0, [pc, #68]	; (8004694 <main+0x2bc>)
+ 8004650:	f7ff fe0b 	bl	800426a <LL_TIM_CC_DisableChannel>
 
   	  printf("\nLPS22HH failed. Program shutting down...");
- 8004656:	481b      	ldr	r0, [pc, #108]	; (80046c4 <main+0x2ec>)
- 8004658:	f009 f9e8 	bl	800da2c <iprintf>
+ 8004654:	481b      	ldr	r0, [pc, #108]	; (80046c4 <main+0x2ec>)
+ 8004656:	f009 f9e9 	bl	800da2c <iprintf>
   	  while(1)
   	  {
   		  LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
- 800465c:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 8004660:	480c      	ldr	r0, [pc, #48]	; (8004694 <main+0x2bc>)
- 8004662:	f7ff fe02 	bl	800426a <LL_TIM_CC_DisableChannel>
+ 800465a:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 800465e:	480d      	ldr	r0, [pc, #52]	; (8004694 <main+0x2bc>)
+ 8004660:	f7ff fe03 	bl	800426a <LL_TIM_CC_DisableChannel>
   		  LL_GPIO_TogglePin(GPIOC, LL_GPIO_PIN_2);
- 8004666:	2104      	movs	r1, #4
- 8004668:	4814      	ldr	r0, [pc, #80]	; (80046bc <main+0x2e4>)
- 800466a:	f7ff fe6f 	bl	800434c <LL_GPIO_TogglePin>
+ 8004664:	2104      	movs	r1, #4
+ 8004666:	4815      	ldr	r0, [pc, #84]	; (80046bc <main+0x2e4>)
+ 8004668:	f7ff fe70 	bl	800434c <LL_GPIO_TogglePin>
   		  HAL_Delay(200);
- 800466e:	20c8      	movs	r0, #200	; 0xc8
- 8004670:	f004 fa1a 	bl	8008aa8 <HAL_Delay>
+ 800466c:	20c8      	movs	r0, #200	; 0xc8
+ 800466e:	f004 fa1b 	bl	8008aa8 <HAL_Delay>
   		  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4);
- 8004674:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 8004678:	4806      	ldr	r0, [pc, #24]	; (8004694 <main+0x2bc>)
- 800467a:	f7ff fde5 	bl	8004248 <LL_TIM_CC_EnableChannel>
+ 8004672:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 8004676:	4807      	ldr	r0, [pc, #28]	; (8004694 <main+0x2bc>)
+ 8004678:	f7ff fde6 	bl	8004248 <LL_TIM_CC_EnableChannel>
   		  LL_GPIO_TogglePin(GPIOC, LL_GPIO_PIN_2);
- 800467e:	2104      	movs	r1, #4
- 8004680:	480e      	ldr	r0, [pc, #56]	; (80046bc <main+0x2e4>)
- 8004682:	f7ff fe63 	bl	800434c <LL_GPIO_TogglePin>
+ 800467c:	2104      	movs	r1, #4
+ 800467e:	480f      	ldr	r0, [pc, #60]	; (80046bc <main+0x2e4>)
+ 8004680:	f7ff fe64 	bl	800434c <LL_GPIO_TogglePin>
   		  HAL_Delay(200);
- 8004686:	20c8      	movs	r0, #200	; 0xc8
- 8004688:	f004 fa0e 	bl	8008aa8 <HAL_Delay>
+ 8004684:	20c8      	movs	r0, #200	; 0xc8
+ 8004686:	f004 fa0f 	bl	8008aa8 <HAL_Delay>
   		  LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
- 800468c:	e7e6      	b.n	800465c <main+0x284>
- 800468e:	bf00      	nop
- 8004690:	3f8ccccd 	.word	0x3f8ccccd
+ 800468a:	e7e6      	b.n	800465a <main+0x282>
+ 800468c:	3ff33333 	.word	0x3ff33333
+ 8004690:	3f4ccccd 	.word	0x3f4ccccd
  8004694:	40000400 	.word	0x40000400
  8004698:	40004c00 	.word	0x40004c00
  800469c:	40005000 	.word	0x40005000
@@ -9673,183 +9673,184 @@ altitude.out.ki = 0;
  80048ca:	4b6b      	ldr	r3, [pc, #428]	; (8004a78 <main+0x6a0>)
  80048cc:	f04f 0200 	mov.w	r2, #0
  80048d0:	641a      	str	r2, [r3, #64]	; 0x40
-altitude.out.kd = 0.01;
+altitude.out.kd = 0;
  80048d2:	4b69      	ldr	r3, [pc, #420]	; (8004a78 <main+0x6a0>)
- 80048d4:	4a6a      	ldr	r2, [pc, #424]	; (8004a80 <main+0x6a8>)
- 80048d6:	645a      	str	r2, [r3, #68]	; 0x44
+ 80048d4:	f04f 0200 	mov.w	r2, #0
+ 80048d8:	645a      	str	r2, [r3, #68]	; 0x44
 altitude.in.kp = 150;
- 80048d8:	4b67      	ldr	r3, [pc, #412]	; (8004a78 <main+0x6a0>)
- 80048da:	4a6a      	ldr	r2, [pc, #424]	; (8004a84 <main+0x6ac>)
- 80048dc:	601a      	str	r2, [r3, #0]
-altitude.in.ki = 0;
- 80048de:	4b66      	ldr	r3, [pc, #408]	; (8004a78 <main+0x6a0>)
- 80048e0:	f04f 0200 	mov.w	r2, #0
+ 80048da:	4b67      	ldr	r3, [pc, #412]	; (8004a78 <main+0x6a0>)
+ 80048dc:	4a68      	ldr	r2, [pc, #416]	; (8004a80 <main+0x6a8>)
+ 80048de:	601a      	str	r2, [r3, #0]
+altitude.in.ki = 0.1;
+ 80048e0:	4b65      	ldr	r3, [pc, #404]	; (8004a78 <main+0x6a0>)
+ 80048e2:	4a68      	ldr	r2, [pc, #416]	; (8004a84 <main+0x6ac>)
  80048e4:	605a      	str	r2, [r3, #4]
-altitude.in.kd = 0;
+altitude.in.kd = 0.1;
  80048e6:	4b64      	ldr	r3, [pc, #400]	; (8004a78 <main+0x6a0>)
- 80048e8:	f04f 0200 	mov.w	r2, #0
- 80048ec:	609a      	str	r2, [r3, #8]
+ 80048e8:	4a66      	ldr	r2, [pc, #408]	; (8004a84 <main+0x6ac>)
+ 80048ea:	609a      	str	r2, [r3, #8]
 
 gps_lon.out.kp = 50;
- 80048ee:	4b66      	ldr	r3, [pc, #408]	; (8004a88 <main+0x6b0>)
- 80048f0:	4a66      	ldr	r2, [pc, #408]	; (8004a8c <main+0x6b4>)
- 80048f2:	63da      	str	r2, [r3, #60]	; 0x3c
+ 80048ec:	4b66      	ldr	r3, [pc, #408]	; (8004a88 <main+0x6b0>)
+ 80048ee:	4a67      	ldr	r2, [pc, #412]	; (8004a8c <main+0x6b4>)
+ 80048f0:	63da      	str	r2, [r3, #60]	; 0x3c
 gps_lon.out.ki = 0;
- 80048f4:	4b64      	ldr	r3, [pc, #400]	; (8004a88 <main+0x6b0>)
- 80048f6:	f04f 0200 	mov.w	r2, #0
- 80048fa:	641a      	str	r2, [r3, #64]	; 0x40
+ 80048f2:	4b65      	ldr	r3, [pc, #404]	; (8004a88 <main+0x6b0>)
+ 80048f4:	f04f 0200 	mov.w	r2, #0
+ 80048f8:	641a      	str	r2, [r3, #64]	; 0x40
 gps_lon.out.kd = 0;
- 80048fc:	4b62      	ldr	r3, [pc, #392]	; (8004a88 <main+0x6b0>)
- 80048fe:	f04f 0200 	mov.w	r2, #0
- 8004902:	645a      	str	r2, [r3, #68]	; 0x44
+ 80048fa:	4b63      	ldr	r3, [pc, #396]	; (8004a88 <main+0x6b0>)
+ 80048fc:	f04f 0200 	mov.w	r2, #0
+ 8004900:	645a      	str	r2, [r3, #68]	; 0x44
 gps_lon.in.kp = 2;
- 8004904:	4b60      	ldr	r3, [pc, #384]	; (8004a88 <main+0x6b0>)
- 8004906:	f04f 4280 	mov.w	r2, #1073741824	; 0x40000000
- 800490a:	601a      	str	r2, [r3, #0]
+ 8004902:	4b61      	ldr	r3, [pc, #388]	; (8004a88 <main+0x6b0>)
+ 8004904:	f04f 4280 	mov.w	r2, #1073741824	; 0x40000000
+ 8004908:	601a      	str	r2, [r3, #0]
 gps_lon.in.ki = 0;
- 800490c:	4b5e      	ldr	r3, [pc, #376]	; (8004a88 <main+0x6b0>)
- 800490e:	f04f 0200 	mov.w	r2, #0
- 8004912:	605a      	str	r2, [r3, #4]
+ 800490a:	4b5f      	ldr	r3, [pc, #380]	; (8004a88 <main+0x6b0>)
+ 800490c:	f04f 0200 	mov.w	r2, #0
+ 8004910:	605a      	str	r2, [r3, #4]
 gps_lon.in.kd = 0;
- 8004914:	4b5c      	ldr	r3, [pc, #368]	; (8004a88 <main+0x6b0>)
- 8004916:	f04f 0200 	mov.w	r2, #0
- 800491a:	609a      	str	r2, [r3, #8]
+ 8004912:	4b5d      	ldr	r3, [pc, #372]	; (8004a88 <main+0x6b0>)
+ 8004914:	f04f 0200 	mov.w	r2, #0
+ 8004918:	609a      	str	r2, [r3, #8]
 
 gps_lat.out.kp = 50;
- 800491c:	4b5c      	ldr	r3, [pc, #368]	; (8004a90 <main+0x6b8>)
- 800491e:	4a5b      	ldr	r2, [pc, #364]	; (8004a8c <main+0x6b4>)
- 8004920:	63da      	str	r2, [r3, #60]	; 0x3c
+ 800491a:	4b5d      	ldr	r3, [pc, #372]	; (8004a90 <main+0x6b8>)
+ 800491c:	4a5b      	ldr	r2, [pc, #364]	; (8004a8c <main+0x6b4>)
+ 800491e:	63da      	str	r2, [r3, #60]	; 0x3c
 gps_lat.out.ki = 0;
- 8004922:	4b5b      	ldr	r3, [pc, #364]	; (8004a90 <main+0x6b8>)
- 8004924:	f04f 0200 	mov.w	r2, #0
- 8004928:	641a      	str	r2, [r3, #64]	; 0x40
+ 8004920:	4b5b      	ldr	r3, [pc, #364]	; (8004a90 <main+0x6b8>)
+ 8004922:	f04f 0200 	mov.w	r2, #0
+ 8004926:	641a      	str	r2, [r3, #64]	; 0x40
 gps_lat.out.kd = 0;
- 800492a:	4b59      	ldr	r3, [pc, #356]	; (8004a90 <main+0x6b8>)
- 800492c:	f04f 0200 	mov.w	r2, #0
- 8004930:	645a      	str	r2, [r3, #68]	; 0x44
+ 8004928:	4b59      	ldr	r3, [pc, #356]	; (8004a90 <main+0x6b8>)
+ 800492a:	f04f 0200 	mov.w	r2, #0
+ 800492e:	645a      	str	r2, [r3, #68]	; 0x44
 gps_lat.in.kp = 2;
- 8004932:	4b57      	ldr	r3, [pc, #348]	; (8004a90 <main+0x6b8>)
- 8004934:	f04f 4280 	mov.w	r2, #1073741824	; 0x40000000
- 8004938:	601a      	str	r2, [r3, #0]
+ 8004930:	4b57      	ldr	r3, [pc, #348]	; (8004a90 <main+0x6b8>)
+ 8004932:	f04f 4280 	mov.w	r2, #1073741824	; 0x40000000
+ 8004936:	601a      	str	r2, [r3, #0]
 gps_lat.in.ki = 0;
- 800493a:	4b55      	ldr	r3, [pc, #340]	; (8004a90 <main+0x6b8>)
- 800493c:	f04f 0200 	mov.w	r2, #0
- 8004940:	605a      	str	r2, [r3, #4]
+ 8004938:	4b55      	ldr	r3, [pc, #340]	; (8004a90 <main+0x6b8>)
+ 800493a:	f04f 0200 	mov.w	r2, #0
+ 800493e:	605a      	str	r2, [r3, #4]
 gps_lat.in.kd = 0;
- 8004942:	4b53      	ldr	r3, [pc, #332]	; (8004a90 <main+0x6b8>)
- 8004944:	f04f 0200 	mov.w	r2, #0
- 8004948:	609a      	str	r2, [r3, #8]
+ 8004940:	4b53      	ldr	r3, [pc, #332]	; (8004a90 <main+0x6b8>)
+ 8004942:	f04f 0200 	mov.w	r2, #0
+ 8004946:	609a      	str	r2, [r3, #8]
 
 /*Receiver Detection*/
   while(Is_iBus_Received() == 0)
- 800494a:	e013      	b.n	8004974 <main+0x59c>
+ 8004948:	e013      	b.n	8004972 <main+0x59a>
   {
 	  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4); //Enable Timer Counting
- 800494c:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 8004950:	4850      	ldr	r0, [pc, #320]	; (8004a94 <main+0x6bc>)
- 8004952:	f7ff fc79 	bl	8004248 <LL_TIM_CC_EnableChannel>
+ 800494a:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 800494e:	4851      	ldr	r0, [pc, #324]	; (8004a94 <main+0x6bc>)
+ 8004950:	f7ff fc7a 	bl	8004248 <LL_TIM_CC_EnableChannel>
 	  TIM3->PSC = 3000;
- 8004956:	4b4f      	ldr	r3, [pc, #316]	; (8004a94 <main+0x6bc>)
- 8004958:	f640 32b8 	movw	r2, #3000	; 0xbb8
- 800495c:	629a      	str	r2, [r3, #40]	; 0x28
+ 8004954:	4b4f      	ldr	r3, [pc, #316]	; (8004a94 <main+0x6bc>)
+ 8004956:	f640 32b8 	movw	r2, #3000	; 0xbb8
+ 800495a:	629a      	str	r2, [r3, #40]	; 0x28
 	  HAL_Delay(200);
- 800495e:	20c8      	movs	r0, #200	; 0xc8
- 8004960:	f004 f8a2 	bl	8008aa8 <HAL_Delay>
+ 800495c:	20c8      	movs	r0, #200	; 0xc8
+ 800495e:	f004 f8a3 	bl	8008aa8 <HAL_Delay>
 	  LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
- 8004964:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 8004968:	484a      	ldr	r0, [pc, #296]	; (8004a94 <main+0x6bc>)
- 800496a:	f7ff fc7e 	bl	800426a <LL_TIM_CC_DisableChannel>
+ 8004962:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 8004966:	484b      	ldr	r0, [pc, #300]	; (8004a94 <main+0x6bc>)
+ 8004968:	f7ff fc7f 	bl	800426a <LL_TIM_CC_DisableChannel>
 
 	  HAL_Delay(200);
- 800496e:	20c8      	movs	r0, #200	; 0xc8
- 8004970:	f004 f89a 	bl	8008aa8 <HAL_Delay>
+ 800496c:	20c8      	movs	r0, #200	; 0xc8
+ 800496e:	f004 f89b 	bl	8008aa8 <HAL_Delay>
   while(Is_iBus_Received() == 0)
- 8004974:	f002 fa7c 	bl	8006e70 <Is_iBus_Received>
- 8004978:	4603      	mov	r3, r0
- 800497a:	2b00      	cmp	r3, #0
- 800497c:	d0e6      	beq.n	800494c <main+0x574>
+ 8004972:	f002 fa7d 	bl	8006e70 <Is_iBus_Received>
+ 8004976:	4603      	mov	r3, r0
+ 8004978:	2b00      	cmp	r3, #0
+ 800497a:	d0e6      	beq.n	800494a <main+0x572>
   }
 
   /**************************ESC Calibration***********************************/
   if(iBus.SwC == 2000)
- 800497e:	4b46      	ldr	r3, [pc, #280]	; (8004a98 <main+0x6c0>)
- 8004980:	899b      	ldrh	r3, [r3, #12]
- 8004982:	f5b3 6ffa 	cmp.w	r3, #2000	; 0x7d0
- 8004986:	f040 8089 	bne.w	8004a9c <main+0x6c4>
+ 800497c:	4b46      	ldr	r3, [pc, #280]	; (8004a98 <main+0x6c0>)
+ 800497e:	899b      	ldrh	r3, [r3, #12]
+ 8004980:	f5b3 6ffa 	cmp.w	r3, #2000	; 0x7d0
+ 8004984:	f040 808a 	bne.w	8004a9c <main+0x6c4>
   {
 	  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4); //Enable Timer Counting
- 800498a:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 800498e:	4841      	ldr	r0, [pc, #260]	; (8004a94 <main+0x6bc>)
- 8004990:	f7ff fc5a 	bl	8004248 <LL_TIM_CC_EnableChannel>
+ 8004988:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 800498c:	4841      	ldr	r0, [pc, #260]	; (8004a94 <main+0x6bc>)
+ 800498e:	f7ff fc5b 	bl	8004248 <LL_TIM_CC_EnableChannel>
 	  TIM3->PSC = 1500;
- 8004994:	4b3f      	ldr	r3, [pc, #252]	; (8004a94 <main+0x6bc>)
- 8004996:	f240 52dc 	movw	r2, #1500	; 0x5dc
- 800499a:	629a      	str	r2, [r3, #40]	; 0x28
+ 8004992:	4b40      	ldr	r3, [pc, #256]	; (8004a94 <main+0x6bc>)
+ 8004994:	f240 52dc 	movw	r2, #1500	; 0x5dc
+ 8004998:	629a      	str	r2, [r3, #40]	; 0x28
 	  HAL_Delay(500);
- 800499c:	f44f 70fa 	mov.w	r0, #500	; 0x1f4
- 80049a0:	f004 f882 	bl	8008aa8 <HAL_Delay>
+ 800499a:	f44f 70fa 	mov.w	r0, #500	; 0x1f4
+ 800499e:	f004 f883 	bl	8008aa8 <HAL_Delay>
 	  TIM3->PSC = 2000;
- 80049a4:	4b3b      	ldr	r3, [pc, #236]	; (8004a94 <main+0x6bc>)
- 80049a6:	f44f 62fa 	mov.w	r2, #2000	; 0x7d0
- 80049aa:	629a      	str	r2, [r3, #40]	; 0x28
+ 80049a2:	4b3c      	ldr	r3, [pc, #240]	; (8004a94 <main+0x6bc>)
+ 80049a4:	f44f 62fa 	mov.w	r2, #2000	; 0x7d0
+ 80049a8:	629a      	str	r2, [r3, #40]	; 0x28
 	  HAL_Delay(500);
- 80049ac:	f44f 70fa 	mov.w	r0, #500	; 0x1f4
- 80049b0:	f004 f87a 	bl	8008aa8 <HAL_Delay>
+ 80049aa:	f44f 70fa 	mov.w	r0, #500	; 0x1f4
+ 80049ae:	f004 f87b 	bl	8008aa8 <HAL_Delay>
 	  TIM3->PSC = 1500;
- 80049b4:	4b37      	ldr	r3, [pc, #220]	; (8004a94 <main+0x6bc>)
- 80049b6:	f240 52dc 	movw	r2, #1500	; 0x5dc
- 80049ba:	629a      	str	r2, [r3, #40]	; 0x28
+ 80049b2:	4b38      	ldr	r3, [pc, #224]	; (8004a94 <main+0x6bc>)
+ 80049b4:	f240 52dc 	movw	r2, #1500	; 0x5dc
+ 80049b8:	629a      	str	r2, [r3, #40]	; 0x28
 	  HAL_Delay(500);
- 80049bc:	f44f 70fa 	mov.w	r0, #500	; 0x1f4
- 80049c0:	f004 f872 	bl	8008aa8 <HAL_Delay>
+ 80049ba:	f44f 70fa 	mov.w	r0, #500	; 0x1f4
+ 80049be:	f004 f873 	bl	8008aa8 <HAL_Delay>
 	  TIM3->PSC = 2000;
- 80049c4:	4b33      	ldr	r3, [pc, #204]	; (8004a94 <main+0x6bc>)
- 80049c6:	f44f 62fa 	mov.w	r2, #2000	; 0x7d0
- 80049ca:	629a      	str	r2, [r3, #40]	; 0x28
+ 80049c2:	4b34      	ldr	r3, [pc, #208]	; (8004a94 <main+0x6bc>)
+ 80049c4:	f44f 62fa 	mov.w	r2, #2000	; 0x7d0
+ 80049c8:	629a      	str	r2, [r3, #40]	; 0x28
 	  HAL_Delay(500);
- 80049cc:	f44f 70fa 	mov.w	r0, #500	; 0x1f4
- 80049d0:	f004 f86a 	bl	8008aa8 <HAL_Delay>
+ 80049ca:	f44f 70fa 	mov.w	r0, #500	; 0x1f4
+ 80049ce:	f004 f86b 	bl	8008aa8 <HAL_Delay>
 	  LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
- 80049d4:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 80049d8:	482e      	ldr	r0, [pc, #184]	; (8004a94 <main+0x6bc>)
- 80049da:	f7ff fc46 	bl	800426a <LL_TIM_CC_DisableChannel>
+ 80049d2:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 80049d6:	482f      	ldr	r0, [pc, #188]	; (8004a94 <main+0x6bc>)
+ 80049d8:	f7ff fc47 	bl	800426a <LL_TIM_CC_DisableChannel>
 
 	  ESC_Calibration();
- 80049de:	f002 fa1d 	bl	8006e1c <ESC_Calibration>
+ 80049dc:	f002 fa1e 	bl	8006e1c <ESC_Calibration>
 	  while(iBus.SwC != 1000)
- 80049e2:	e019      	b.n	8004a18 <main+0x640>
+ 80049e0:	e019      	b.n	8004a16 <main+0x63e>
 	  {
 		  Is_iBus_Received();
- 80049e4:	f002 fa44 	bl	8006e70 <Is_iBus_Received>
+ 80049e2:	f002 fa45 	bl	8006e70 <Is_iBus_Received>
 
 		  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4);
- 80049e8:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 80049ec:	4829      	ldr	r0, [pc, #164]	; (8004a94 <main+0x6bc>)
- 80049ee:	f7ff fc2b 	bl	8004248 <LL_TIM_CC_EnableChannel>
+ 80049e6:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 80049ea:	482a      	ldr	r0, [pc, #168]	; (8004a94 <main+0x6bc>)
+ 80049ec:	f7ff fc2c 	bl	8004248 <LL_TIM_CC_EnableChannel>
 		  TIM3->PSC = 1500;
- 80049f2:	4b28      	ldr	r3, [pc, #160]	; (8004a94 <main+0x6bc>)
- 80049f4:	f240 52dc 	movw	r2, #1500	; 0x5dc
- 80049f8:	629a      	str	r2, [r3, #40]	; 0x28
+ 80049f0:	4b28      	ldr	r3, [pc, #160]	; (8004a94 <main+0x6bc>)
+ 80049f2:	f240 52dc 	movw	r2, #1500	; 0x5dc
+ 80049f6:	629a      	str	r2, [r3, #40]	; 0x28
 		  HAL_Delay(200);
- 80049fa:	20c8      	movs	r0, #200	; 0xc8
- 80049fc:	f004 f854 	bl	8008aa8 <HAL_Delay>
+ 80049f8:	20c8      	movs	r0, #200	; 0xc8
+ 80049fa:	f004 f855 	bl	8008aa8 <HAL_Delay>
 		  TIM3->PSC = 2000;
- 8004a00:	4b24      	ldr	r3, [pc, #144]	; (8004a94 <main+0x6bc>)
- 8004a02:	f44f 62fa 	mov.w	r2, #2000	; 0x7d0
- 8004a06:	629a      	str	r2, [r3, #40]	; 0x28
+ 80049fe:	4b25      	ldr	r3, [pc, #148]	; (8004a94 <main+0x6bc>)
+ 8004a00:	f44f 62fa 	mov.w	r2, #2000	; 0x7d0
+ 8004a04:	629a      	str	r2, [r3, #40]	; 0x28
 		  HAL_Delay(200);
- 8004a08:	20c8      	movs	r0, #200	; 0xc8
- 8004a0a:	f004 f84d 	bl	8008aa8 <HAL_Delay>
+ 8004a06:	20c8      	movs	r0, #200	; 0xc8
+ 8004a08:	f004 f84e 	bl	8008aa8 <HAL_Delay>
 		  LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
- 8004a0e:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 8004a12:	4820      	ldr	r0, [pc, #128]	; (8004a94 <main+0x6bc>)
- 8004a14:	f7ff fc29 	bl	800426a <LL_TIM_CC_DisableChannel>
+ 8004a0c:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 8004a10:	4820      	ldr	r0, [pc, #128]	; (8004a94 <main+0x6bc>)
+ 8004a12:	f7ff fc2a 	bl	800426a <LL_TIM_CC_DisableChannel>
 	  while(iBus.SwC != 1000)
- 8004a18:	4b1f      	ldr	r3, [pc, #124]	; (8004a98 <main+0x6c0>)
- 8004a1a:	899b      	ldrh	r3, [r3, #12]
- 8004a1c:	f5b3 7f7a 	cmp.w	r3, #1000	; 0x3e8
- 8004a20:	d1e0      	bne.n	80049e4 <main+0x60c>
- 8004a22:	e0a2      	b.n	8004b6a <main+0x792>
+ 8004a16:	4b20      	ldr	r3, [pc, #128]	; (8004a98 <main+0x6c0>)
+ 8004a18:	899b      	ldrh	r3, [r3, #12]
+ 8004a1a:	f5b3 7f7a 	cmp.w	r3, #1000	; 0x3e8
+ 8004a1e:	d1e0      	bne.n	80049e2 <main+0x60a>
+ 8004a20:	e0a3      	b.n	8004b6a <main+0x792>
+ 8004a22:	bf00      	nop
  8004a24:	08011cf8 	.word	0x08011cf8
  8004a28:	20000678 	.word	0x20000678
  8004a2c:	20000674 	.word	0x20000674
@@ -9873,8 +9874,8 @@ gps_lat.in.kd = 0;
  8004a74:	20000418 	.word	0x20000418
  8004a78:	20000544 	.word	0x20000544
  8004a7c:	3e99999a 	.word	0x3e99999a
- 8004a80:	3c23d70a 	.word	0x3c23d70a
- 8004a84:	43160000 	.word	0x43160000
+ 8004a80:	43160000 	.word	0x43160000
+ 8004a84:	3dcccccd 	.word	0x3dcccccd
  8004a88:	200004cc 	.word	0x200004cc
  8004a8c:	42480000 	.word	0x42480000
  8004a90:	20000454 	.word	0x20000454
@@ -10201,7 +10202,6 @@ gps_lat.in.kd = 0;
  8004cf4:	691b      	ldr	r3, [r3, #16]
  8004cf6:	4a16      	ldr	r2, [pc, #88]	; (8004d50 <main+0x978>)
  8004cf8:	6153      	str	r3, [r2, #20]
-//			  printf(" ", XAVIER.mode);
 		  }
 	  }
 
@@ -11147,7 +11147,7 @@ gps_lat.in.kd = 0;
  8005600:	ee17 2a90 	vmov	r2, s15
  8005604:	4b41      	ldr	r3, [pc, #260]	; (800570c <main+0x1334>)
  8005606:	601a      	str	r2, [r3, #0]
-				  ccr2 = (unsigned int)((float)ccr2 * 0.91f);
+				  ccr2 = (unsigned int)((float)ccr2 * 0.88f);
  8005608:	4b40      	ldr	r3, [pc, #256]	; (800570c <main+0x1334>)
  800560a:	681b      	ldr	r3, [r3, #0]
  800560c:	ee07 3a90 	vmov	s15, r3
@@ -11202,7 +11202,7 @@ gps_lat.in.kd = 0;
  80056a8:	ee17 2a90 	vmov	r2, s15
  80056ac:	4b1a      	ldr	r3, [pc, #104]	; (8005718 <main+0x1340>)
  80056ae:	601a      	str	r2, [r3, #0]
-				  ccr4 = (unsigned int)((float)ccr4 * 0.91f);
+				  ccr4 = (unsigned int)((float)ccr4 * 0.88f);
  80056b0:	4b19      	ldr	r3, [pc, #100]	; (8005718 <main+0x1340>)
  80056b2:	681b      	ldr	r3, [r3, #0]
  80056b4:	ee07 3a90 	vmov	s15, r3
@@ -11214,7 +11214,7 @@ gps_lat.in.kd = 0;
  80056cc:	4b12      	ldr	r3, [pc, #72]	; (8005718 <main+0x1340>)
  80056ce:	601a      	str	r2, [r3, #0]
 			  if(iBus.LH < 1485 || iBus.LH > 1515)
- 80056d0:	f001 b83b 	b.w	800674a <main+0x2372>
+ 80056d0:	f001 b845 	b.w	800675e <main+0x2386>
  80056d4:	20000282 	.word	0x20000282
  80056d8:	20000384 	.word	0x20000384
  80056dc:	3d8f5c29 	.word	0x3d8f5c29
@@ -11230,7 +11230,7 @@ gps_lat.in.kd = 0;
  8005704:	20000418 	.word	0x20000418
  8005708:	2000075c 	.word	0x2000075c
  800570c:	20000770 	.word	0x20000770
- 8005710:	3f68f5c3 	.word	0x3f68f5c3
+ 8005710:	3f6147ae 	.word	0x3f6147ae
  8005714:	20000798 	.word	0x20000798
  8005718:	20000774 	.word	0x20000774
 			  }
@@ -11290,7 +11290,7 @@ gps_lat.in.kd = 0;
  80057ba:	ee17 2a90 	vmov	r2, s15
  80057be:	4b3b      	ldr	r3, [pc, #236]	; (80058ac <main+0x14d4>)
  80057c0:	601a      	str	r2, [r3, #0]
-				  ccr2 = (unsigned int)((float)ccr2 * 0.91f);
+				  ccr2 = (unsigned int)((float)ccr2 * 0.88f);
  80057c2:	4b3a      	ldr	r3, [pc, #232]	; (80058ac <main+0x14d4>)
  80057c4:	681b      	ldr	r3, [r3, #0]
  80057c6:	ee07 3a90 	vmov	s15, r3
@@ -11345,7 +11345,7 @@ gps_lat.in.kd = 0;
  8005862:	ee17 2a90 	vmov	r2, s15
  8005866:	4b14      	ldr	r3, [pc, #80]	; (80058b8 <main+0x14e0>)
  8005868:	601a      	str	r2, [r3, #0]
-				  ccr4 = (unsigned int)((float)ccr4 * 0.91f);
+				  ccr4 = (unsigned int)((float)ccr4 * 0.88f);
  800586a:	4b13      	ldr	r3, [pc, #76]	; (80058b8 <main+0x14e0>)
  800586c:	681b      	ldr	r3, [r3, #0]
  800586e:	ee07 3a90 	vmov	s15, r3
@@ -11357,7 +11357,7 @@ gps_lat.in.kd = 0;
  8005886:	4b0c      	ldr	r3, [pc, #48]	; (80058b8 <main+0x14e0>)
  8005888:	601a      	str	r2, [r3, #0]
 			  if(iBus.LH < 1485 || iBus.LH > 1515)
- 800588a:	f000 bf5e 	b.w	800674a <main+0x2372>
+ 800588a:	f000 bf68 	b.w	800675e <main+0x2386>
  800588e:	bf00      	nop
  8005890:	200006ec 	.word	0x200006ec
  8005894:	200003a8 	.word	0x200003a8
@@ -11367,7 +11367,7 @@ gps_lat.in.kd = 0;
  80058a4:	20000544 	.word	0x20000544
  80058a8:	2000075c 	.word	0x2000075c
  80058ac:	20000770 	.word	0x20000770
- 80058b0:	3f68f5c3 	.word	0x3f68f5c3
+ 80058b0:	3f6147ae 	.word	0x3f6147ae
  80058b4:	20000798 	.word	0x20000798
  80058b8:	20000774 	.word	0x20000774
 			  }
@@ -11755,7 +11755,7 @@ gps_lat.in.kd = 0;
  8005cb8:	4603      	mov	r3, r0
  8005cba:	4aa9      	ldr	r2, [pc, #676]	; (8005f60 <main+0x1b88>)
  8005cbc:	6013      	str	r3, [r2, #0]
-				  ccr2 = (unsigned int)((float)ccr2 * 0.91f);
+				  ccr2 = (unsigned int)((float)ccr2 * 0.88f);
  8005cbe:	4ba8      	ldr	r3, [pc, #672]	; (8005f60 <main+0x1b88>)
  8005cc0:	681b      	ldr	r3, [r3, #0]
  8005cc2:	ee07 3a90 	vmov	s15, r3
@@ -12009,7 +12009,7 @@ gps_lat.in.kd = 0;
  8005f58:	200005bc 	.word	0x200005bc
  8005f5c:	20000544 	.word	0x20000544
  8005f60:	20000770 	.word	0x20000770
- 8005f64:	3f68f5c3 	.word	0x3f68f5c3
+ 8005f64:	3f6147ae 	.word	0x3f6147ae
  8005f68:	200004cc 	.word	0x200004cc
  8005f6c:	20000798 	.word	0x20000798
  8005f70:	f009 fea2 	bl	800fcb8 <sin>
@@ -12055,7 +12055,7 @@ gps_lat.in.kd = 0;
  8005fd4:	4603      	mov	r3, r0
  8005fd6:	4a60      	ldr	r2, [pc, #384]	; (8006158 <main+0x1d80>)
  8005fd8:	6013      	str	r3, [r2, #0]
-				  ccr4 = (unsigned int)((float)ccr4 * 0.91f);
+				  ccr4 = (unsigned int)((float)ccr4 * 0.88f);
  8005fda:	4b5f      	ldr	r3, [pc, #380]	; (8006158 <main+0x1d80>)
  8005fdc:	681b      	ldr	r3, [r3, #0]
  8005fde:	ee07 3a90 	vmov	s15, r3
@@ -12067,7 +12067,7 @@ gps_lat.in.kd = 0;
  8005ff6:	4b58      	ldr	r3, [pc, #352]	; (8006158 <main+0x1d80>)
  8005ff8:	601a      	str	r2, [r3, #0]
 			  if ( (abs(iBus.RH-1500) < 50) && (abs(iBus.RV-1500) <50))
- 8005ffa:	e3a6      	b.n	800674a <main+0x2372>
+ 8005ffa:	e3b0      	b.n	800675e <main+0x2386>
 			  }
 			  else
 			  {
@@ -12115,7 +12115,7 @@ gps_lat.in.kd = 0;
  800607c:	ee17 2a90 	vmov	r2, s15
  8006080:	4b3a      	ldr	r3, [pc, #232]	; (800616c <main+0x1d94>)
  8006082:	601a      	str	r2, [r3, #0]
-				  ccr2 = (unsigned int)((float)ccr2 * 0.91f);
+				  ccr2 = (unsigned int)((float)ccr2 * 0.88f);
  8006084:	4b39      	ldr	r3, [pc, #228]	; (800616c <main+0x1d94>)
  8006086:	681b      	ldr	r3, [r3, #0]
  8006088:	ee07 3a90 	vmov	s15, r3
@@ -12170,7 +12170,7 @@ gps_lat.in.kd = 0;
  8006124:	ee17 2a90 	vmov	r2, s15
  8006128:	4b0b      	ldr	r3, [pc, #44]	; (8006158 <main+0x1d80>)
  800612a:	601a      	str	r2, [r3, #0]
-				  ccr4 = (unsigned int)((float)ccr4 * 0.91f);
+				  ccr4 = (unsigned int)((float)ccr4 * 0.88f);
  800612c:	4b0a      	ldr	r3, [pc, #40]	; (8006158 <main+0x1d80>)
  800612e:	681b      	ldr	r3, [r3, #0]
  8006130:	ee07 3a90 	vmov	s15, r3
@@ -12182,23 +12182,23 @@ gps_lat.in.kd = 0;
  8006148:	4b03      	ldr	r3, [pc, #12]	; (8006158 <main+0x1d80>)
  800614a:	601a      	str	r2, [r3, #0]
 			  if ( (abs(iBus.RH-1500) < 50) && (abs(iBus.RV-1500) <50))
- 800614c:	e2fd      	b.n	800674a <main+0x2372>
+ 800614c:	e307      	b.n	800675e <main+0x2386>
  800614e:	bf00      	nop
  8006150:	200005bc 	.word	0x200005bc
  8006154:	20000544 	.word	0x20000544
  8006158:	20000774 	.word	0x20000774
- 800615c:	3f68f5c3 	.word	0x3f68f5c3
+ 800615c:	3f6147ae 	.word	0x3f6147ae
  8006160:	200005f8 	.word	0x200005f8
  8006164:	20000670 	.word	0x20000670
  8006168:	2000075c 	.word	0x2000075c
  800616c:	20000770 	.word	0x20000770
  8006170:	20000798 	.word	0x20000798
-//				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9;
-//				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9;
-//			  }
-//			  else
-//			  {
-				  if(iBus.LH < 1485 || iBus.LH > 1515)
+		  }
+
+
+		  else // Default Angle Mode
+		  {
+			  if(iBus.LH < 1485 || iBus.LH > 1515)
  8006174:	4bbc      	ldr	r3, [pc, #752]	; (8006468 <main+0x2090>)
  8006176:	88db      	ldrh	r3, [r3, #6]
  8006178:	f240 52cc 	movw	r2, #1484	; 0x5cc
@@ -12209,12 +12209,12 @@ gps_lat.in.kd = 0;
  8006184:	f240 52eb 	movw	r2, #1515	; 0x5eb
  8006188:	4293      	cmp	r3, r2
  800618a:	f240 8183 	bls.w	8006494 <main+0x20bc>
-				  {
-					  yaw_heading_reference = BNO080_Yaw;
+			  {
+				  yaw_heading_reference = BNO080_Yaw;
  800618e:	4bb7      	ldr	r3, [pc, #732]	; (800646c <main+0x2094>)
  8006190:	681b      	ldr	r3, [r3, #0]
  8006192:	65fb      	str	r3, [r7, #92]	; 0x5c
-					  Single_Yaw_Rate_PID_Calculation(&yaw_rate, (iBus.LH-1500), ICM20602.gyro_z);
+				  Single_Yaw_Rate_PID_Calculation(&yaw_rate, (iBus.LH-1500), ICM20602.gyro_z);
  8006194:	4bb4      	ldr	r3, [pc, #720]	; (8006468 <main+0x2090>)
  8006196:	88db      	ldrh	r3, [r3, #6]
  8006198:	f2a3 53dc 	subw	r3, r3, #1500	; 0x5dc
@@ -12227,7 +12227,7 @@ gps_lat.in.kd = 0;
  80061b2:	48b0      	ldr	r0, [pc, #704]	; (8006474 <main+0x209c>)
  80061b4:	f7fd f9f2 	bl	800359c <Single_Yaw_Rate_PID_Calculation>
 
-					  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result + roll.in.pid_result -yaw_rate.pid_result;
+				  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result + roll.in.pid_result -yaw_rate.pid_result;
  80061b8:	4bab      	ldr	r3, [pc, #684]	; (8006468 <main+0x2090>)
  80061ba:	889b      	ldrh	r3, [r3, #4]
  80061bc:	f5a3 737a 	sub.w	r3, r3, #1000	; 0x3e8
@@ -12290,7 +12290,7 @@ gps_lat.in.kd = 0;
  8006248:	4603      	mov	r3, r0
  800624a:	4a8d      	ldr	r2, [pc, #564]	; (8006480 <main+0x20a8>)
  800624c:	6013      	str	r3, [r2, #0]
-					  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result + roll.in.pid_result +yaw_rate.pid_result;
+				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result + roll.in.pid_result +yaw_rate.pid_result;
  800624e:	4b86      	ldr	r3, [pc, #536]	; (8006468 <main+0x2090>)
  8006250:	889b      	ldrh	r3, [r3, #4]
  8006252:	f5a3 737a 	sub.w	r3, r3, #1000	; 0x3e8
@@ -12353,7 +12353,7 @@ gps_lat.in.kd = 0;
  80062de:	4603      	mov	r3, r0
  80062e0:	4a68      	ldr	r2, [pc, #416]	; (8006484 <main+0x20ac>)
  80062e2:	6013      	str	r3, [r2, #0]
-					  ccr2 = (unsigned int)((float)ccr2 * 0.91f);
+				  ccr2 = (unsigned int)((float)ccr2 * 0.88f);
  80062e4:	4b67      	ldr	r3, [pc, #412]	; (8006484 <main+0x20ac>)
  80062e6:	681b      	ldr	r3, [r3, #0]
  80062e8:	ee07 3a90 	vmov	s15, r3
@@ -12364,7 +12364,7 @@ gps_lat.in.kd = 0;
  80062fc:	ee17 2a90 	vmov	r2, s15
  8006300:	4b60      	ldr	r3, [pc, #384]	; (8006484 <main+0x20ac>)
  8006302:	601a      	str	r2, [r3, #0]
-					  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result - roll.in.pid_result -yaw_rate.pid_result;
+				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result - roll.in.pid_result -yaw_rate.pid_result;
  8006304:	4b58      	ldr	r3, [pc, #352]	; (8006468 <main+0x2090>)
  8006306:	889b      	ldrh	r3, [r3, #4]
  8006308:	f5a3 737a 	sub.w	r3, r3, #1000	; 0x3e8
@@ -12427,7 +12427,7 @@ gps_lat.in.kd = 0;
  8006394:	4603      	mov	r3, r0
  8006396:	4a3d      	ldr	r2, [pc, #244]	; (800648c <main+0x20b4>)
  8006398:	6013      	str	r3, [r2, #0]
-					  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result - roll.in.pid_result +yaw_rate.pid_result;
+				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result - roll.in.pid_result +yaw_rate.pid_result;
  800639a:	4b33      	ldr	r3, [pc, #204]	; (8006468 <main+0x2090>)
  800639c:	889b      	ldrh	r3, [r3, #4]
  800639e:	f5a3 737a 	sub.w	r3, r3, #1000	; 0x3e8
@@ -12490,7 +12490,7 @@ gps_lat.in.kd = 0;
  800642a:	4603      	mov	r3, r0
  800642c:	4a18      	ldr	r2, [pc, #96]	; (8006490 <main+0x20b8>)
  800642e:	6013      	str	r3, [r2, #0]
-					  ccr4 = (unsigned int)((float)ccr4 * 0.91f);
+				  ccr4 = (unsigned int)((float)ccr4 * 0.88f);
  8006430:	4b17      	ldr	r3, [pc, #92]	; (8006490 <main+0x20b8>)
  8006432:	681b      	ldr	r3, [r3, #0]
  8006434:	ee07 3a90 	vmov	s15, r3
@@ -12516,13 +12516,13 @@ gps_lat.in.kd = 0;
  800647c:	20000670 	.word	0x20000670
  8006480:	2000075c 	.word	0x2000075c
  8006484:	20000770 	.word	0x20000770
- 8006488:	3f68f5c3 	.word	0x3f68f5c3
+ 8006488:	3f6147ae 	.word	0x3f6147ae
  800648c:	20000798 	.word	0x20000798
  8006490:	20000774 	.word	0x20000774
-				  }
-				  else
-				  {
-					  Single_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference, BNO080_Yaw, ICM20602.gyro_z);
+			  }
+			  else
+			  {
+				  Single_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference, BNO080_Yaw, ICM20602.gyro_z);
  8006494:	4bc8      	ldr	r3, [pc, #800]	; (80067b8 <main+0x23e0>)
  8006496:	edd3 7a00 	vldr	s15, [r3]
  800649a:	4bc8      	ldr	r3, [pc, #800]	; (80067bc <main+0x23e4>)
@@ -12532,7 +12532,7 @@ gps_lat.in.kd = 0;
  80064a8:	ed97 0a17 	vldr	s0, [r7, #92]	; 0x5c
  80064ac:	48c4      	ldr	r0, [pc, #784]	; (80067c0 <main+0x23e8>)
  80064ae:	f7fc ffdb 	bl	8003468 <Single_Yaw_Heading_PID_Calculation>
-					  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result + roll.in.pid_result -yaw_heading.pid_result;
+				  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result + roll.in.pid_result -yaw_heading.pid_result;
  80064b2:	4bc4      	ldr	r3, [pc, #784]	; (80067c4 <main+0x23ec>)
  80064b4:	889b      	ldrh	r3, [r3, #4]
  80064b6:	f5a3 737a 	sub.w	r3, r3, #1000	; 0x3e8
@@ -12595,7 +12595,7 @@ gps_lat.in.kd = 0;
  8006542:	4603      	mov	r3, r0
  8006544:	4aa2      	ldr	r2, [pc, #648]	; (80067d0 <main+0x23f8>)
  8006546:	6013      	str	r3, [r2, #0]
-					  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result + roll.in.pid_result +yaw_heading.pid_result;
+				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result + roll.in.pid_result +yaw_heading.pid_result;
  8006548:	4b9e      	ldr	r3, [pc, #632]	; (80067c4 <main+0x23ec>)
  800654a:	889b      	ldrh	r3, [r3, #4]
  800654c:	f5a3 737a 	sub.w	r3, r3, #1000	; 0x3e8
@@ -12658,7 +12658,7 @@ gps_lat.in.kd = 0;
  80065d8:	4603      	mov	r3, r0
  80065da:	4a7e      	ldr	r2, [pc, #504]	; (80067d4 <main+0x23fc>)
  80065dc:	6013      	str	r3, [r2, #0]
-					  ccr2 = (unsigned int)((float)ccr2 * 0.91f);
+				  ccr2 = (unsigned int)((float)ccr2 * 0.88f);
  80065de:	4b7d      	ldr	r3, [pc, #500]	; (80067d4 <main+0x23fc>)
  80065e0:	681b      	ldr	r3, [r3, #0]
  80065e2:	ee07 3a90 	vmov	s15, r3
@@ -12669,7 +12669,7 @@ gps_lat.in.kd = 0;
  80065f6:	ee17 2a90 	vmov	r2, s15
  80065fa:	4b76      	ldr	r3, [pc, #472]	; (80067d4 <main+0x23fc>)
  80065fc:	601a      	str	r2, [r3, #0]
-					  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result - roll.in.pid_result -yaw_heading.pid_result;
+				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result - roll.in.pid_result -yaw_heading.pid_result;
  80065fe:	4b71      	ldr	r3, [pc, #452]	; (80067c4 <main+0x23ec>)
  8006600:	889b      	ldrh	r3, [r3, #4]
  8006602:	f5a3 737a 	sub.w	r3, r3, #1000	; 0x3e8
@@ -12732,7 +12732,7 @@ gps_lat.in.kd = 0;
  800668e:	4603      	mov	r3, r0
  8006690:	4a52      	ldr	r2, [pc, #328]	; (80067dc <main+0x2404>)
  8006692:	6013      	str	r3, [r2, #0]
-					  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result - roll.in.pid_result +yaw_heading.pid_result;
+				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result - roll.in.pid_result +yaw_heading.pid_result;
  8006694:	4b4b      	ldr	r3, [pc, #300]	; (80067c4 <main+0x23ec>)
  8006696:	889b      	ldrh	r3, [r3, #4]
  8006698:	f5a3 737a 	sub.w	r3, r3, #1000	; 0x3e8
@@ -12795,7 +12795,7 @@ gps_lat.in.kd = 0;
  8006724:	4603      	mov	r3, r0
  8006726:	4a2e      	ldr	r2, [pc, #184]	; (80067e0 <main+0x2408>)
  8006728:	6013      	str	r3, [r2, #0]
-					  ccr4 = (unsigned int)((float)ccr4 * 0.91f);
+				  ccr4 = (unsigned int)((float)ccr4 * 0.88f);
  800672a:	4b2d      	ldr	r3, [pc, #180]	; (80067e0 <main+0x2408>)
  800672c:	681b      	ldr	r3, [r3, #0]
  800672e:	ee07 3a90 	vmov	s15, r3
@@ -12806,8 +12806,8 @@ gps_lat.in.kd = 0;
  8006742:	ee17 2a90 	vmov	r2, s15
  8006746:	4b26      	ldr	r3, [pc, #152]	; (80067e0 <main+0x2408>)
  8006748:	601a      	str	r2, [r3, #0]
-				  }
 			  }
+
 			  last_lat = posllh.lat;
  800674a:	4b26      	ldr	r3, [pc, #152]	; (80067e4 <main+0x240c>)
  800674c:	691b      	ldr	r3, [r3, #16]
@@ -12822,8 +12822,10 @@ gps_lat.in.kd = 0;
  800675a:	4a24      	ldr	r2, [pc, #144]	; (80067ec <main+0x2414>)
  800675c:	6013      	str	r3, [r2, #0]
 		  }
+	  }
 
-		  if(iBus.LV < 1030 || motor_arming_flag == 0)
+
+	  if(iBus.LV < 1030 || motor_arming_flag == 0)
  800675e:	4b19      	ldr	r3, [pc, #100]	; (80067c4 <main+0x23ec>)
  8006760:	889b      	ldrh	r3, [r3, #4]
  8006762:	f240 4205 	movw	r2, #1029	; 0x405
@@ -12832,10 +12834,10 @@ gps_lat.in.kd = 0;
  800676a:	f897 3067 	ldrb.w	r3, [r7, #103]	; 0x67
  800676e:	2b00      	cmp	r3, #0
  8006770:	d101      	bne.n	8006776 <main+0x239e>
-		  {
-			  Reset_All_PID_Integrator();
+	  {
+		  Reset_All_PID_Integrator();
  8006772:	f7fc ff97 	bl	80036a4 <Reset_All_PID_Integrator>
-		  }
+	  }
 
 
 	  /********************* Motor Arming State ************************/
@@ -12876,7 +12878,7 @@ gps_lat.in.kd = 0;
  80067cc:	20000670 	.word	0x20000670
  80067d0:	2000075c 	.word	0x2000075c
  80067d4:	20000770 	.word	0x20000770
- 80067d8:	3f68f5c3 	.word	0x3f68f5c3
+ 80067d8:	3f6147ae 	.word	0x3f6147ae
  80067dc:	20000798 	.word	0x20000798
  80067e0:	20000774 	.word	0x20000774
  80067e4:	200003e0 	.word	0x200003e0
@@ -13059,6 +13061,7 @@ gps_lat.in.kd = 0;
  800690c:	e00b      	b.n	8006926 <main+0x254e>
 		  }
 	  }
+
 	  else
 	  {
 		  TIM5->CCR1 = 84000;

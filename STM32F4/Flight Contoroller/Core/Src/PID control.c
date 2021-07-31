@@ -218,7 +218,7 @@ void Double_Altitude_PID_Calculation(PIDDouble* axis, float set_point_altitude, 
 
 	axis->in.pid_result = axis->in.p_result + axis->in.i_result + axis->in.d_result; //Calculate PID result of inner loop
 	/****************************************************************************************/
-if (axis->in.pid_result < -5000) axis->in.pid_result = -5000;
+if (axis->in.pid_result < -5000) axis->in.pid_result = -8400;
 if (axis->in.pid_result > 16800) axis->in.pid_result = 16800;
 
 }
