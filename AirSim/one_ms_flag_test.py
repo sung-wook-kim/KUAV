@@ -1,5 +1,6 @@
 import airsim
 import threading
+from threading import Timer
 import time
 
 import numpy as np
@@ -18,7 +19,13 @@ def print_state(client):
     # threading.Timer(0.001, print_state, args=[client]).start()
 
     print(time.time())
-    threading.Timer(0.05, print_state, args=[client]).start()
+    threading.Timer(0.0001, print_state, args=[client]).start()
 
-print_state(client)
+def nextfunction():
+  print(f'{time.time()}')
 
+t = Timer(0.5, nextfunction)
+t.start()
+
+while 1:
+    pass
