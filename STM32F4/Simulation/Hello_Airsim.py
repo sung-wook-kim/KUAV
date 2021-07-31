@@ -31,3 +31,5 @@ while 1:
 
     # IMU
     imu_data = client.getImuData('Imu','Drone1')
+
+    print(f'altitude : {altitude}')

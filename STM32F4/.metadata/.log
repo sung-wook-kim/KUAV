@@ -319,3 +319,65 @@ java.io.FileNotFoundException: C:\Users\jngeun\Desktop\KUAV\STM32F4\Flight Conto
 	at org.eclipse.debug.internal.ui.DebugUIPlugin.buildAndLaunch(DebugUIPlugin.java:1021)
 	at org.eclipse.debug.internal.ui.DebugUIPlugin$2.run(DebugUIPlugin.java:1224)
 	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:63)
+!SESSION 2021-07-31 13:26:28.960 -----------------------------------------------
+eclipse.buildId=Version 1.6.1
+java.version=11.0.9.1
+java.vendor=AdoptOpenJDK
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=ko_KR
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2021-07-31 13:26:44.706
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2021-07-31 13:26:44.766
+!MESSAGE Log4j initialized with config file C:\Users\jngeun\Desktop\KUAV\STM32F4\.metadata\.log4j.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.buildanalyzer.ui 1 0 2021-07-31 13:26:48.054
+!MESSAGE Failed to parse map file
+!STACK 0
+java.io.FileNotFoundException: C:\Users\jngeun\Desktop\KUAV\STM32F4\Flight Contoroller\Debug\Flight Contoroller.map (지정된 파일을 찾을 수 없습니다)
+	at java.base/java.io.FileInputStream.open0(Native Method)
+	at java.base/java.io.FileInputStream.open(Unknown Source)
+	at java.base/java.io.FileInputStream.<init>(Unknown Source)
+	at java.base/java.io.FileInputStream.<init>(Unknown Source)
+	at java.base/java.io.FileReader.<init>(Unknown Source)
+	at elf_analyzer.datamodel.BuildDataProviderMap.readFile(BuildDataProviderMap.java:57)
+	at elf_analyzer.datamodel.BuildDataProviderMap.compute(BuildDataProviderMap.java:351)
+	at elf_analyzer.datamodel.BuildDataProviderMap.computeMemConfig(BuildDataProviderMap.java:394)
+	at elf_analyzer.datamodel.BuildData.compute(BuildData.java:80)
+	at elf_analyzer.ElfAnalyzerView.inputChanged(ElfAnalyzerView.java:252)
+	at elf_analyzer.ElfAnalyzerView.lambda$3(ElfAnalyzerView.java:403)
+	at java.base/java.lang.Thread.run(Unknown Source)
+
+!ENTRY com.st.stm32cube.ide.mcu.buildanalyzer.ui 1 0 2021-07-31 13:26:48.142
+!MESSAGE Failed to parse map file
+!STACK 0
+java.io.FileNotFoundException: C:\Users\jngeun\Desktop\KUAV\STM32F4\Flight Contoroller\Debug\Flight Contoroller.map (지정된 파일을 찾을 수 없습니다)
+	at java.base/java.io.FileInputStream.open0(Native Method)
+	at java.base/java.io.FileInputStream.open(Unknown Source)
+	at java.base/java.io.FileInputStream.<init>(Unknown Source)
+	at java.base/java.io.FileInputStream.<init>(Unknown Source)
+	at java.base/java.io.FileReader.<init>(Unknown Source)
+	at elf_analyzer.datamodel.BuildDataProviderMap.readFile(BuildDataProviderMap.java:57)
+	at elf_analyzer.datamodel.BuildDataProviderMap.compute(BuildDataProviderMap.java:351)
+	at elf_analyzer.datamodel.BuildDataProviderMap.computeLinkerSymbols(BuildDataProviderMap.java:402)
+	at elf_analyzer.datamodel.BuildData.compute(BuildData.java:102)
+	at elf_analyzer.ElfAnalyzerView.inputChanged(ElfAnalyzerView.java:252)
+	at elf_analyzer.ElfAnalyzerView.lambda$3(ElfAnalyzerView.java:403)
+	at java.base/java.lang.Thread.run(Unknown Source)
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2021-07-31 13:26:51.104
+!MESSAGE Started RMI Server, listening on port 41337
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 4 4 2021-07-31 13:26:52.101
+!MESSAGE com.st.stm32cube.ide.mcu.ide/META-INF/version/build_ref file not found, build reference will not be reported into properties
+
+!ENTRY com.st.stm32cube.ide.mcu.stackanalyzer 4 0 2021-07-31 13:27:14.854
+!MESSAGE Stackanalyzer failed to analyze input
+!STACK 0
+java.lang.Exception: File: C:\Users\jngeun\Desktop\KUAV\STM32F4\Flight Contoroller\Debug\Flight Contoroller.elfdo not exists
+	at com.st.stm32cube.ide.mcu.utils.assembly.Disassembler.<init>(Disassembler.java:59)
+	at com.st.stm32cube.ide.mcu.utils.assembly.Disassembler.<init>(Disassembler.java:87)
+	at com.st.stm32cube.ide.mcu.stackanalyzer.ui.StackAnalyzerView.inputChanged(StackAnalyzerView.java:902)
+	at com.st.stm32cube.ide.mcu.stackanalyzer.ui.StackAnalyzerView.lambda$14(StackAnalyzerView.java:1187)
+	at java.base/java.lang.Thread.run(Unknown Source)
