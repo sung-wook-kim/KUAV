@@ -21,6 +21,7 @@ def print_state(client):
     print(time.time())
     threading.Timer(0.0001, print_state, args=[client]).start()
 
+
 def nextfunction():
   print(f'{time.time()}')
 
@@ -29,3 +30,4 @@ t.start()
 
 while 1:
     pass
+

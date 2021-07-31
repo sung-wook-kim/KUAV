@@ -1,6 +1,7 @@
 .idea/
 .vscode/
 __pycache__/
+.vs
 
 #STM32F4
 STM32F4/*.csv
