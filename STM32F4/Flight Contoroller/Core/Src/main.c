@@ -367,12 +367,12 @@ Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 5, yaw_rate.kp, yaw_rate.ki, yaw_rate.
 HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
 
 
-altitude.out.kp = 30;
+altitude.out.kp = 0.3;
 altitude.out.ki = 0;
-altitude.out.kd = 0;
-altitude.in.kp = 10;
+altitude.out.kd = 0.01;
+altitude.in.kp = 150;
 altitude.in.ki = 0;
-altitude.in.kd = 0;
+altitude.in.kd = 1;
 
 gps_lon.out.kp = 50;
 gps_lon.out.ki = 0;
@@ -531,6 +531,7 @@ gps_lat.in.kd = 0;
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+//	  printf("%2f \n", actual_pressure_fast);
 	  /********************* NX Message Parsing ************************/
 //	  if(nx_rx_cplt_flag==1)
 //	  {
@@ -727,7 +728,7 @@ gps_lat.in.kd = 0;
 			  Double_GPS_PID_Calculation(&gps_lat, last_lat, posllh.lat);
 			  Double_Altitude_PID_Calculation(&altitude, last_altitude, actual_pressure_fast);
 
-			  if ( (abs(iBus.RH-1500) < 50) && (abs(iBus.RL-1500) <50))
+			  if ( (abs(iBus.RH-1500) < 50) && (abs(iBus.RV-1500) <50))
 			  {
 				  Single_Yaw_Heading_PID_Calculation(&yaw_heading, 0 , BNO080_Yaw, ICM20602.gyro_z);
 				  ccr1 = 84000 + landing_throttle - gps_lon.in.pid_result * (-sin(theta_radian)) + gps_lat.in.pid_result * cos(theta_radian) + gps_lon.in.pid_result * cos(theta_radian) + gps_lat.in.pid_result * sin(theta_radian) -yaw_heading.pid_result  + altitude.in.pid_result;
