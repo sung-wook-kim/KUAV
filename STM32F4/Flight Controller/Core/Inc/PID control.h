@@ -60,7 +60,8 @@ typedef struct _PIDDouble
 extern PIDDouble roll;
 extern PIDDouble pitch;
 
-extern PIDDouble altitude;
+extern PIDSingle altitude;
+//extern PIDDouble altitude;
 extern PIDDouble gps_lon;
 extern PIDDouble gps_lat;
 
@@ -81,7 +82,7 @@ void Single_GPS_PID_Calculation(PIDSingle* axis, unsigned int set_point_gps, uns
 
 
 
-
+void Single_Altitude_PID_Calculation(PIDSingle* axis, float set_point_altitude, float current_altitude);
 void Double_Altitude_PID_Calculation(PIDDouble* axis, float set_point_antitude, float anltitude);
 void Double_GPS_PID_Calculation(PIDDouble* axis, float set_point_gps, float gps);
 

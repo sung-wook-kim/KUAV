@@ -32,7 +32,8 @@ PIDDouble pitch;
 PIDSingle yaw_heading;
 PIDSingle yaw_rate;
 
-PIDDouble altitude;
+PIDSingle altitude;
+//PIDDouble altitude;
 PIDDouble gps_lon;
 PIDDouble gps_lat;
 
@@ -153,8 +154,8 @@ void Reset_All_PID_Integrator(void)
 	Reset_PID_Integrator(&yaw_heading);
 	Reset_PID_Integrator(&yaw_rate);
 
-	Reset_PID_Integrator(&altitude.in);
-	Reset_PID_Integrator(&altitude.out);
+	Reset_PID_Integrator(&altitude);
+//	Reset_PID_Integrator(&altitude);
 
 	Reset_PID_Integrator(&gps_lat.in);
 	Reset_PID_Integrator(&gps_lat.out);
@@ -162,6 +163,32 @@ void Reset_All_PID_Integrator(void)
 	Reset_PID_Integrator(&gps_lon.out);
 }
 
+void Single_Altitude_PID_Calculation(PIDSingle* axis, float set_point_altitude, float current_altitude)
+{
+	axis->reference = set_point_altitude;
+	axis->meas_value = current_altitude;
+
+	axis->error = axis->reference - axis->meas_value;
+
+	axis->kp = 0;
+	if(axis->error > 0.5 || axis->error < -0.5)
+	{
+		if(axis->error > 0) axis->kp = (axis->error - 0.5) * 2600;
+		else axis->kp = (-(axis->error) - 0.5) * 2600;
+
+		if(axis->kp > 4000) axis->kp = 4000;
+	}
+	axis->p_result = axis->error * axis->kp;
+
+	axis->error_deriv = (axis->meas_value - axis->meas_value_prev) / DT;
+	axis->meas_value_prev  = axis->meas_value;
+
+	axis->d_result = axis->kd * axis->error_deriv;
+
+	axis->pid_result = axis->p_result + axis->d_result;
+	if(axis->pid_result < -3000) axis->pid_result = -3000;
+	else if(axis->pid_result > 4500) axis->pid_result = 4500;
+}
 
 void Double_Altitude_PID_Calculation(PIDDouble* axis, float set_point_altitude, float current_altitude)
 {

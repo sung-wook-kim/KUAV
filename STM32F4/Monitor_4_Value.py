@@ -40,7 +40,7 @@ def connect():
             df['target'] = target_li
             df['error'] = error_li
             df['pid_result'] = value_li
-            df.to_csv(f"{timevar}_alt_data.csv")
+            df.to_csv(f"Data/{timevar}_alt_data.csv")
 
         a = int(ser.read(1).hex(), 16)
         if a == 0x88:
@@ -82,7 +82,7 @@ def connect():
                 if error_sign == 1: error = (error & 0x7fffffff) - 2 ** 31
                 if value_sign == 1: value = (value & 0x7fffffff) - 2 ** 31
                 
-                print(alt , target , error , value)
+                print(alt, target, error, value)
                 alt_li.append(alt)
                 target_li.append(target)
                 error_li.append(error)
@@ -92,13 +92,13 @@ fig = plt.figure()
 # h , w 간격 조절
 fig.subplots_adjust(hspace=0.4, wspace=0.2)
 
-ax = plt.subplot(221, xlim=(0, 50), ylim=(-1000, 1000))
+ax = plt.subplot(221, xlim=(0, 50), ylim=(-500, 500))
 ax.set_title("altitude")
-ax_2 = plt.subplot(222, xlim=(0, 50), ylim=(-1000, 1000))
+ax_2 = plt.subplot(222, xlim=(0, 50), ylim=(-500, 500))
 ax_2.set_title("target")
-ax_3 = plt.subplot(223, xlim=(0, 50), ylim=(-1000, 1000))
+ax_3 = plt.subplot(223, xlim=(0, 50), ylim=(-500, 500))
 ax_3.set_title("error")
-ax_4 = plt.subplot(224, xlim=(0, 50), ylim=(-2100, 15000))
+ax_4 = plt.subplot(224, xlim=(0, 50), ylim=(-2000, 5000))
 ax_4.set_title("something you want")
 
 # 화면에 보여질 점의 개수 ( 길이 )

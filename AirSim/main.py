@@ -2,6 +2,7 @@ import airsim
 from airsim import MultirotorClient
 
 import time
+import os
 import pandas as pd
 import keyboard
 
@@ -48,6 +49,7 @@ class MyClient(MultirotorClient):
         self.set_pid_gain()
 
         #Save Flight Data
+        self.path = './data'
         self.flight_data = pd.DataFrame()
         self.flight_data['altitude'] = 0
         self.now = None
@@ -67,7 +69,12 @@ class MyClient(MultirotorClient):
     def __del__(self):
         self.now = time.localtime()
         self.now = time.strftime('%d%H%M%S', self.now)
-        # self.flight_data.to_csv(f'data/simulation_data_{self.now}')
+
+        if not os.path.isdir(self.path):
+            os.mkdir(self.path)
+
+        self.flight_data.to_csv(f'data/simulation_data_{self.now}.csv')
+        print(f'Success to save Flight Data')
 
 
     def run(self):
@@ -112,7 +119,6 @@ class MyClient(MultirotorClient):
             if keyboard.read_key() == 'q':
                 break
 
-        del self.client
 
     def read_angle(self):
         self.angle['pitch'], self.angle['roll'], self.angle['yaw'] = \
@@ -385,3 +391,5 @@ if __name__ == "__main__":
 
     kuav = MyClient()
     kuav.run()
+
+    del kuav
