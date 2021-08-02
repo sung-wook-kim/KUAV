@@ -19,6 +19,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "adc.h"
 #include "dma.h"
 #include "i2c.h"
 #include "spi.h"
@@ -96,7 +97,7 @@ float last_altitude;
 float altitude_filt;
 float baro_offset = 0;
 signed int gps_height_offset = 0;
-float batVolt;
+
 
 float pressure_total_average = 0;
 float pressure_rotating_mem[20] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -158,6 +159,8 @@ uint8_t mode = 0;
 float BNO080_Pitch_Offset = 1.9f;
 float BNO080_Roll_Offset = 0.8f;
 
+unsigned short adcVal;
+float batVolt;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -190,6 +193,7 @@ float BNO080_Roll_Offset = 0.8f;
   MX_SPI3_Init();
   MX_I2C1_Init();
   MX_UART4_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
   LL_TIM_EnableCounter(TIM3); //Buzzer
 
@@ -219,6 +223,7 @@ float BNO080_Roll_Offset = 0.8f;
   LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
   HAL_Delay(60);
 
+  HAL_ADC_Start_DMA(&hadc1, &adcVal, 1); //battery
 
   printf("Checking sensor connection!\n");
 
@@ -532,6 +537,21 @@ gps_lat.in.kd = 0;
 
     /* USER CODE BEGIN 3 */
 //	  printf("%f \t %f \n", BNO080_Roll, BNO080_Pitch);
+//	  printf("%f \t %f \n", LPS22HH.baroAlt, actual_pressure_fast);
+
+
+	  batVolt = adcVal * 0.010770647f;
+//	  printf("%d\t %.2f \n", adcVal, batVolt);
+	  if(batVolt < 16.0f)
+	  {
+		  TIM3->PSC = 2000;
+		  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4); //Enable Timer Counting
+	  }
+	  else
+	  {
+		  LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
+	  }
+
 	  /********************* NX Message Parsing ************************/
 //	  if(nx_rx_cplt_flag==1)
 //	  {
