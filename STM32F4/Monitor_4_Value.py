@@ -25,7 +25,7 @@ def connect():
     # for save
     i = 0
     now = time.localtime()
-    timevar = time.strftime('%Y%m%d%H%M%S', now)
+    timevar = time.strftime('%d%H%M%S', now)
     # list
     alt_li = []
     target_li = []

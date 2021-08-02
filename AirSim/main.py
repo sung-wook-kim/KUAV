@@ -2,6 +2,8 @@ import airsim
 from airsim import MultirotorClient
 
 import time
+import pandas as pd
+import keyboard
 
 class PIDSingle():
     def __init__(self):
@@ -45,6 +47,11 @@ class MyClient(MultirotorClient):
         # Set PID Gain
         self.set_pid_gain()
 
+        #Save Flight Data
+        self.flight_data = pd.DataFrame()
+        self.flight_data['altitude'] = 0
+        self.now = None
+
         # Drone Value
         self.angle = {'pitch': None, 'roll': None, 'yaw': None}
         self.rate = {'pitch': None, 'roll': None, 'yaw': None}
@@ -56,6 +63,11 @@ class MyClient(MultirotorClient):
 
         self.ccr = {1 : None, 2 : None, 3 : None, 4 : None, 'duration': 1}
         self.motor = {1: 0.60001, 2: 0.60001, 3: 0.6, 4: 0.6, 'duration': 1}
+
+    def __del__(self):
+        self.now = time.localtime()
+        self.now = time.strftime('%d%H%M%S', self.now)
+        # self.flight_data.to_csv(f'data/simulation_data_{self.now}')
 
 
     def run(self):
@@ -69,6 +81,9 @@ class MyClient(MultirotorClient):
             self.read_altitude()
             # GPS
             self.read_gps()
+
+            # Save Data
+            self.flight_data['altitude'] = self.altitude
 
             # PID Control
             self.Double_Roll_Pitch_PID_Calculation(self.pitch, 0, self.angle['pitch'], self.rate['pitch'], self.DT)
@@ -93,6 +108,11 @@ class MyClient(MultirotorClient):
             # print('roll : ',self.angle['roll'],' pitch : ', self.angle['pitch'], ' yaw : ', self.angle['yaw'])
 
             self.DT = time.time() - start
+
+            if keyboard.read_key() == 'q':
+                break
+
+        del self.client
 
     def read_angle(self):
         self.angle['pitch'], self.angle['roll'], self.angle['yaw'] = \
