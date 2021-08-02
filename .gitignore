@@ -5,6 +5,7 @@ __pycache__/
 
 #STM32F4
 STM32F4/*.csv
+STM32F4/Data/
 STM32F4/.metadata/
 STM32F4/Flight Controller/Debug/
 STM32F4/Flight Controller/*.launch
