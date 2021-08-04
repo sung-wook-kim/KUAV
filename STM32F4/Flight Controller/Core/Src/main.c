@@ -122,7 +122,7 @@ void BNO080_Calibration(void);
 float Sensor_fusion(float, float, float);
 
 void Encode_Msg_AHRS(unsigned char* telemetry_tx_buf);
-void Encode_Msg_GPS(unsigned char* telemetry_tx_buf);
+void Encode_Msg_Gps(unsigned char* telemetry_tx_buf);
 void Encode_Msg_Altitude(unsigned char* telemetry_tx_buf);
 void Encode_Msg_PID_Gain(unsigned char* telemetry_tx_buf, unsigned char id, float p, float i, float d);
 
@@ -930,10 +930,10 @@ gps_lat.in.kd = 0;
 		  tim7_20ms_flag = 0;
 		  tim7_100ms_flag = 0;
 //		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
-//		  Encode_Msg_GPS(&telemetry_tx_buf[20]);
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
-		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
-		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 22);
+//		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
+		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
+		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 17);
 	  }
 
 
@@ -1339,42 +1339,6 @@ void Encode_Msg_AHRS(unsigned char* telemetry_tx_buf)
 	  }
 }
 
-void Encode_Msg_GPS(unsigned char* telemetry_tx_buf)
-{
-	  telemetry_tx_buf[0] = 0x46;
-	  telemetry_tx_buf[1] = 0x43;
-	  telemetry_tx_buf[2] = 0x10;
-
-	  telemetry_tx_buf[3] = posllh.lat;
-	  telemetry_tx_buf[4] = posllh.lat>>8;
-	  telemetry_tx_buf[5] = posllh.lat>>16;
-	  telemetry_tx_buf[6] = posllh.lat>>24;
-
-	  telemetry_tx_buf[7] = posllh.lon;
-	  telemetry_tx_buf[8] = posllh.lon>>8;
-	  telemetry_tx_buf[9] = posllh.lon>>16;
-	  telemetry_tx_buf[10] = posllh.lon>>24;
-
-//	  telemetry_tx_buf[11] = (unsigned short)(bat.Volt*100);
-//	  telemetry_tx_buf[12] = ((unsigned short)(bat.Volt*100))>>8;
-
-	  telemetry_tx_buf[13] = iBus.SwA ==1000 ? 0 : 1;
-	  telemetry_tx_buf[14] = iBus.SwC ==1000 ? 0 : iBus.SwC == 1500 ? 1 : 2;
-
-	  telemetry_tx_buf[15] = iBus_isActiveFailSafe(&iBus);
-
-	  telemetry_tx_buf[16] = 0x00;
-	  telemetry_tx_buf[17] = 0x00;
-	  telemetry_tx_buf[18] = 0x00;
-
-	  telemetry_tx_buf[19] = 0xff;
-
-	  for(int i=0; i<19; i++)
-	  {
-		  telemetry_tx_buf[19] = telemetry_tx_buf[19] - telemetry_tx_buf[i];
-	  }
-}
-
 void Encode_Msg_PID_Gain(unsigned char* telemetry_tx_buf, unsigned char id, float p, float i, float d)
 {
 	  telemetry_tx_buf[0] = 0x46;
@@ -1490,6 +1454,32 @@ void Encode_Msg_Altitude(unsigned char* telemetry_tx_buf)
 	telemetry_tx_buf[19] = ((int)(altitude.i_result)) >> 16;
 	telemetry_tx_buf[20] = ((int)(altitude.i_result)) >> 8;
 	telemetry_tx_buf[21] = ((int)(altitude.i_result));
+}
+
+void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
+{
+	telemetry_tx_buf[0] = 0x88;
+	telemetry_tx_buf[1] = 0x18;
+
+	telemetry_tx_buf[2] = pvt.iTOW >> 24;
+	telemetry_tx_buf[3] = pvt.iTOW >> 16;
+	telemetry_tx_buf[4] = pvt.iTOW >> 8;
+	telemetry_tx_buf[5] = pvt.iTOW;
+
+	telemetry_tx_buf[6] = posllh.lat >> 24;
+	telemetry_tx_buf[7] = posllh.lat >> 16;
+	telemetry_tx_buf[8] = posllh.lat >> 8;
+	telemetry_tx_buf[9] = posllh.lat;
+
+	telemetry_tx_buf[10] = posllh.lon >> 24;
+	telemetry_tx_buf[11] = posllh.lon >> 16;
+	telemetry_tx_buf[12] = posllh.lon >> 8;
+	telemetry_tx_buf[13] = posllh.lon;
+
+	telemetry_tx_buf[14] = pvt.numSV;
+
+	telemetry_tx_buf[15] = pvt.pDOP >> 8;
+	telemetry_tx_buf[16] = pvt.pDOP;
 }
 /* USER CODE END 4 */
 
