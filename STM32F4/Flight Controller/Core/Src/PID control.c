@@ -50,7 +50,6 @@ void Double_Roll_Pitch_PID_Calculation(PIDDouble* axis, float set_point_angle, f
 	axis->out.error = axis->out.reference - axis->out.meas_value;	//Define error of outer loop
 	axis->out.p_result = axis->out.error * axis->out.kp;			//Calculate P result of outer loop
 
-	axis->out.error_sum = axis->out.error_sum + axis->out.error * DT;	//Define summation of outer loop
 #define OUT_ERR_SUM_MAX 2000
 #define OUT_I_ERR_MIN -OUT_ERR_SUM_MAX
 	if(axis->out.error_sum > OUT_ERR_SUM_MAX) axis->out.error_sum = OUT_ERR_SUM_MAX;
@@ -165,29 +164,34 @@ void Reset_All_PID_Integrator(void)
 
 void Single_Altitude_PID_Calculation(PIDSingle* axis, float set_point_altitude, float current_altitude)
 {
+#define I_RESULT_MAX 500
+#define I_RESULT_MIN -I_RESULT_MAX
+
 	axis->reference = set_point_altitude;
 	axis->meas_value = current_altitude;
 
 	axis->error = axis->reference - axis->meas_value;
-
+	axis->error_sum = axis->error_sum + axis->error * DT;
+	axis->error_deriv = -(axis->meas_value - axis->meas_value_prev) / DT;
+	axis->meas_value_prev  = axis->meas_value;
 	axis->kp = 0;
-	if(axis->error > 0.5 || axis->error < -0.5)
+	if(axis->error > 0.05 || axis->error < -0.05)
 	{
-		if(axis->error > 0) axis->kp = (axis->error - 0.5) * 2600;
-		else axis->kp = (-(axis->error) - 0.5) * 2600;
+		if(axis->error > 0) axis->kp = (axis->error - 0.05) * 3000;
+		else axis->kp = (-(axis->error) - 0.05) * 3000;
 
-		if(axis->kp > 4000) axis->kp = 4000;
+		if(axis->kp > 5000) axis->kp = 5000;
 	}
 	axis->p_result = axis->error * axis->kp;
-
-	axis->error_deriv = (axis->meas_value - axis->meas_value_prev) / DT;
-	axis->meas_value_prev  = axis->meas_value;
-
 	axis->d_result = axis->kd * axis->error_deriv;
+	axis->i_result = axis->ki * axis->error_sum;
+	if(axis->i_result > I_RESULT_MAX) axis->i_result = I_RESULT_MAX;
+	else if(axis->i_result < I_RESULT_MIN ) axis->i_result = I_RESULT_MIN;
 
-	axis->pid_result = axis->p_result + axis->d_result;
+	axis->pid_result = axis->p_result + axis->i_result + axis->d_result;
 	if(axis->pid_result < -3000) axis->pid_result = -3000;
-	else if(axis->pid_result > 4500) axis->pid_result = 4500;
+	else if(axis->pid_result > 5500) axis->pid_result = 5500;
+
 }
 
 void Double_Altitude_PID_Calculation(PIDDouble* axis, float set_point_altitude, float current_altitude)
