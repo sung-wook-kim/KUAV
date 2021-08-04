@@ -543,7 +543,7 @@ gps_lat.in.kd = 0;
 //	  printf("%f \t %f \n", LPS22HH.baroAlt, actual_pressure_fast);
 //	  printf("%f \t %f \n", altitude.p_result, altitude.d_result);
 //	  printf("%d\t %.2f \n", adcVal, batVolt);
-	  printf("%ld\t %ld\t %d\t %d\n" , pvt.lon, pvt.lat, pvt.pDOP, pvt.numSV);
+	  printf("%ld\t %ld\t %d\t %d\n" , posllh.lon, posllh.lat, pvt.pDOP, pvt.numSV);
 
 	  batVolt = adcVal * 0.010770647f;
 
@@ -748,8 +748,8 @@ gps_lat.in.kd = 0;
 
 		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && iBus.LV < 1550 && iBus.LV > 1400) //GPS holding Mode
 		  {
-			  Single_GPS_PID_Calculation(&gps_lon, last_lon, posllh.lon);
-			  Single_GPS_PID_Calculation(&gps_lat, last_lat, posllh.lat);
+			  Double_GPS_PID_Calculation(&gps_lon, last_lon, posllh.lon);
+			  Double_GPS_PID_Calculation(&gps_lat, last_lat, posllh.lat);
 			  Single_Altitude_PID_Calculation(&altitude, last_altitude, actual_pressure_fast);
 
 			  if(iBus.RH > 1500)Is_Move_Roll = iBus.RH - 1500;
