@@ -70,7 +70,7 @@ int _write(int file, char* p, int len)
 extern uint8_t uart6_rx_flag;
 extern uint8_t uart6_rx_data;
 
-extern uint8_t m8n_rx_buf[36];
+extern uint8_t m8n_rx_buf[100];
 extern uint8_t m8n_rx_cplt_flag;
 
 extern uint8_t ibus_rx_buf[32];
@@ -543,9 +543,11 @@ gps_lat.in.kd = 0;
 //	  printf("%f \t %f \n", BNO080_Roll, BNO080_Pitch);
 //	  printf("%f \t %f \n", LPS22HH.baroAlt, actual_pressure_fast);
 //	  printf("%f \t %f \n", altitude.p_result, altitude.d_result);
+//	  printf("%d\t %.2f \n", adcVal, batVolt);
+	  printf("%ld\t %ld\t %d\t %d\n" , pvt.lon, pvt.lat, pvt.pDOP, pvt.numSV);
 
 	  batVolt = adcVal * 0.010770647f;
-//	  printf("%d\t %.2f \n", adcVal, batVolt);
+
 //	  if(batVolt < 16.0f)
 //	  {
 //		  TIM3->PSC = 2000;
@@ -569,10 +571,12 @@ gps_lat.in.kd = 0;
 	  {
 		  m8n_rx_cplt_flag == 0;
 
-		  if(M8N_UBX_CHKSUM_Check(&m8n_rx_buf[0], 36) == 1)
+		  if(M8N_UBX_CHKSUM_Check(&m8n_rx_buf[0], 100) == 1)
 		  {
 			  LL_GPIO_TogglePin(GPIOC, LL_GPIO_PIN_2);
-			  M8N_UBX_NAV_POSLLH_Parsing(&m8n_rx_buf[0], &posllh);
+//			  M8N_UBX_NAV_POSLLH_Parsing(&m8n_rx_buf[0], &posllh);
+			  M8N_UBX_NAV_PVT_Parsing(&m8n_rx_buf[0], &pvt);
+
 			  posllh.height -= gps_height_offset;
 
 			  if((posllh.lon - posllh.lon_prev > 500) || (posllh.lon - posllh.lon_prev < -500)) posllh.lon = posllh.lon_prev;

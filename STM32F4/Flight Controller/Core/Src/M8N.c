@@ -126,3 +126,47 @@ void M8N_UBX_NAV_POSLLH_Parsing(unsigned char* data, M8N_UBX_NAV_POSLLH* posllh)
 //	posllh->lat_f64 = posllh->lat/ 10000000.;
 
 }
+
+
+void M8N_UBX_NAV_PVT_Parsing(unsigned char* data, M8N_UBX_NAV_PVT* pvt)
+{
+	pvt->CLASS = data[2];
+	pvt->ID = data[3];
+	pvt->length = data[4] | data [5]<<8;
+
+	pvt->iTOW = data[6] | data[7]<<8 | data[8]<<16 | data[9]<<24 ;
+	pvt->year =  data[10] | data[11]<<8 ;
+	pvt->month = data[12] ;
+	pvt->day = data[13] ;
+	pvt->hour = data[14] ;
+	pvt->min = data[15] ;
+	pvt->sec = data[16] ;
+	pvt->valid = data[17] ;
+	pvt->tAcc = data[18] | data[19]<<8 | data[20]<<16 | data[21]<<24 ;
+	pvt->nano = data[22] | data[23]<<8 | data[24]<<16 | data[25]<<24 ;
+	pvt->fixType = data[26] ;
+	pvt->flags = data[27] ;
+	pvt->flags2 = data[28] ;
+	pvt->numSV = data[29] ;
+	pvt->lon = data[30] | data[31]<<8 | data[32]<<16 | data[33]<<24 ;
+	pvt->lat = data[34] | data[35]<<8 | data[36]<<16 | data[37]<<24 ;
+	pvt->height = data[38] | data[39]<<8 | data[40]<<16 | data[41]<<24 ;
+	pvt->hMSL = data[42] | data[43]<<8 | data[44]<<16 | data[45]<<24 ;
+	pvt->hAcc = data[46] | data[47]<<8 | data[48]<<16 | data[49]<<24 ;
+	pvt->vAcc = data[50] | data[51]<<8 | data[52]<<16 | data[53]<<24 ;
+	pvt->velN = data[54] | data[55]<<8 | data[56]<<16 | data[57]<<24 ;
+	pvt->velE = data[58] | data[59]<<8 | data[60]<<16 | data[61]<<24 ;
+	pvt->velD = data[62] | data[63]<<8 | data[64]<<16 | data[65]<<24 ;
+	pvt->gSpeed = data[66] | data[67]<<8 | data[68]<<16 | data[69]<<24 ;
+	pvt->headMot = data[70] | data[71]<<8 | data[72]<<16 | data[73]<<24 ;
+	pvt->sAcc = data[74] | data[75]<<8 | data[76]<<16 | data[77]<<24 ;
+	pvt->headAcc = data[78] | data[79]<<8 | data[80]<<16 | data[81]<<24 ;
+	pvt->pDOP = data[82] | data[83]<<8 ;
+	pvt->flags3 = data[84] | data[85]<<8 ;
+	pvt->reserved1 = data[86] | data[87]<<8 | data[88]<<16 | data[89]<<24 ;
+	pvt->headVeh = data[90] | data[91]<<8 | data[92]<<16 | data[93]<<24 ;
+	pvt->magDec = data[94] | data[95]<<8 ;
+	pvt->magAcc = data[96] | data[97]<<8 ;
+	//	pvt->lon_f64 = posllh->lon/ 10000000.;
+	//	pvt->lat_f64 = posllh->lat/ 10000000.;
+}
