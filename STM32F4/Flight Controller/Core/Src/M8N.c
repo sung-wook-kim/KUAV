@@ -1,6 +1,8 @@
 #include "M8N.h"
 
 M8N_UBX_NAV_POSLLH posllh;
+M8N_UBX_NAV_PVT pvt;
+
 
 const unsigned char UBX_CFG_PRT[] = {
 0xB5, 0x62, 0x06, 0x00, 0x14, 0x00, 0x01, 0x00, 0x00, 0x00,
@@ -23,6 +25,11 @@ const unsigned char UBX_CFG_CFG[] = {
 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x17, 0x31,
 0xBF
 }; //Save current configuration, Devices: BBR, FLASH, I2C-EEPROM, SPI-FLASH,
+
+const unsigned char UBX_CFG_MSGPVT[] = {
+0xB5 , 0x62 ,  0x06 ,  0x01 ,  0x08 ,  0x00 ,  0x01 ,  0x07 ,  0x00 ,  0x00 ,
+0x00 ,  0x00 ,  0x00 ,  0x00 ,  0x17 ,  0xDC
+}; //NAV-POSLLH(01-07), UART1
 
 void M8N_TransmitData(unsigned char* data, unsigned char len)
 {
@@ -79,7 +86,8 @@ void M8N_Initialization(void)
 	M8N_UART4_Initialization();
 	M8N_TransmitData(&UBX_CFG_PRT[0], sizeof(UBX_CFG_PRT));
 	HAL_Delay(100);
-	M8N_TransmitData(&UBX_CFG_MSG[0], sizeof(UBX_CFG_MSG));
+//	M8N_TransmitData(&UBX_CFG_MSG[0], sizeof(UBX_CFG_MSG));
+	M8N_TransmitData(&UBX_CFG_MSG[0], sizeof(UBX_CFG_MSGPVT));
 	HAL_Delay(100);
 	M8N_TransmitData(&UBX_CFG_RATE[0], sizeof(UBX_CFG_RATE));
 	HAL_Delay(100);
