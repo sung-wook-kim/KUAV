@@ -110,6 +110,7 @@ typedef struct _LPS22HH{
 	int32_t pressure_raw;
 	int16_t temperature_raw;
 	float baroAlt;
+	float baroAltGround;
 	float baroAltFilt;
 }Struct_LPS22HH;
 
