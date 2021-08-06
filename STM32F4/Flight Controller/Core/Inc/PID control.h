@@ -78,7 +78,7 @@ void Single_Yaw_Heading_PID_Calculation(PIDSingle* axis, float set_point, float 
 void Reset_PID_Integrator(PIDSingle* axis);
 void Reset_All_PID_Integrator(void);
 void Single_Alt_PID_Calculation(PIDSingle* axis, float set_point_alt, float baro);
-void Single_GPS_PID_Calculation(PIDSingle* axis, unsigned int set_point_gps, unsigned int gps);
+void Single_GPS_PID_Calculation(PIDSingle* axis, float set_point_gps, float gps);
 
 
 
