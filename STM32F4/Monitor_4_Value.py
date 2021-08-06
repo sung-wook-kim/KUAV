@@ -9,11 +9,12 @@ import pandas as pd
 
 # 네가지 값 프린트 , 전체변경으로 value 값을 원하는 변수로 변경 하세요
 # alt , target , error global declaration + value
-global alt , target , error ,value
+global alt , target , error ,value, d_result
 alt = 0
 target = 0
 error = 0
 value = 0
+d_result = 0
 
 
 ser = serial.Serial('COM7', 115200)
@@ -21,7 +22,7 @@ ser.flush()
 
 # you have to receive 18bytes
 def connect():
-    global alt , target , error , value
+    global alt , target , error , value , d_result
     # for save
     i = 0
     now = time.localtime()
@@ -31,6 +32,7 @@ def connect():
     target_li = []
     error_li = []
     value_li = []
+    d_result_li = []
     while True:
         i+=1
         # 100개의 데이터 마다 저장
@@ -40,6 +42,7 @@ def connect():
             df['target'] = target_li
             df['error'] = error_li
             df['pid_result'] = value_li
+            df['d_result'] = d_result_li
             df.to_csv(f"Data/{timevar}_alt_data.csv")
 
         a = int(ser.read(1).hex(), 16)
@@ -50,7 +53,6 @@ def connect():
                 alt_2 = int(ser.read(1).hex(), 16) & 0xff
                 alt_3 = int(ser.read(1).hex(), 16) & 0xff
                 alt_4 = int(ser.read(1).hex(), 16) & 0xff
-                
 
                 target_1 = int(ser.read(1).hex(), 16) & 0xff
                 target_2 = int(ser.read(1).hex(), 16) & 0xff
@@ -66,28 +68,36 @@ def connect():
                 value_2 = int(ser.read(1).hex(), 16) & 0xff
                 value_3 = int(ser.read(1).hex(), 16) & 0xff
                 value_4 = int(ser.read(1).hex(), 16) & 0xff
-                
+
+                d_result_1 = int(ser.read(1).hex(), 16) & 0xff
+                d_result_2 = int(ser.read(1).hex(), 16) & 0xff
+                d_result_3 = int(ser.read(1).hex(), 16) & 0xff
+                d_result_4 = int(ser.read(1).hex(), 16) & 0xff
+
                 alt_sign = alt_1 >> 7
                 target_sign = target_1 >> 7
                 error_sign = error_1 >> 7
                 value_sign = value_1 >> 7
+                d_sign = d_result_1 >> 7
 
                 alt = alt_1 << 24 | alt_2 << 16 | alt_3 << 8 | alt_4
                 target = target_1 << 24 | target_2 << 16 | target_3 << 8 | target_4
                 error = error_1 << 24 | error_2 << 16 | error_3 << 8 | error_4
                 value = value_1 << 24 | value_2 << 16 | value_3 << 8 | value_4
+                d_result = d_result_1 << 24 | d_result_2 << 16 | d_result_3 << 8 | d_result_4
 
                 if alt_sign == 1: alt = (alt & 0x7fffffff) - 2 ** 31
                 if target_sign == 1 : target = (target & 0x7fffffff) - 2 ** 31
                 if error_sign == 1: error = (error & 0x7fffffff) - 2 ** 31
                 if value_sign == 1: value = (value & 0x7fffffff) - 2 ** 31
-                
-                print(alt, target, error, value)
+                if d_sign == 1: d_result = (d_result & 0x7fffffff) - 2 ** 31
+
+                print(alt, target, error, value , d_result)
                 alt_li.append(alt)
                 target_li.append(target)
                 error_li.append(error)
                 value_li.append(value)
-
+                d_result_li.append(d_result)
 fig = plt.figure()
 # h , w 간격 조절
 fig.subplots_adjust(hspace=0.4, wspace=0.2)
@@ -169,4 +179,3 @@ anim_2 = animation.FuncAnimation(fig, animate_2  , init_func= init_2 ,frames=200
 anim_3 = animation.FuncAnimation(fig, animate_3  , init_func= init_3 ,frames=200, interval=100, blit=False)
 anim_4 = animation.FuncAnimation(fig, animate_4  , init_func= init_4 ,frames=200, interval=100, blit=False)
 plt.show()
-

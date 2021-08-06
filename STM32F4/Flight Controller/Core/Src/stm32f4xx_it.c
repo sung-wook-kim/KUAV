@@ -51,7 +51,7 @@ uint8_t uart5_rx_data = 0;
 uint8_t uart6_rx_flag = 0;
 uint8_t uart6_rx_data = 0;
 
-uint8_t m8n_rx_buf[36];
+uint8_t m8n_rx_buf[100];
 uint8_t m8n_rx_cplt_flag = 0;
 
 uint8_t ibus_rx_buf[32];
@@ -274,7 +274,7 @@ void UART4_IRQHandler(void)
 					cnt = 0;
 				break;
 
-			case 35:
+			case 99:
 				m8n_rx_buf[cnt] = uart4_rx_data;
 				cnt = 0;
 				m8n_rx_cplt_flag = 1;

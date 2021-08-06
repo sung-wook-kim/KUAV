@@ -34,8 +34,12 @@ PIDSingle yaw_rate;
 
 PIDSingle altitude;
 //PIDDouble altitude;
+
 PIDDouble gps_lon;
 PIDDouble gps_lat;
+
+//PIDDouble gps_lon;
+//PIDDouble gps_lat;
 
 #define DT 0.001f
 #define OUTER_DERIV_FILT_ENABLE 1
@@ -50,7 +54,6 @@ void Double_Roll_Pitch_PID_Calculation(PIDDouble* axis, float set_point_angle, f
 	axis->out.error = axis->out.reference - axis->out.meas_value;	//Define error of outer loop
 	axis->out.p_result = axis->out.error * axis->out.kp;			//Calculate P result of outer loop
 
-	axis->out.error_sum = axis->out.error_sum + axis->out.error * DT;	//Define summation of outer loop
 #define OUT_ERR_SUM_MAX 2000
 #define OUT_I_ERR_MIN -OUT_ERR_SUM_MAX
 	if(axis->out.error_sum > OUT_ERR_SUM_MAX) axis->out.error_sum = OUT_ERR_SUM_MAX;
@@ -157,37 +160,42 @@ void Reset_All_PID_Integrator(void)
 	Reset_PID_Integrator(&altitude);
 //	Reset_PID_Integrator(&altitude);
 
-	Reset_PID_Integrator(&gps_lat.in);
-	Reset_PID_Integrator(&gps_lat.out);
-	Reset_PID_Integrator(&gps_lon.in);
-	Reset_PID_Integrator(&gps_lon.out);
+//	Reset_PID_Integrator(&gps_lat.in);
+//	Reset_PID_Integrator(&gps_lat.out);
+//	Reset_PID_Integrator(&gps_lon.in);
+//	Reset_PID_Integrator(&gps_lon.out);
 }
 
 void Single_Altitude_PID_Calculation(PIDSingle* axis, float set_point_altitude, float current_altitude)
 {
+#define I_RESULT_MAX 500
+#define I_RESULT_MIN -I_RESULT_MAX
+
 	axis->reference = set_point_altitude;
 	axis->meas_value = current_altitude;
 
 	axis->error = axis->reference - axis->meas_value;
-
+	axis->error_sum = axis->error_sum + axis->error * DT;
+	axis->error_deriv = -(axis->meas_value - axis->meas_value_prev) / DT;
+	axis->meas_value_prev  = axis->meas_value;
 	axis->kp = 0;
-	if(axis->error > 0.5 || axis->error < -0.5)
+	if(axis->error > 0.05 || axis->error < -0.05)
 	{
-		if(axis->error > 0) axis->kp = (axis->error - 0.5) * 2600;
-		else axis->kp = (-(axis->error) - 0.5) * 2600;
+		if(axis->error > 0) axis->kp = (axis->error - 0.05) * 3000;
+		else axis->kp = (-(axis->error) - 0.05) * 3000;
 
-		if(axis->kp > 4000) axis->kp = 4000;
+		if(axis->kp > 5000) axis->kp = 5000;
 	}
 	axis->p_result = axis->error * axis->kp;
-
-	axis->error_deriv = (axis->meas_value - axis->meas_value_prev) / DT;
-	axis->meas_value_prev  = axis->meas_value;
-
 	axis->d_result = axis->kd * axis->error_deriv;
+	axis->i_result = axis->ki * axis->error_sum;
+	if(axis->i_result > I_RESULT_MAX) axis->i_result = I_RESULT_MAX;
+	else if(axis->i_result < I_RESULT_MIN ) axis->i_result = I_RESULT_MIN;
 
-	axis->pid_result = axis->p_result + axis->d_result;
+	axis->pid_result = axis->p_result + axis->i_result + axis->d_result;
 	if(axis->pid_result < -3000) axis->pid_result = -3000;
-	else if(axis->pid_result > 4500) axis->pid_result = 4500;
+	else if(axis->pid_result > 5500) axis->pid_result = 5500;
+
 }
 
 void Double_Altitude_PID_Calculation(PIDDouble* axis, float set_point_altitude, float current_altitude)
@@ -249,6 +257,27 @@ if (axis->in.pid_result < -2100) axis->in.pid_result = -2100;
 if (axis->in.pid_result > 16800) axis->in.pid_result = 16800;
 
 }
+
+//void Single_GPS_PID_Calculation(PIDSingle* axis, float set_point_gps, float gps/*ICM-20602 Angular Rate*/)
+//{
+//	/*********** Single PID Begin (Yaw Angular Rate Control) *************/
+//	axis->reference = set_point_gps;	//Set point of yaw heading @ yaw stick is not center.
+//	axis->meas_value = gps;			//Current ICM20602.gyro_z @ yaw stick is not center.
+//
+//	axis->error = axis->reference - axis->meas_value;	//Define error of yaw rate control
+//	axis->p_result = axis->error * axis->kp;			//Calculate P result of yaw rate control
+//
+//	axis->error_sum = axis->error_sum + axis->error * DT;	//Define summation of yaw rate control
+//	axis->i_result = axis->error_sum * axis->ki;			//Calculate I result of yaw rate control
+//
+//	axis->error_deriv = -(axis->meas_value - axis->meas_value_prev) / DT;	//Define differentiation of yaw rate control
+//	axis->meas_value_prev = axis->meas_value;								//Refresh value_prev to the latest value
+//	axis->d_result = axis->error_deriv * axis->kd;							//Calculate D result of yaw rate control
+//
+//	axis->pid_result = axis->p_result + axis->i_result + axis->d_result; //Calculate PID result of yaw control
+//	/*******************************************************************/
+//}
+
 
 void Double_GPS_PID_Calculation(PIDDouble* axis, float set_point_gps, float gps)
 {
