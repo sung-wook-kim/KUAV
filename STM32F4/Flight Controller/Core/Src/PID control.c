@@ -35,11 +35,8 @@ PIDSingle yaw_rate;
 PIDSingle altitude;
 //PIDDouble altitude;
 
-PIDDouble gps_lon;
-PIDDouble gps_lat;
-
-//PIDDouble gps_lon;
-//PIDDouble gps_lat;
+PDSingle_GPS lat;
+PDSingle_GPS lon;
 
 #define DT 0.001f
 #define OUTER_DERIV_FILT_ENABLE 1
@@ -148,6 +145,12 @@ void Reset_PID_Integrator(PIDSingle* axis)
 	axis->error_sum = 0;
 }
 
+void Reset_GPS_Integrator(PDSingle_GPS* axis)
+{
+	axis->total_average = 0;
+	axis->rotating_mem_location = 0;
+}
+
 void Reset_All_PID_Integrator(void)
 {
 	Reset_PID_Integrator(&roll.in);
@@ -158,12 +161,9 @@ void Reset_All_PID_Integrator(void)
 	Reset_PID_Integrator(&yaw_rate);
 
 	Reset_PID_Integrator(&altitude);
-//	Reset_PID_Integrator(&altitude);
 
-//	Reset_PID_Integrator(&gps_lat.in);
-//	Reset_PID_Integrator(&gps_lat.out);
-//	Reset_PID_Integrator(&gps_lon.in);
-//	Reset_PID_Integrator(&gps_lon.out);
+	Reset_GPS_Integrator(&lat);
+	Reset_GPS_Integrator(&lon);
 }
 
 void Single_Altitude_PID_Calculation(PIDSingle* axis, float set_point_altitude, float current_altitude)
@@ -298,35 +298,30 @@ if (axis->in.pid_result > 16800) axis->in.pid_result = 16800;
 //	axis->pid_result = axis->p_result + axis->i_result + axis->d_result; //Calculate PID result of yaw control
 //	/*******************************************************************/
 //}
-void Single_GPS_PID_Calculation(PIDSingle* axis, float set_point_gps, float gps)
+void Single_GPS_PD_Calculation(PDSingle_GPS* axis, float set_point_gps, float gps)
 {
-#define GPS_ERR_SUM_MAX 500
-#define GPS_ERR_SUM_MIN -GPS_ERR_SUM_MAX
-#define ENABLE_GPS_DERIV_FILT 1
-
 	axis->reference = set_point_gps;
 	axis->meas_value = gps;
 
-	axis->error = axis->reference - axis->meas_value;
-	axis->p_result = axis->error * axis->kp;
+	axis->error = axis->reference - axis->meas_value;                                                         //Calculate the latitude error between waypoint and actual position.
 
-	axis->error_sum = axis->error_sum + axis->error * DT;
-	if(axis->error_sum > GPS_ERR_SUM_MAX) axis->error_sum = GPS_ERR_SUM_MAX;
-	else if(axis->error_sum < GPS_ERR_SUM_MIN) axis->error_sum = GPS_ERR_SUM_MIN;
-	axis->i_result = axis->error_sum * axis->ki;
+	axis->total_average -=  axis->rotating_mem[axis->rotating_mem_location];                         //Subtract the current memory position to make room for the new value.
+	axis->rotating_mem[ axis->rotating_mem_location] = axis->error - axis->error_prev;          //Calculate the new change between the actual pressure and the previous measurement.
+	axis->total_average +=  axis->rotating_mem[ axis->rotating_mem_location];                         //Add the new value to the long term avarage value.
 
-	axis->error_deriv = -(axis->meas_value - axis->meas_value_prev) / DT;
-	axis->meas_value_prev = axis->meas_value;
+	axis->rotating_mem_location++;                                                                        //Increase the rotating memory location.
+	if ( axis->rotating_mem_location == 35) axis->rotating_mem_location = 0;                                //Start at 0 when the memory location 35 is reached.
 
-#if !ENABLE_GPS_DERIV_FILT
-	axis->d_result = axis->error_deriv * axis->kd;
-#else
-	axis->error_deriv_filt = axis->error_deriv_filt * 0.4f + axis->error_deriv * 0.6f;
-	axis->d_result = axis->error_deriv_filt * axis->kd;
-#endif
+	axis->error_prev = axis->error;                                                             //Remember the error for the next loop.
 
-	axis->pid_result = axis->p_result + axis->i_result + axis->d_result;
+	//Calculate the GPS pitch and roll correction as if the nose of the multicopter is facing north.
+	//The Proportional part = (float)gps_lat_error * gps_p_gain.
+	//The Derivative part = (float)gps_lat_total_avarage * gps_d_gain.
+	axis->p_result = axis->kp * axis->error;
 
+	axis->d_result = axis->kd * axis->total_average;
+
+	axis->pd_result = axis->p_result + axis->d_result;
 }
 
 void Double_GPS_PID_Calculation(PIDDouble* axis, float set_point_gps, float gps)

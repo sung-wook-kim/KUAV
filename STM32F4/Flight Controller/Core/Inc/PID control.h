@@ -59,14 +59,38 @@ typedef struct _PIDDouble
 	PIDSingle out;
 }PIDDouble;
 
+typedef struct PDSingle_GPS
+{
+	float kp;
+	float kd;
+
+	float reference;
+	float meas_value;
+	float meas_value_prev;
+
+	float total_average;
+	float rotating_mem[40];
+	unsigned char rotating_mem_location;
+
+	float error;
+	float error_prev;
+	float error_sum;
+	float error_deriv;
+	float error_deriv_filt;
+
+	float p_result;
+	float d_result;
+
+	float pd_result;
+}PDSingle_GPS;
+
 
 extern PIDDouble roll;
 extern PIDDouble pitch;
 
 extern PIDSingle altitude;
-//extern PIDDouble altitude;
-extern PIDDouble gps_lon;
-extern PIDDouble gps_lat;
+extern PDSingle_GPS lat;
+extern PDSingle_GPS lon;
 
 extern PIDSingle yaw_heading;
 extern PIDSingle yaw_rate;
@@ -78,18 +102,11 @@ void Single_Yaw_Heading_PID_Calculation(PIDSingle* axis, float set_point, float 
 void Reset_PID_Integrator(PIDSingle* axis);
 void Reset_All_PID_Integrator(void);
 void Single_Alt_PID_Calculation(PIDSingle* axis, float set_point_alt, float baro);
-void Single_GPS_PID_Calculation(PIDSingle* axis, float set_point_gps, float gps);
-
-
-
-
-
 
 void Single_Altitude_PID_Calculation(PIDSingle* axis, float set_point_altitude, float current_altitude);
 void Double_Altitude_PID_Calculation(PIDDouble* axis, float set_point_antitude, float anltitude);
+void Single_GPS_PD_Calculation(PDSingle_GPS* axis, float set_point_gps, float gps);
 void Double_GPS_PID_Calculation(PIDDouble* axis, float set_point_gps, float gps);
-
-
 
 #ifdef __cplusplus
 }

@@ -122,6 +122,10 @@ float lon_gps_loop_add;
 float lat_gps_add;
 float lon_gps_add;
 unsigned char new_gps_data_available;
+float gps_roll_adjust;
+float gps_pitch_adjust;
+#define GPS_PD_MAX 300
+#define GPS_PD_MIN -GPS_PD_MAX
 
 // Motor Value
 uint8_t ccr[18];
@@ -399,19 +403,10 @@ altitude.kd = 15;
 //altitude.in.ki = 0;
 //altitude.in.kd = 0.1;
 
-gps_lon.out.kp = 50;
-gps_lon.out.ki = 0;
-gps_lon.out.kd = 0;
-gps_lon.in.kp = 2;
-gps_lon.in.ki = 0;
-gps_lon.in.kd = 0;
-
-gps_lat.out.kp = 50;
-gps_lat.out.ki = 0;
-gps_lat.out.kd = 0;
-gps_lat.in.kp = 2;
-gps_lat.in.ki = 0;
-gps_lat.in.kd = 0;
+lon.kp = 0;
+lon.kd = 0;
+lat.kp = 0;
+lat.kd = 0;
 
 /*Receiver Detection*/
   while(Is_iBus_Received() == 0)
@@ -749,22 +744,28 @@ gps_lat.in.kd = 0;
 			  if (gps_add_counter >= 0)gps_add_counter --;
 			  Read_Gps();
 
+			  Single_GPS_PD_Calculation(&lat, l_lat_waypoint, l_lat_gps);
+			  Single_GPS_PD_Calculation(&lon, l_lon_waypoint, l_lon_gps);
 			  Single_Altitude_PID_Calculation(&altitude, last_altitude, actual_pressure_fast);
 
-			  if(iBus.RH > 1500)Is_Move_Roll = iBus.RH - 1500;
-			  else Is_Move_Roll = 1500 - iBus.RH;
+			  //Because the correction is calculated as if the nose was facing north, we need to convert it for the current heading.
+			  gps_roll_adjust = ((float)lon.pd_result * cos(BNO080_Yaw * 0.017453)) + ((float)lat.pd_result * cos((BNO080_Yaw - 90) * 0.017453));
+			  gps_pitch_adjust = ((float)lat.pd_result * cos(BNO080_Yaw * 0.017453)) + ((float)lon.pd_result * cos((BNO080_Yaw + 90) * 0.017453));
 
-			  if(iBus.RV > 1500)Is_Move_Pitch = iBus.RV - 1500;
-			  else Is_Move_Pitch = 1500 - iBus.RV;
+			  //Limit the maximum correction to 300. This way we still have full controll with the pitch and roll stick on the transmitter.
+			  if (gps_roll_adjust > GPS_PD_MAX) gps_roll_adjust = GPS_PD_MAX;
+			  if (gps_roll_adjust < GPS_PD_MIN) gps_roll_adjust = GPS_PD_MIN;
+			  if (gps_pitch_adjust > GPS_PD_MAX) gps_pitch_adjust = GPS_PD_MAX;
+			  if (gps_pitch_adjust < GPS_PD_MIN) gps_pitch_adjust = GPS_PD_MIN;
 
-			  if ( (Is_Move_Roll < 50) && (Is_Move_Pitch < 50))
+			  if ( (iBus.RH - 1500 > -50) && (iBus.RH - 1500 < 50) && (iBus.RV - 1500 > -50) && (iBus.RV - 1500 < 50))
 			  {
 				  Single_Yaw_Heading_PID_Calculation(&yaw_heading, 0 , BNO080_Yaw, ICM20602.gyro_z);
-				  ccr1 = 84000 + landing_throttle - gps_lon.in.pid_result * (-sin(theta_radian)) + gps_lat.in.pid_result * cos(theta_radian) + gps_lon.in.pid_result * cos(theta_radian) + gps_lat.in.pid_result * sin(theta_radian) -yaw_heading.pid_result  + altitude.pid_result;
-				  ccr2 = 84000 + landing_throttle + gps_lon.in.pid_result * (-sin(theta_radian)) + gps_lat.in.pid_result * cos(theta_radian) + gps_lon.in.pid_result * cos(theta_radian) + gps_lat.in.pid_result * sin(theta_radian) +yaw_heading.pid_result  + altitude.pid_result;
+				  ccr1 = 84000 + landing_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.pid_result + altitude.pid_result - gps_pitch_adjust + gps_roll_adjust;
+				  ccr2 = 84000 + landing_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.pid_result + altitude.pid_result + gps_pitch_adjust + gps_roll_adjust;
 				  ccr2 = (unsigned int)((float)ccr2 * 0.88f);
-				  ccr3 = 84000 + landing_throttle + gps_lon.in.pid_result * (-sin(theta_radian)) + gps_lat.in.pid_result * cos(theta_radian) - gps_lon.in.pid_result * cos(theta_radian) + gps_lat.in.pid_result * sin(theta_radian) -yaw_heading.pid_result  + altitude.pid_result;
-				  ccr4 = 84000 + landing_throttle - gps_lon.in.pid_result * (-sin(theta_radian)) + gps_lat.in.pid_result * cos(theta_radian) - gps_lon.in.pid_result * cos(theta_radian) + gps_lat.in.pid_result * sin(theta_radian) +yaw_heading.pid_result  + altitude.pid_result;
+				  ccr3 = 84000 + landing_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.pid_result + altitude.pid_result + gps_pitch_adjust - gps_roll_adjust;
+				  ccr4 = 84000 + landing_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.pid_result + altitude.pid_result - gps_pitch_adjust - gps_roll_adjust;
 				  ccr4 = (unsigned int)((float)ccr4 * 0.88f);
 			  }
 			  else
