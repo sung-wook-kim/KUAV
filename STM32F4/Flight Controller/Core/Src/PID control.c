@@ -298,7 +298,36 @@ if (axis->in.pid_result > 16800) axis->in.pid_result = 16800;
 //	axis->pid_result = axis->p_result + axis->i_result + axis->d_result; //Calculate PID result of yaw control
 //	/*******************************************************************/
 //}
+void Single_GPS_PID_Calculation(PIDSingle* axis, float set_point_gps, float gps)
+{
+#define GPS_ERR_SUM_MAX 500
+#define GPS_ERR_SUM_MIN -GPS_ERR_SUM_MAX
+#define ENABLE_GPS_DERIV_FILT 1
 
+	axis->reference = set_point_gps;
+	axis->meas_value = gps;
+
+	axis->error = axis->reference - axis->meas_value;
+	axis->p_result = axis->error * axis->kp;
+
+	axis->error_sum = axis->error_sum + axis->error * DT;
+	if(axis->error_sum > GPS_ERR_SUM_MAX) axis->error_sum = GPS_ERR_SUM_MAX;
+	else if(axis->error_sum < GPS_ERR_SUM_MIN) axis->error_sum = GPS_ERR_SUM_MIN;
+	axis->i_result = axis->error_sum * axis->ki;
+
+	axis->error_deriv = -(axis->meas_value - axis->meas_value_prev) / DT;
+	axis->meas_value_prev = axis->meas_value;
+
+#if !ENABLE_GPS_DERIV_FILT
+	axis->d_result = axis->error_deriv * axis->kd;
+#else
+	axis->error_deriv_filt = axis->error_deriv_filt * 0.4f + axis->error_deriv * 0.6f;
+	axis->d_result = axis->error_deriv_filt * axis->kd;
+#endif
+
+	axis->pid_result = axis->p_result + axis->i_result + axis->d_result;
+
+}
 
 void Double_GPS_PID_Calculation(PIDDouble* axis, float set_point_gps, float gps)
 {
