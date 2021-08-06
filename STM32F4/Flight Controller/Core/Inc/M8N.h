@@ -51,7 +51,9 @@ typedef struct _M8N_UBX_NAV_PVT
 	unsigned char flags2; //X1 date type
 	unsigned char numSV;
 	signed int lon;
+	signed int lon_prev;
 	signed int lat;
+	signed int lat_prev;
 	signed int height;
 	signed int hMSL;
 	unsigned int hAcc;
