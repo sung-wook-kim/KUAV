@@ -104,6 +104,7 @@ float pressure_rotating_mem[20] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
 int pressure_rotating_mem_location = 0;
 float actual_pressure_diff;
 float actual_pressure_fast = 0, actual_pressure_slow = 0;
+float actual_pressure;
 
 uint8_t ccr[18];
 unsigned int ccr1 ,ccr2, ccr3, ccr4;
@@ -506,7 +507,7 @@ gps_lat.in.kd = 0;
 //			  //LL_GPIO_TogglePin(GPIOC, LL_GPIO_PIN_2);
 //			  M8N_UBX_NAV_POSLLH_Parsing(&m8n_rx_buf[0], &posllh);
 //			  gps_cnt++;
-//			  //		  printf("%d %ld %ld %d %d %d %ld\n", mode, posllh.lat, posllh.lon, (int)LPS22HH.baroAltFilt, (int)BNO080_Yaw, (int)XAVIER.mode, XAVIER.lat)
+  //			printf("%d %ld %ld %d %d %d %ld\n", mode, posllh.lat, posllh.lon, (int)LPS22HH.baroAltFilt, (int)BNO080_Yaw, (int)XAVIER.mode, XAVIER.lat)
 //		  }
 //	  }
 //	  HAL_Delay(200);
@@ -542,10 +543,11 @@ gps_lat.in.kd = 0;
 //	  printf("%f \t %f \n", BNO080_Roll, BNO080_Pitch);
 //	  printf("%f \t %f \n", LPS22HH.baroAlt, actual_pressure_fast);
 //	  printf("%f \t %f \n", altitude.p_result, altitude.d_result);
-//	  printf("%d\t %.2f \n", adcVal, batVolt);
-	  printf("%ld\t %ld\t %d\t %d\n" , posllh.lon, posllh.lat, pvt.pDOP, pvt.numSV);
 
-	  batVolt = adcVal * 0.010770647f;
+//	  printf("%d\t %d\t %d\t %d\t %d\t %d\t %d\n" ,pvt.CLASS, pvt.ID, pvt.lon, pvt.lat, pvt.pDOP, pvt.numSV, pvt.fixType);
+
+	  batVolt = adcVal * 0.00699563f;
+//	  printf("%d\t %.2f \n", adcVal, batVolt);
 
 //	  if(batVolt < 16.0f)
 //	  {
@@ -573,16 +575,16 @@ gps_lat.in.kd = 0;
 		  if(M8N_UBX_CHKSUM_Check(&m8n_rx_buf[0], 100) == 1)
 		  {
 			  LL_GPIO_TogglePin(GPIOC, LL_GPIO_PIN_2);
-//			  M8N_UBX_NAV_POSLLH_Parsing(&m8n_rx_buf[0], &posllh);
 			  M8N_UBX_NAV_PVT_Parsing(&m8n_rx_buf[0], &pvt);
+//	 		  M8N_UBX_NAV_POSLLH_Parsing(&m8n_rx_buf[0], &posllh);
+			  pvt.height -= gps_height_offset;
 
-			  posllh.height -= gps_height_offset;
+			  if((pvt.lon - pvt.lon_prev > 500) || (pvt.lon - pvt.lon_prev < -500)) pvt.lon = pvt.lon_prev;
+			  if((pvt.lat - pvt.lat_prev > 500) || (pvt.lat - pvt.lat_prev < -500)) pvt.lat = pvt.lat_prev;
 
-			  if((posllh.lon - posllh.lon_prev > 500) || (posllh.lon - posllh.lon_prev < -500)) posllh.lon = posllh.lon_prev;
-			  if((posllh.lat - posllh.lat_prev > 500) || (posllh.lat - posllh.lat_prev < -500)) posllh.lat = posllh.lat_prev;
+			  pvt.lon_prev = pvt.lon;
+			  pvt.lat_prev = pvt.lat;
 
-			  posllh.lon_prev = posllh.lon;
-			  posllh.lat_prev = posllh.lat;
 		  }
 	  }
 
@@ -748,8 +750,8 @@ gps_lat.in.kd = 0;
 
 		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && iBus.LV < 1550 && iBus.LV > 1400) //GPS holding Mode
 		  {
-			  Double_GPS_PID_Calculation(&gps_lon, last_lon, posllh.lon);
-			  Double_GPS_PID_Calculation(&gps_lat, last_lat, posllh.lat);
+			  Double_GPS_PID_Calculation(&gps_lon, last_lon, pvt.lon);
+			  Double_GPS_PID_Calculation(&gps_lat, last_lat, pvt.lat);
 			  Single_Altitude_PID_Calculation(&altitude, last_altitude, actual_pressure_fast);
 
 			  if(iBus.RH > 1500)Is_Move_Roll = iBus.RH - 1500;
@@ -784,8 +786,8 @@ gps_lat.in.kd = 0;
 
 //		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && iBus.LV < 1550 && iBus.LV > 1400) //GPS holding Mode
 //		  {
-//			  Double_GPS_PID_Calculation(&gps_lon, last_lon, posllh.lon);
-//			  Double_GPS_PID_Calculation(&gps_lat, last_lat, posllh.lat);
+//			  Double_GPS_PID_Calculation(&gps_lon, last_lon, pvt.lon);
+//			  Double_GPS_PID_Calculation(&gps_lat, last_lat, pvt.lat);
 //			  Single_Altitude_PID_Calculation(&altitude, last_altitude, actual_pressure_fast);
 ////			  Double_Altitude_PID_Calculation(&altitude, last_altitude, actual_pressure_fast);
 //
@@ -837,8 +839,8 @@ gps_lat.in.kd = 0;
 				  ccr4 = (unsigned int)((float)ccr4 * 0.94f);
 			  }
 
-			  last_lat = posllh.lat;
-			  last_lon = posllh.lon;
+			  last_lat = pvt.lat;
+			  last_lon = pvt.lon;
 			  last_altitude = actual_pressure_fast;
 			  Reset_PID_Integrator(&altitude);
 		  }
@@ -988,20 +990,28 @@ gps_lat.in.kd = 0;
 		  LPS22HH_GetTemperature(&LPS22HH.temperature_raw);
 
 		  LPS22HH.baroAlt = getAltitude2(LPS22HH.pressure_raw/4096.f, LPS22HH.temperature_raw/100.f); //Default Unit = 1m
+		  LPS22HH.baroAltGround = LPS22HH.baroAlt - baro_offset;
 
+		  //moving average of altitude
 		  pressure_total_average -= pressure_rotating_mem[pressure_rotating_mem_location];
 		  pressure_rotating_mem[pressure_rotating_mem_location] = LPS22HH.baroAlt - baro_offset;
 		  pressure_total_average += pressure_rotating_mem[pressure_rotating_mem_location];
 		  pressure_rotating_mem_location++;
 		  if(pressure_rotating_mem_location ==10) pressure_rotating_mem_location = 0;
 		  actual_pressure_fast = pressure_total_average / 10.0f;
+
+		  //1st order IIR
 		  actual_pressure_slow = actual_pressure_slow * 0.985f + actual_pressure_fast * 0.015f;
 
-//		  actual_pressure_diff = actual_pressure_slow - actual_pressure_fast;
-//		  if (actual_pressure_diff > 0.08f || actual_pressure_diff < -0.08f) actual_pressure_slow -= actual_pressure_fast / 6.0f;
-
-//		  printf("%f, %f, %f\n", LPS22HH.baroAlt, baro_offset, actual_pressure_slow);
+		  actual_pressure_diff = actual_pressure_slow - actual_pressure_fast;
+		  if (actual_pressure_diff > 4)actual_pressure_diff = 4;
+		  if (actual_pressure_diff < -4)actual_pressure_diff = -4;
+		  if (actual_pressure_diff > 0.5 || actual_pressure_diff < -0.5) actual_pressure_slow -= actual_pressure_diff / 3.0;
+		   actual_pressure = actual_pressure_slow;
+//		   printf( "%f\t %f\t%f\t %f\t %f\n", LPS22HH.baroAltGround, actual_pressure_fast, actual_pressure_slow , actual_pressure_diff , actual_pressure );
+//		   printf("%f/n",LPS22HH.baroAltGround);
 	  }
+
 
 
 	  /***********************************************************************************************
@@ -1466,15 +1476,15 @@ void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[4] = pvt.iTOW >> 8;
 	telemetry_tx_buf[5] = pvt.iTOW;
 
-	telemetry_tx_buf[6] = posllh.lat >> 24;
-	telemetry_tx_buf[7] = posllh.lat >> 16;
-	telemetry_tx_buf[8] = posllh.lat >> 8;
-	telemetry_tx_buf[9] = posllh.lat;
+	telemetry_tx_buf[6] = pvt.lat >> 24;
+	telemetry_tx_buf[7] = pvt.lat >> 16;
+	telemetry_tx_buf[8] = pvt.lat >> 8;
+	telemetry_tx_buf[9] = pvt.lat;
 
-	telemetry_tx_buf[10] = posllh.lon >> 24;
-	telemetry_tx_buf[11] = posllh.lon >> 16;
-	telemetry_tx_buf[12] = posllh.lon >> 8;
-	telemetry_tx_buf[13] = posllh.lon;
+	telemetry_tx_buf[10] = pvt.lon >> 24;
+	telemetry_tx_buf[11] = pvt.lon >> 16;
+	telemetry_tx_buf[12] = pvt.lon >> 8;
+	telemetry_tx_buf[13] = pvt.lon;
 
 	telemetry_tx_buf[14] = pvt.numSV;
 

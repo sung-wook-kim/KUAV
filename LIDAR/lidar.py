@@ -18,4 +18,5 @@ while True:
             distance = np.int16(recv[2] + np.int16(recv[3] << 8))
 
             print(f'distance = {distance}cm')
+            time.sleep(0.1)
             ser.reset_input_buffer()
