@@ -37,6 +37,9 @@ typedef struct _PIDSingle
 	float reference;
 	float meas_value;
 	float meas_value_prev;
+	float meas_rate;
+	float meas_rate_prev;
+
 	float error;
 	float error_prev;
 	float error_sum;

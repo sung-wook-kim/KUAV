@@ -198,6 +198,27 @@ void Single_Altitude_PID_Calculation(PIDSingle* axis, float set_point_altitude, 
 
 }
 
+void Single_Altitude_Rate_PID_Calculation(PIDSingle* axis, float set_point_rate, float current_altitude)
+{
+	axis->reference = set_point_rate;
+	axis->meas_value = current_altitude;
+
+	axis->meas_rate = -(axis->meas_value - axis->meas_value_prev) / DT;
+	axis->meas_value_prev = axis->meas_value;
+
+	axis->error = axis->reference - axis->meas_rate;
+	axis->p_result = axis->kp * axis->error;
+
+	axis->error_sum = axis->error_sum + axis->error * DT;
+	axis->i_result = axis->ki * axis->error_sum;
+
+	axis->error_deriv = -(axis->meas_rate - axis->meas_rate_prev) / DT;
+	axis->meas_rate_prev = axis->meas_rate_prev;
+	axis->d_result = axis->kd * axis->error_deriv;
+
+	axis->pid_result = axis->p_result + axis->i_result + axis->d_result;
+}
+
 void Double_Altitude_PID_Calculation(PIDDouble* axis, float set_point_altitude, float current_altitude)
 {
 	/*********** Double PID Outer Begin (Roll and Pitch Angular Position Control) *************/
