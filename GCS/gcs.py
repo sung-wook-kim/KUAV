@@ -30,8 +30,6 @@ class window(QtWidgets.QMainWindow):
         self.data = io.BytesIO()
         self.m.save(self.data, close_file=False)
 
-
-
         self.statuslayout = QtWidgets.QHBoxLayout()
         self.altstatus = QtWidgets.QLabel("고도 : ",self)
         self.mission_lat = QtWidgets.QLineEdit("Mission lat",self)
@@ -78,7 +76,6 @@ class window(QtWidgets.QMainWindow):
         self.ser = 0
         self.header_1 = b'0x44'
         self.header_2 = b'0x77'
-
 
         self.MISSION_LAT = 0
         self.MISSION_LON = 0
@@ -145,6 +142,7 @@ class window(QtWidgets.QMainWindow):
         msgT = f"1\n{self.MISSION_LAT}\n{self.MISSION_LON}"
         self.client_socket.sendall(msgT.encode())
         _ = self.client_socket.recv(1024) # don't need this
+        self.automatic = 0
     
     # 리턴투홈
     def RTH(self):
