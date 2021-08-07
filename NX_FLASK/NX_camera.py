@@ -73,7 +73,7 @@ class NX(BaseCamera):
     @staticmethod
     def frames():
         out, weights, imgsz, stride = \
-            'inference/output', 'weights/yolov5m.pt', 640, 32
+            'inference/output', 'weights/yolov5s.pt', 640, 32
         # source = 'test.mp4'
         source = 0
         device = torch_utils.select_device()

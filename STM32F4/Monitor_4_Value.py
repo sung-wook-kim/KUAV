@@ -9,20 +9,20 @@ import pandas as pd
 
 # 네가지 값 프린트 , 전체변경으로 value 값을 원하는 변수로 변경 하세요
 # alt , target , error global declaration + value
-global alt , target , error ,value, d_result
+global alt , target , error ,value, d_result , voltage
 alt = 0
 target = 0
 error = 0
 value = 0
 d_result = 0
-
+voltage = 0
 
 ser = serial.Serial('COM7', 115200)
 ser.flush()
 
 # you have to receive 18bytes
 def connect():
-    global alt , target , error , value , d_result
+    global alt , target , error , value , d_result , voltage
     # for save
     i = 0
     now = time.localtime()
@@ -74,6 +74,11 @@ def connect():
                 d_result_3 = int(ser.read(1).hex(), 16) & 0xff
                 d_result_4 = int(ser.read(1).hex(), 16) & 0xff
 
+                voltage_1 = int(ser.read(1).hex(), 16) & 0xff
+                voltage_2 = int(ser.read(1).hex(), 16) & 0xff
+                voltage_3 = int(ser.read(1).hex(), 16) & 0xff
+                voltage_4 = int(ser.read(1).hex(), 16) & 0xff
+
                 alt_sign = alt_1 >> 7
                 target_sign = target_1 >> 7
                 error_sign = error_1 >> 7
@@ -85,6 +90,7 @@ def connect():
                 error = error_1 << 24 | error_2 << 16 | error_3 << 8 | error_4
                 value = value_1 << 24 | value_2 << 16 | value_3 << 8 | value_4
                 d_result = d_result_1 << 24 | d_result_2 << 16 | d_result_3 << 8 | d_result_4
+                voltage = voltage_1 << 24 | voltage_2 << 16 | voltage_3 << 8 | voltage_4
 
                 if alt_sign == 1: alt = (alt & 0x7fffffff) - 2 ** 31
                 if target_sign == 1 : target = (target & 0x7fffffff) - 2 ** 31
@@ -92,7 +98,7 @@ def connect():
                 if value_sign == 1: value = (value & 0x7fffffff) - 2 ** 31
                 if d_sign == 1: d_result = (d_result & 0x7fffffff) - 2 ** 31
 
-                print(alt, target, error, value , d_result)
+                print(alt, target, error, value , d_result , voltage)
                 alt_li.append(alt)
                 target_li.append(target)
                 error_li.append(error)
