@@ -293,7 +293,7 @@ if (axis->in.pid_result > 8000) axis->in.pid_result = 8000;
 //	axis->pid_result = axis->p_result + axis->i_result + axis->d_result; //Calculate PID result of yaw control
 //	/*******************************************************************/
 //}
-void Single_GPS_PD_Calculation(PDSingle_GPS* axis, float set_point_gps, float gps)
+void Single_GPS_PD_Calculation(PDSingle_GPS* axis, signed int set_point_gps, signed int gps)
 {
 	axis->reference = set_point_gps;
 	axis->meas_value = gps;

@@ -130,6 +130,7 @@ float gps_pitch_adjust;
 // Motor Value
 uint8_t ccr[18];
 unsigned int ccr1 ,ccr2, ccr3, ccr4;
+unsigned int landing_throttle;
 
 float batVolt;
 float theta, theta_radian;
@@ -144,6 +145,7 @@ void ESC_Calibration(void);
 int Is_iBus_Received(void);
 void BNO080_Calibration(void);
 void Read_Gps(void);
+void Landing_Throttle_Calculation();
 
 void Encode_Msg_AHRS(unsigned char* telemetry_tx_buf);
 void Encode_Msg_Gps(unsigned char* telemetry_tx_buf);
@@ -174,8 +176,8 @@ unsigned char iBus_VrB_flag = 0;
 unsigned char iBus_VrB_Prev_flag = 0;
 
 float yaw_heading_reference;
+float motor_frequency_adjustment = 0.94f;
 
-unsigned int landing_throttle = 39000;
 int manual_throttle;
 int gps_cnt = 0;
 int baro_cnt = 0;
@@ -405,9 +407,9 @@ altitude.in.kp = 1000;
 altitude.in.ki = 10;
 altitude.in.kd = 0;
 
-lon.kp = 0;
+lon.kp = 1;
 lon.kd = 0;
-lat.kp = 0;
+lat.kp = 1;
 lat.kd = 0;
 
 /*Receiver Detection*/
@@ -709,7 +711,6 @@ lat.kd = 0;
 
 		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 && iBus.LV < 1550 && iBus.LV > 1400) //Altitude Holding Mode
 		  {
-//			  Single_Altitude_PID_Calculation(&altitude, last_altitude, actual_pressure_fast);
 			  Double_Altitude_PID_Calculation(&altitude, last_altitude, actual_pressure_fast);
 
 			  if(iBus.LH < 1485 || iBus.LH > 1515)
@@ -718,31 +719,32 @@ lat.kd = 0;
 				  Single_Yaw_Rate_PID_Calculation(&yaw_rate, (iBus.LH-1500), ICM20602.gyro_z);
 				  ccr1 = 84000 + landing_throttle - pitch.in.pid_result + roll.in.pid_result -yaw_rate.pid_result+altitude.in.pid_result;
 				  ccr2 = 84000 + landing_throttle + pitch.in.pid_result + roll.in.pid_result +yaw_rate.pid_result+altitude.in.pid_result;
-				  ccr2 = (unsigned int)((float)ccr2 * 0.94f);
+				  ccr2 = (unsigned int)((float)ccr2 * motor_frequency_adjustment);
 				  ccr3 = 84000 + landing_throttle + pitch.in.pid_result - roll.in.pid_result -yaw_rate.pid_result+altitude.in.pid_result;
 				  ccr4 = 84000 + landing_throttle - pitch.in.pid_result - roll.in.pid_result +yaw_rate.pid_result+altitude.in.pid_result;
-				  ccr4 = (unsigned int)((float)ccr4 * 0.94f);
+				  ccr4 = (unsigned int)((float)ccr4 * motor_frequency_adjustment);
 			  }
 			  else
 			  {
 				  Single_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference, BNO080_Yaw, ICM20602.gyro_z);
 				  ccr1 = 84000 + landing_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.pid_result + altitude.in.pid_result;
 				  ccr2 = 84000 + landing_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.pid_result + altitude.in.pid_result;
-				  ccr2 = (unsigned int)((float)ccr2 * 0.94f);
+				  ccr2 = (unsigned int)((float)ccr2 * motor_frequency_adjustment);
 				  ccr3 = 84000 + landing_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.pid_result + altitude.in.pid_result;
 				  ccr4 = 84000 + landing_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.pid_result + altitude.in.pid_result;
-				  ccr4 = (unsigned int)((float)ccr4 * 0.94f);
+				  ccr4 = (unsigned int)((float)ccr4 * motor_frequency_adjustment);
 			  }
 		  }
 
 		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && iBus.LV < 1550 && iBus.LV > 1400) //GPS holding Mode
 		  {
+			  Double_Altitude_PID_Calculation(&altitude, last_altitude, actual_pressure_fast);
+
 			  if (gps_add_counter >= 0)gps_add_counter --;
 			  Read_Gps();
 
 			  Single_GPS_PD_Calculation(&lat, l_lat_waypoint, l_lat_gps);
 			  Single_GPS_PD_Calculation(&lon, l_lon_waypoint, l_lon_gps);
-			  Single_Altitude_PID_Calculation(&altitude, last_altitude, actual_pressure_fast);
 
 			  //Because the correction is calculated as if the nose was facing north, we need to convert it for the current heading.
 			  gps_roll_adjust = ((float)lon.pd_result * cos(BNO080_Yaw * 0.017453)) + ((float)lat.pd_result * cos((BNO080_Yaw - 90) * 0.017453));
@@ -759,19 +761,19 @@ lat.kd = 0;
 				  Single_Yaw_Heading_PID_Calculation(&yaw_heading, 0 , BNO080_Yaw, ICM20602.gyro_z);
 				  ccr1 = 84000 + landing_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.pid_result + altitude.in.pid_result - gps_pitch_adjust + gps_roll_adjust;
 				  ccr2 = 84000 + landing_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.pid_result + altitude.in.pid_result + gps_pitch_adjust + gps_roll_adjust;
-				  ccr2 = (unsigned int)((float)ccr2 * 0.88f);
+				  ccr2 = (unsigned int)((float)ccr2 * motor_frequency_adjustment);
 				  ccr3 = 84000 + landing_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.pid_result + altitude.in.pid_result + gps_pitch_adjust - gps_roll_adjust;
 				  ccr4 = 84000 + landing_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.pid_result + altitude.in.pid_result - gps_pitch_adjust - gps_roll_adjust;
-				  ccr4 = (unsigned int)((float)ccr4 * 0.88f);
+				  ccr4 = (unsigned int)((float)ccr4 * motor_frequency_adjustment);
 			  }
 			  else
 			  {
 				  ccr1 = 84000 + landing_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.pid_result + altitude.in.pid_result;
 				  ccr2 = 84000 + landing_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.pid_result + altitude.in.pid_result;
-				  ccr2 = (unsigned int)((float)ccr2 * 0.88f);
+				  ccr2 = (unsigned int)((float)ccr2 * motor_frequency_adjustment);
 				  ccr3 = 84000 + landing_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.pid_result + altitude.in.pid_result;
 				  ccr4 = 84000 + landing_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.pid_result + altitude.in.pid_result;
-				  ccr4 = (unsigned int)((float)ccr4 * 0.88f);
+				  ccr4 = (unsigned int)((float)ccr4 * motor_frequency_adjustment);
 			  }
 		  }
 		  else // Default Angle Mode
@@ -783,20 +785,20 @@ lat.kd = 0;
 
 				  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result + roll.in.pid_result -yaw_rate.pid_result;
 				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result + roll.in.pid_result +yaw_rate.pid_result;
-				  ccr2 = (unsigned int)((float)ccr2 * 0.94f);
+				  ccr2 = (unsigned int)((float)ccr2 * motor_frequency_adjustment);
 				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result - roll.in.pid_result -yaw_rate.pid_result;
 				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result - roll.in.pid_result +yaw_rate.pid_result;
-				  ccr4 = (unsigned int)((float)ccr4 * 0.94f);
+				  ccr4 = (unsigned int)((float)ccr4 * motor_frequency_adjustment);
 			  }
 			  else
 			  {
 				  Single_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference, BNO080_Yaw, ICM20602.gyro_z);
 				  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result + roll.in.pid_result -yaw_heading.pid_result;
 				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result + roll.in.pid_result +yaw_heading.pid_result;
-				  ccr2 = (unsigned int)((float)ccr2 * 0.94f);
+				  ccr2 = (unsigned int)((float)ccr2 * motor_frequency_adjustment);
 				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result - roll.in.pid_result -yaw_heading.pid_result;
 				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result - roll.in.pid_result +yaw_heading.pid_result;
-				  ccr4 = (unsigned int)((float)ccr4 * 0.94f);
+				  ccr4 = (unsigned int)((float)ccr4 * motor_frequency_adjustment);
 			  }
 
 			  l_lat_waypoint = pvt.lat;
@@ -826,7 +828,7 @@ lat.kd = 0;
 		  {
 			  motor_arming_flag = 1;
 			  yaw_heading_reference = BNO080_Yaw;
-
+			  Landing_Throttle_Calculation();
 		  }
 		  else
 		  {
@@ -900,8 +902,8 @@ lat.kd = 0;
 //		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
 //		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
-		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
-		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 26);
+		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
+		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 23);
 	  }
 
 
@@ -1439,28 +1441,35 @@ void Encode_Msg_Altitude(unsigned char* telemetry_tx_buf)
 
 void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
 {
-	telemetry_tx_buf[0] = 0x88;
-	telemetry_tx_buf[1] = 0x18;
+	telemetry_tx_buf[0] = 0x77;
+	telemetry_tx_buf[1] = 0x17;
 
-	telemetry_tx_buf[2] = pvt.iTOW >> 24;
-	telemetry_tx_buf[3] = pvt.iTOW >> 16;
-	telemetry_tx_buf[4] = pvt.iTOW >> 8;
-	telemetry_tx_buf[5] = pvt.iTOW;
+	telemetry_tx_buf[2] = pvt.numSV;
 
-	telemetry_tx_buf[6] = pvt.lat >> 24;
-	telemetry_tx_buf[7] = pvt.lat >> 16;
-	telemetry_tx_buf[8] = pvt.lat >> 8;
-	telemetry_tx_buf[9] = pvt.lat;
+	telemetry_tx_buf[3] = pvt.lat >> 24;
+	telemetry_tx_buf[4] = pvt.lat >> 16;
+	telemetry_tx_buf[5] = pvt.lat >> 8;
+	telemetry_tx_buf[6] = pvt.lat;
 
-	telemetry_tx_buf[10] = pvt.lon >> 24;
-	telemetry_tx_buf[11] = pvt.lon >> 16;
-	telemetry_tx_buf[12] = pvt.lon >> 8;
-	telemetry_tx_buf[13] = pvt.lon;
+	telemetry_tx_buf[7] = pvt.lon >> 24;
+	telemetry_tx_buf[8] = pvt.lon >> 16;
+	telemetry_tx_buf[9] = pvt.lon >> 8;
+	telemetry_tx_buf[10] = pvt.lon;
 
-	telemetry_tx_buf[14] = pvt.numSV;
+	telemetry_tx_buf[11] = l_lat_gps >> 24;
+	telemetry_tx_buf[12] = l_lat_gps >> 16;
+	telemetry_tx_buf[13] = l_lat_gps >> 8;
+	telemetry_tx_buf[14] = l_lat_gps;
 
-	telemetry_tx_buf[15] = pvt.pDOP >> 8;
-	telemetry_tx_buf[16] = pvt.pDOP;
+	telemetry_tx_buf[15] = l_lon_gps >> 24;
+	telemetry_tx_buf[16] = l_lon_gps >> 16;
+	telemetry_tx_buf[17] = l_lon_gps >> 8;
+	telemetry_tx_buf[18] = l_lon_gps;
+
+	telemetry_tx_buf[19] = (int)BNO080_Yaw >> 24;
+	telemetry_tx_buf[20] = (int)BNO080_Yaw >> 16;
+	telemetry_tx_buf[21] = (int)BNO080_Yaw >> 8;
+	telemetry_tx_buf[22] = (int)BNO080_Yaw;
 }
 
 void Read_Gps(void)
@@ -1468,10 +1477,6 @@ void Read_Gps(void)
 	  /********************* GPS Data Parsing ************************/
 	  if(m8n_rx_cplt_flag == 1) // GPS receive checking
 	  {
-		  l_lat_gps = 0;
-		  l_lon_gps = 0;
-		  lat_gps_previous = 0;
-		  lon_gps_previous = 0;
 
 		  if(M8N_UBX_CHKSUM_Check(&m8n_rx_buf[0], 100) == 1)
 		  {
@@ -1489,14 +1494,21 @@ void Read_Gps(void)
 			  lat_gps_actual = pvt.lat;
 			  lon_gps_actual = pvt.lon;
 		  }
+		  else
+		  {
+			  l_lat_gps = 0;
+			  l_lon_gps = 0;
+			  lat_gps_previous = 0;
+			  lon_gps_previous = 0;
+		  }
 
 		  if (lat_gps_previous == 0 && lon_gps_previous == 0) {                                              //If this is the first time the GPS code is used.
 			  lat_gps_previous = lat_gps_actual;                                                               //Set the lat_gps_previous variable to the lat_gps_actual variable.
 			  lon_gps_previous = lon_gps_actual;                                                               //Set the lon_gps_previous variable to the lon_gps_actual variable.
 		  }
 
-		  lat_gps_loop_add = (float)(lat_gps_actual - lat_gps_previous) / 10.0;                              //Divide the difference between the new and previous latitude by ten.
-		  lon_gps_loop_add = (float)(lon_gps_actual - lon_gps_previous) / 10.0;                              //Divide the difference between the new and previous longitude by ten.
+		  lat_gps_loop_add = (float)(lat_gps_actual - lat_gps_previous) / 20.0;                              //Divide the difference between the new and previous latitude by ten.
+		  lon_gps_loop_add = (float)(lon_gps_actual - lon_gps_previous) / 20.0;                              //Divide the difference between the new and previous longitude by ten.
 
 		  l_lat_gps = lat_gps_previous;                                                                      //Set the l_lat_gps variable to the previous latitude value.
 		  l_lon_gps = lon_gps_previous;                                                                      //Set the l_lon_gps variable to the previous longitude value.
@@ -1519,17 +1531,22 @@ void Read_Gps(void)
 	    gps_add_counter = 10;                                                                                  //Set the gps_add_counter variable to 5 as a count down loop timer
 
 	    lat_gps_add += lat_gps_loop_add;                                                                      //Add the simulated part to a buffer float variable because the l_lat_gps can only hold integers.
-	    if ((lat_gps_add >= 1) || (lat_gps_add <= -1)) {                                                                          //If the absolute value of lat_gps_add is larger then 1.
+	    if ((lat_gps_add >= 10) || (lat_gps_add <= -10)) {                                                                          //If the absolute value of lat_gps_add is larger then 1.
 	      l_lat_gps += (int)lat_gps_add;                                                                      //Increment the lat_gps_add value with the lat_gps_add value as an integer. So no decimal part.
 	      lat_gps_add -= (int)lat_gps_add;                                                                    //Subtract the lat_gps_add value as an integer so the decimal value remains.
 	    }
 
 	    lon_gps_add += lon_gps_loop_add;                                                                      //Add the simulated part to a buffer float variable because the l_lat_gps can only hold integers.
-	    if ((lon_gps_add >= 1) || (lon_gps_add <= -1)) {                                                                          //If the absolute value of lat_gps_add is larger then 1.
+	    if ((lon_gps_add >= 10) || (lon_gps_add <= -10)) {                                                                          //If the absolute value of lat_gps_add is larger then 1.
 	      l_lon_gps += (int)lon_gps_add;                                                                      //Increment the lat_gps_add value with the lat_gps_add value as an integer. So no decimal part.
 	      lon_gps_add -= (int)lon_gps_add;                                                                    //Subtract the lat_gps_add value as an integer so the decimal value remains.
 	    }
 	  }
+}
+
+void Landing_Throttle_Calculation()
+{
+	landing_throttle = 84 * ( batVolt * (-32.314) + 2093.3);
 }
 /* USER CODE END 4 */
 

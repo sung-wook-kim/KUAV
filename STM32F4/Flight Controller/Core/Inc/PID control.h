@@ -105,7 +105,7 @@ void Single_Alt_PID_Calculation(PIDSingle* axis, float set_point_alt, float baro
 
 void Single_Altitude_PID_Calculation(PIDSingle* axis, float set_point_altitude, float current_altitude);
 void Double_Altitude_PID_Calculation(PIDDouble* axis, float set_point_antitude, float anltitude);
-void Single_GPS_PD_Calculation(PDSingle_GPS* axis, float set_point_gps, float gps);
+void Single_GPS_PD_Calculation(PDSingle_GPS* axis, signed int set_point_gps, signed int gps);
 void Double_GPS_PID_Calculation(PIDDouble* axis, float set_point_gps, float gps);
 
 #ifdef __cplusplus
