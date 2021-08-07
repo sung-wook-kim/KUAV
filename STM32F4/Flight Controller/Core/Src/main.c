@@ -126,7 +126,7 @@ float lon_gps_add;
 unsigned char new_gps_data_available;
 float gps_roll_adjust;
 float gps_pitch_adjust;
-#define GPS_PD_MAX 1000
+#define GPS_PD_MAX 300
 #define GPS_PD_MIN -GPS_PD_MAX
 
 // Motor Value
@@ -409,9 +409,9 @@ altitude.in.kp = 1000;
 altitude.in.ki = 10;
 altitude.in.kd = 0;
 
-lon.kp = 5;
+lon.kp = 3;
 lon.kd = 0;
-lat.kp = 5;
+lat.kp = 3;
 lat.kd = 0;
 
 /*Receiver Detection*/
@@ -721,6 +721,9 @@ lat.kd = 0;
 			  if (gps_add_counter >= 0)gps_add_counter --;
 			  Read_Gps();
 
+			  if(l_lat_waypoint == 0) l_lat_waypoint = l_lat_gps;
+			  else if(l_lon_waypoint == 0) l_lon_waypoint = l_lon_gps;
+
 			  Single_GPS_PD_Calculation(&lat, l_lat_waypoint, l_lat_gps);
 			  Single_GPS_PD_Calculation(&lon, l_lon_waypoint, l_lon_gps);
 
@@ -783,8 +786,8 @@ lat.kd = 0;
 			  Reset_PID_Integrator(&altitude.out);
 			  Reset_PID_Integrator(&altitude.in);
 
-			  l_lat_waypoint = pvt.lat;
-			  l_lon_waypoint = pvt.lon;
+			  l_lat_waypoint = 0;
+			  l_lon_waypoint = 0;
 			  Reset_GPS_Integrator(&lat);
 			  Reset_GPS_Integrator(&lon);
 		  }
@@ -881,7 +884,7 @@ lat.kd = 0;
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
 //		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
 		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
-		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35);
+		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35
 	  }
 
 
