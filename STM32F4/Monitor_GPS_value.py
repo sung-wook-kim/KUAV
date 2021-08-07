@@ -49,27 +49,30 @@ while True:
             l_lat_2 = int(ser.read(1).hex(), 16) & 0xff
             l_lat_3 = int(ser.read(1).hex(), 16) & 0xff
             l_lat_4 = int(ser.read(1).hex(), 16) & 0xff
+            l_lat_sign = l_lat_1 >> 7
 
             l_lon_1 = int(ser.read(1).hex(), 16) & 0xff
             l_lon_2 = int(ser.read(1).hex(), 16) & 0xff
             l_lon_3 = int(ser.read(1).hex(), 16) & 0xff
             l_lon_4 = int(ser.read(1).hex(), 16) & 0xff
+            l_lon_sign = l_lon_1 >> 7
 
             bno080_yaw_1 = int(ser.read(1).hex(), 16) & 0xff
             bno080_yaw_2 = int(ser.read(1).hex(), 16) & 0xff
             bno080_yaw_3 = int(ser.read(1).hex(), 16) & 0xff
             bno080_yaw_4 = int(ser.read(1).hex(), 16) & 0xff
-
             yaw_sign = bno080_yaw_1 >> 7
             
             pvt_lat = pvt_lat_1 << 24 | pvt_lat_2 << 16 | pvt_lat_3 << 8 | pvt_lat_4
             pvt_lon = pvt_lon_1 << 24 | pvt_lon_2 << 16 | pvt_lon_3 << 8 | pvt_lon_4
             l_lat = l_lat_1 << 24 | l_lat_2 << 16 | l_lat_3 << 8 | l_lat_4
             l_lon = l_lon_1 << 24 | l_lon_2 << 16 | l_lon_3 << 8 | l_lon_4
-            bno080_yaw = bno080_yaw_1 << 24 | bno080_yaw_2 << 16 | bno080_yaw_3 << 8 | bno080_yaw
+            bno080_yaw = bno080_yaw_1 << 24 | bno080_yaw_2 << 16 | bno080_yaw_3 << 8 | bno080_yaw_4
 
+            if l_lat_sign == 1: l_lat = (l_lat & 0x7fffffff) - 2 ** 31
+            if l_lon_sign == 1: l_lon = (l_lon & 0x7fffffff) - 2 ** 31
             if yaw_sign == 1: bno080_yaw = (bno080_yaw & 0x7fffffff) - 2 ** 31
     
-            print(num_sv, pvt_lat, pvt_lon , l_lat, l_lon)
+            print(num_sv, pvt_lat, pvt_lon , l_lat, l_lon, bno080_yaw)
 
 

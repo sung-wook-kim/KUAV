@@ -107,6 +107,8 @@ float actual_pressure_fast = 0, actual_pressure_slow = 0;
 float actual_pressure;
 
 // Gps Value
+signed int lat_prev = 0;
+signed int lon_prev = 0;
 unsigned char gps_add_counter;
 unsigned char new_gps_data_counter;
 signed int l_lat_waypoint;
@@ -124,7 +126,7 @@ float lon_gps_add;
 unsigned char new_gps_data_available;
 float gps_roll_adjust;
 float gps_pitch_adjust;
-#define GPS_PD_MAX 300
+#define GPS_PD_MAX 1000
 #define GPS_PD_MIN -GPS_PD_MAX
 
 // Motor Value
@@ -407,9 +409,9 @@ altitude.in.kp = 1000;
 altitude.in.ki = 10;
 altitude.in.kd = 0;
 
-lon.kp = 1;
+lon.kp = 5;
 lon.kd = 0;
-lat.kp = 1;
+lat.kp = 5;
 lat.kd = 0;
 
 /*Receiver Detection*/
@@ -509,28 +511,6 @@ lat.kd = 0;
 
   baro_offset = baro_offset / baro_cnt;
 
-
-
-//  for(int i=0; i<50; i++)
-//  {
-//	  if(m8n_rx_cplt_flag == 1) // GPS receive checking
-//	  {
-//		  m8n_rx_cplt_flag == 0;
-//
-//		  if(M8N_UBX_CHKSUM_Check(&m8n_rx_buf[0], 36) == 1)
-//		  {
-//			  //LL_GPIO_TogglePin(GPIOC, LL_GPIO_PIN_2);
-//			  M8N_UBX_NAV_POSLLH_Parsing(&m8n_rx_buf[0], &posllh);
-//			  gps_cnt++;
-  //			printf("%d %ld %ld %d %d %d %ld\n", mode, posllh.lat, posllh.lon, (int)LPS22HH.baroAltFilt, (int)BNO080_Yaw, (int)XAVIER.mode, XAVIER.lat)
-//		  }
-//	  }
-//	  HAL_Delay(200);
-//	  gps_height_offset += posllh.height;
-//  }
-//
-//  gps_height_offset /= gps_cnt;
-
   /********************* FC Ready to Fly ************************/
 
   LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4); //Enable Timer Counting
@@ -555,7 +535,6 @@ lat.kd = 0;
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
 	  batVolt = adcVal * 0.00699563f;
 
 //	  if(batVolt < 16.0f)
@@ -575,7 +554,6 @@ lat.kd = 0;
 //
 //		  XAVIER_Parsing(&nx_rx_buf, &XAVIER);
 //	  }
-
 
 	  /********************* Telemetry Communication ************************/
 	  if(telemetry_rx_cplt_flag == 1) //Receive GCS Message
@@ -801,12 +779,14 @@ lat.kd = 0;
 				  ccr4 = (unsigned int)((float)ccr4 * motor_frequency_adjustment);
 			  }
 
-			  l_lat_waypoint = pvt.lat;
-			  l_lon_waypoint = pvt.lon;
 			  last_altitude = actual_pressure_fast;
 			  Reset_PID_Integrator(&altitude.out);
 			  Reset_PID_Integrator(&altitude.in);
 
+			  l_lat_waypoint = pvt.lat;
+			  l_lon_waypoint = pvt.lon;
+			  Reset_GPS_Integrator(&lat);
+			  Reset_GPS_Integrator(&lon);
 		  }
 	  }
 	     if(iBus.VrB < 1100) iBus_VrB_flag = 0;
@@ -854,8 +834,6 @@ lat.kd = 0;
 		  {
 			  if(iBus.LV > 1050)
 			  {
-
-				  //			  printf("%d\t%d\t%d\t%d\n", ccr1, ccr2, ccr3, ccr4);
 				  TIM5->CCR1 = ccr1 > 167999 ? 167999 : ccr1 < 84000 ? 84000 : ccr1;
 				  TIM5->CCR2 = ccr2 > 167999 ? 167999 : ccr2 < 84000 ? 84000 : ccr2;
 				  TIM5->CCR3 = ccr3 > 167999 ? 167999 : ccr3 < 84000 ? 84000 : ccr3;
@@ -903,7 +881,7 @@ lat.kd = 0;
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
 //		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
 		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
-		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 23);
+		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35);
 	  }
 
 
@@ -1444,17 +1422,17 @@ void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[0] = 0x77;
 	telemetry_tx_buf[1] = 0x17;
 
-	telemetry_tx_buf[2] = pvt.numSV;
+	telemetry_tx_buf[2] = ((int)(batVolt * 100)) >> 24;
+	telemetry_tx_buf[3] = ((int)(batVolt * 100)) >> 16;
+	telemetry_tx_buf[4] = ((int)(batVolt * 100)) >> 8;
+	telemetry_tx_buf[5] = ((int)(batVolt * 100));
 
-	telemetry_tx_buf[3] = pvt.lat >> 24;
-	telemetry_tx_buf[4] = pvt.lat >> 16;
-	telemetry_tx_buf[5] = pvt.lat >> 8;
-	telemetry_tx_buf[6] = pvt.lat;
+	telemetry_tx_buf[6] = pvt.numSV;
 
-	telemetry_tx_buf[7] = pvt.lon >> 24;
-	telemetry_tx_buf[8] = pvt.lon >> 16;
-	telemetry_tx_buf[9] = pvt.lon >> 8;
-	telemetry_tx_buf[10] = pvt.lon;
+	telemetry_tx_buf[7] = (int)BNO080_Yaw >> 24;
+	telemetry_tx_buf[8] = (int)BNO080_Yaw >> 16;
+	telemetry_tx_buf[9] = (int)BNO080_Yaw >> 8;
+	telemetry_tx_buf[10] = (int)BNO080_Yaw;
 
 	telemetry_tx_buf[11] = l_lat_gps >> 24;
 	telemetry_tx_buf[12] = l_lat_gps >> 16;
@@ -1466,10 +1444,25 @@ void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[17] = l_lon_gps >> 8;
 	telemetry_tx_buf[18] = l_lon_gps;
 
-	telemetry_tx_buf[19] = (int)BNO080_Yaw >> 24;
-	telemetry_tx_buf[20] = (int)BNO080_Yaw >> 16;
-	telemetry_tx_buf[21] = (int)BNO080_Yaw >> 8;
-	telemetry_tx_buf[22] = (int)BNO080_Yaw;
+	telemetry_tx_buf[19] = l_lat_waypoint >> 24;
+	telemetry_tx_buf[20] = l_lat_waypoint >> 16;
+	telemetry_tx_buf[21] = l_lat_waypoint >> 8;
+	telemetry_tx_buf[22] = l_lat_waypoint;
+
+	telemetry_tx_buf[23] = l_lon_waypoint >> 24;
+	telemetry_tx_buf[24] = l_lon_waypoint >> 16;
+	telemetry_tx_buf[25] = l_lon_waypoint >> 8;
+	telemetry_tx_buf[26] = l_lon_waypoint;
+
+	telemetry_tx_buf[27] = (int)gps_pitch_adjust >> 24;
+	telemetry_tx_buf[28] = (int)gps_pitch_adjust >> 16;
+	telemetry_tx_buf[29] = (int)gps_pitch_adjust >> 8;
+	telemetry_tx_buf[30] = (int)gps_pitch_adjust;
+
+	telemetry_tx_buf[31] = (int)gps_roll_adjust >> 24;
+	telemetry_tx_buf[32] = (int)gps_roll_adjust >> 16;
+	telemetry_tx_buf[33] = (int)gps_roll_adjust >> 8;
+	telemetry_tx_buf[34] = (int)gps_roll_adjust;
 }
 
 void Read_Gps(void)
@@ -1477,6 +1470,7 @@ void Read_Gps(void)
 	  /********************* GPS Data Parsing ************************/
 	  if(m8n_rx_cplt_flag == 1) // GPS receive checking
 	  {
+		  m8n_rx_cplt_flag = 0;
 
 		  if(M8N_UBX_CHKSUM_Check(&m8n_rx_buf[0], 100) == 1)
 		  {
@@ -1485,11 +1479,10 @@ void Read_Gps(void)
 //	 		  M8N_UBX_NAV_POSLLH_Parsing(&m8n_rx_buf[0], &posllh);
 			  pvt.height -= gps_height_offset;
 
-			  if((pvt.lat - pvt.lat_prev > 500) || (pvt.lat - pvt.lat_prev < -500)) pvt.lat = pvt.lat_prev;
-			  if((pvt.lon - pvt.lon_prev > 500) || (pvt.lon - pvt.lon_prev < -500)) pvt.lon = pvt.lon_prev;
-
-			  pvt.lat_prev = pvt.lat;
-			  pvt.lon_prev = pvt.lon;
+//			  if((pvt.lat - pvt.lat_prev > 500) || (pvt.lat - pvt.lat_prev < -500)) pvt.lat = lat_prev;
+//			  if((pvt.lon - pvt.lon_prev > 500) || (pvt.lon - pvt.lon_prev < -500)) pvt.lon = lon_prev;
+//			  lat_prev = pvt.lat;
+//			  lon_prev = pvt.lon;
 
 			  lat_gps_actual = pvt.lat;
 			  lon_gps_actual = pvt.lon;
@@ -1546,7 +1539,7 @@ void Read_Gps(void)
 
 void Landing_Throttle_Calculation()
 {
-	landing_throttle = 84 * ( batVolt * (-32.314) + 2093.3);
+	landing_throttle = 84 * ( batVolt * (-32.314) + 2093.3 - 1000);
 }
 /* USER CODE END 4 */
 

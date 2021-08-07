@@ -149,6 +149,10 @@ void Reset_GPS_Integrator(PDSingle_GPS* axis)
 {
 	axis->total_average = 0;
 	axis->rotating_mem_location = 0;
+	for(int i; i < sizeof(axis->rotating_mem); i++)
+	{
+		axis->rotating_mem[i] = 0;
+	}
 }
 
 void Reset_All_PID_Integrator(void)
