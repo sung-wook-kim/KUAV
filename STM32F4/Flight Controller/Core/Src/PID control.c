@@ -168,7 +168,7 @@ void Reset_All_PID_Integrator(void)
 
 void Single_Altitude_PID_Calculation(PIDSingle* axis, float set_point_altitude, float current_altitude)
 {
-#define I_RESULT_MAX 500
+#define I_RESULT_MAX 4000
 #define I_RESULT_MIN -I_RESULT_MAX
 
 	axis->reference = set_point_altitude;
@@ -178,6 +178,7 @@ void Single_Altitude_PID_Calculation(PIDSingle* axis, float set_point_altitude, 
 	axis->error_sum = axis->error_sum + axis->error * DT;
 	axis->error_deriv = -(axis->meas_value - axis->meas_value_prev) / DT;
 	axis->meas_value_prev  = axis->meas_value;
+	/*
 	axis->kp = 0;
 	if(axis->error > 0.05 || axis->error < -0.05)
 	{
@@ -185,16 +186,17 @@ void Single_Altitude_PID_Calculation(PIDSingle* axis, float set_point_altitude, 
 		else axis->kp = (-(axis->error) - 0.05) * 3000;
 
 		if(axis->kp > 5000) axis->kp = 5000;
-	}
-	axis->p_result = axis->error * axis->kp;
-	axis->d_result = axis->kd * axis->error_deriv;
+	}*/
+	axis->p_result = axis->kp * axis->error;
 	axis->i_result = axis->ki * axis->error_sum;
+	axis->d_result = axis->kd * axis->error_deriv;
+
 	if(axis->i_result > I_RESULT_MAX) axis->i_result = I_RESULT_MAX;
 	else if(axis->i_result < I_RESULT_MIN ) axis->i_result = I_RESULT_MIN;
 
 	axis->pid_result = axis->p_result + axis->i_result + axis->d_result;
 	if(axis->pid_result < -3000) axis->pid_result = -3000;
-	else if(axis->pid_result > 5500) axis->pid_result = 5500;
+	else if(axis->pid_result > 10000) axis->pid_result = 10000;
 
 }
 

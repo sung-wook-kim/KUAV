@@ -392,9 +392,9 @@ EP_PIDGain_Read(5, &yaw_rate.kp, &yaw_rate.ki, &yaw_rate.kd);
 Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 5, yaw_rate.kp, yaw_rate.ki, yaw_rate.kd);
 HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
 
-altitude.kp = 0;
-altitude.ki = 20;
-altitude.kd = 15;
+altitude.kp = 1000;
+altitude.ki = 0;
+altitude.kd = 10;
 
 //altitude.out.kp = 2.5;
 //altitude.out.ki = 0;
