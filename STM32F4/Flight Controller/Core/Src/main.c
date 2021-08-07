@@ -131,6 +131,7 @@ float gps_pitch_adjust;
 uint8_t ccr[18];
 unsigned int ccr1 ,ccr2, ccr3, ccr4;
 
+float batVolt;
 float theta, theta_radian;
 
 /* USER CODE END PV */
@@ -184,7 +185,7 @@ float BNO080_Pitch_Offset = 1.9f;
 float BNO080_Roll_Offset = 0.8f;
 
 unsigned short adcVal;
-float batVolt;
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -1429,10 +1430,10 @@ void Encode_Msg_Altitude(unsigned char* telemetry_tx_buf)
 	telemetry_tx_buf[16] = ((int)(altitude.pid_result)) >> 8;
 	telemetry_tx_buf[17] = ((int)(altitude.pid_result));
 
-	telemetry_tx_buf[18] = ((int)(altitude.i_result)) >> 24;
-	telemetry_tx_buf[19] = ((int)(altitude.i_result)) >> 16;
-	telemetry_tx_buf[20] = ((int)(altitude.i_result)) >> 8;
-	telemetry_tx_buf[21] = ((int)(altitude.i_result));
+	telemetry_tx_buf[18] = ((int)(batVolt)) >> 24;
+	telemetry_tx_buf[19] = ((int)(batVolt)) >> 16;
+	telemetry_tx_buf[20] = ((int)(batVolt)) >> 8;
+	telemetry_tx_buf[21] = ((int)(batVolt));
 }
 
 void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
