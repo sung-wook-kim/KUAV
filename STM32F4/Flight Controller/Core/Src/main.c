@@ -169,8 +169,9 @@ short gyro_x_offset = -6, gyro_y_offset = -19, gyro_z_offset = 4;
 unsigned char motor_arming_flag = 0;
 unsigned short iBus_SwA_Prev = 0;
 unsigned char iBus_rx_cnt = 0;
-unsigned short Is_Move_Roll = 0;
-unsigned short Is_Move_Pitch = 0;
+unsigned char iBus_VrB_flag = 0;
+unsigned char iBus_VrB_Prev_flag = 0;
+
 float yaw_heading_reference;
 
 unsigned int landing_throttle = 42500;
@@ -809,7 +810,11 @@ lat.kd = 0;
 			  Reset_PID_Integrator(&altitude);
 		  }
 	  }
+	     if(iBus.VrB < 1100) iBus_VrB_flag = 0;
+	     else if(iBus.VrB > 1200) iBus_VrB_flag = 1;
 
+	     if(iBus_VrB_flag==1 && iBus_VrB_Prev_flag==0) last_altitude += 0.5f;
+	     iBus_VrB_Prev_flag = iBus_VrB_flag;
 
 	  if(iBus.LV < 1030 || motor_arming_flag == 0)
 	  {
