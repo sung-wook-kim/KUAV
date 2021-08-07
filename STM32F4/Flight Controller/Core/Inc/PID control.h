@@ -88,7 +88,7 @@ typedef struct PDSingle_GPS
 extern PIDDouble roll;
 extern PIDDouble pitch;
 
-extern PIDSingle altitude;
+extern PIDDouble altitude;
 extern PDSingle_GPS lat;
 extern PDSingle_GPS lon;
 

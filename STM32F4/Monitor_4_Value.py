@@ -98,7 +98,7 @@ def connect():
                 if value_sign == 1: value = (value & 0x7fffffff) - 2 ** 31
                 if d_sign == 1: d_result = (d_result & 0x7fffffff) - 2 ** 31
 
-                print(alt, target, error, value , d_result , voltage)
+                print(alt, target, error, value , d_result , voltage / 100)
                 alt_li.append(alt)
                 target_li.append(target)
                 error_li.append(error)
