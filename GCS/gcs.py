@@ -9,7 +9,7 @@ import io
 import socket
 import pandas as pd 
 import serial
-
+import threading
 class window(QtWidgets.QMainWindow):
     def __init__(self):
         QWebEngineSettings.globalSettings().setAttribute(QWebEngineSettings.PluginsEnabled,True)
@@ -45,7 +45,7 @@ class window(QtWidgets.QMainWindow):
         self.statuslayout.addWidget(self.mission_lon)
         self.statuslayout.addWidget(self.RTH_lat)
         self.statuslayout.addWidget(self.RTH_lon)
-        
+
         self.webview2=QtWebEngineWidgets.QWebEngineView()
         self.webview2.setHtml(self.data.getvalue().decode())
         self.weblayout = self.btnlayout=QtWidgets.QHBoxLayout()
@@ -73,7 +73,9 @@ class window(QtWidgets.QMainWindow):
         self.btnSerial.clicked.connect(self.connectSerial) ; self.btnSocket.clicked.connect(self.connectSocket)
         self.btnTakeoff.clicked.connect(self.takeoff) ; self.btnRTH.clicked.connect(self.RTH)
         self.btnDataSave.clicked.connect(self.datasave) ; self.btnFT.clicked.connect(self.forceTerminate)
-        self.ser = 0
+        self.serBase = 0
+        self.serTele = 0
+        self.threadRTK = threading.Thread(target=self.RTK)
         self.header_1 = b'0x44'
         self.header_2 = b'0x77'
 
@@ -103,10 +105,16 @@ class window(QtWidgets.QMainWindow):
 
     # GCS - STM32 serial ( telemetry maybe)
     def connectSerial(self):
-        self.ser = serial.Serial('COM6', 115200, timeout=1)
-        self.ser.flush()
+        self.serBase = serial.Serial('COM6', 115200, timeout=1)
+        self.serTele =  serial.Serial('COM7', 115200, timeout=1)
+        self.serBase.flush()
+        self.serTele.flush()
+        self.threadRTK.start()
         self.btnSerial.setText("connect FC with Serial ")
 
+    def RTK(self):
+        while True:
+            self.serTele.write(self.serBase.read(1)) # 읽어온값을 그대로 전송
     # GCS - NX Socket ( wifi )
     def connectSocket(self):
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -162,7 +170,6 @@ class window(QtWidgets.QMainWindow):
         df['GPS Time'] = self.GPStime
         df['lat_drone'] = self.lat_drone ; df['lon_drone'] = self.lon_drone 
         df['altitude'] = self.altitude
-                #df['lat_person'] = self.lat_person ; df['lon_person'] = self.lon_person
         now = time.localtime()
         timevar = time.strftime('%Y%m%d%H%M%S', now)
         df.to_csv(f"{timevar}_Flight_data.csv")
