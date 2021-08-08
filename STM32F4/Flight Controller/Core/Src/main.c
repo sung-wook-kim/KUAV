@@ -1659,7 +1659,7 @@ void return_to_home(void) {
 	}
 }
 
-void Calculate_takeoff_throttle()
+void Calculate_Takeoff_Throttle()
 {
 	takeoff_throttle = 84 * ( batVolt * (-32.314) + 2093.3 - 1000);
 }
