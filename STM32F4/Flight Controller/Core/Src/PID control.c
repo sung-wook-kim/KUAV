@@ -32,7 +32,6 @@ PIDDouble pitch;
 PIDSingle yaw_heading;
 PIDSingle yaw_rate;
 
-//PIDSingle altitude;
 PIDDouble altitude;
 
 PDSingle_GPS lat;
@@ -278,25 +277,6 @@ if (axis->in.pid_result > 8000) axis->in.pid_result = 8000;
 
 }
 
-//void Single_GPS_PID_Calculation(PIDSingle* axis, float set_point_gps, float gps/*ICM-20602 Angular Rate*/)
-//{
-//	/*********** Single PID Begin (Yaw Angular Rate Control) *************/
-//	axis->reference = set_point_gps;	//Set point of yaw heading @ yaw stick is not center.
-//	axis->meas_value = gps;			//Current ICM20602.gyro_z @ yaw stick is not center.
-//
-//	axis->error = axis->reference - axis->meas_value;	//Define error of yaw rate control
-//	axis->p_result = axis->error * axis->kp;			//Calculate P result of yaw rate control
-//
-//	axis->error_sum = axis->error_sum + axis->error * DT;	//Define summation of yaw rate control
-//	axis->i_result = axis->error_sum * axis->ki;			//Calculate I result of yaw rate control
-//
-//	axis->error_deriv = -(axis->meas_value - axis->meas_value_prev) / DT;	//Define differentiation of yaw rate control
-//	axis->meas_value_prev = axis->meas_value;								//Refresh value_prev to the latest value
-//	axis->d_result = axis->error_deriv * axis->kd;							//Calculate D result of yaw rate control
-//
-//	axis->pid_result = axis->p_result + axis->i_result + axis->d_result; //Calculate PID result of yaw control
-//	/*******************************************************************/
-//}
 void Single_GPS_PD_Calculation(PDSingle_GPS* axis, signed int set_point_gps, signed int gps)
 {
 	axis->reference = set_point_gps;
