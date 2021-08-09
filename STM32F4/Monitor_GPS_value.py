@@ -84,6 +84,6 @@ while True:
             if roll_sign == 1: roll_adjust = (roll_adjust & 0x7fffffff) - 2 ** 31
 
             print(f' {i} /// num_sv : {num_sv}, bno080_yaw : {bno080_yaw} , pvt_lat : {pvt_lat} , pvt_lon : {pvt_lon} \
-            , target_lat : {target_lat} , target_lon : {target_lon} , pitch_adjust : {pitch_adjust} , roll_adjust : {roll_adjust}')
+            , target_lat : {target_lat} , target_lon : {target_lon} , pitch_adjust : {pitch_adjust} , roll_adjust : {roll_adjust}, voltage : {voltage/100}')
 
 
