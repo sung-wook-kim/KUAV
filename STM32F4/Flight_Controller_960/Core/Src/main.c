@@ -84,6 +84,7 @@ uint8_t telemetry_rx_cplt_flag;
 
 extern uint8_t nx_rx_cplt_flag;
 extern uint8_t nx_rx_buf[20];
+extern uint8_t nx_tx_buf[40];
 
 // Timer variables
 extern uint8_t tim7_1ms_flag;
@@ -171,6 +172,7 @@ void Encode_Msg_PID_Gain(unsigned char* telemetry_tx_buf, unsigned char id, floa
 void Encode_Msg_AHRS(unsigned char* telemetry_tx_buf);
 void Encode_Msg_Altitude(unsigned char* telemetry_tx_buf);
 void Encode_Msg_Gps(unsigned char* telemetry_tx_buf);
+void Encode_Msg_Nx(unsigned char* nx_tx_buf);
 
 /* USER CODE END PFP */
 
@@ -812,8 +814,10 @@ lat.kd = 0;
 //		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
 //		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
-		  Encode_Msg_Gps(&telemetry_tx_buf[0]);-
+		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
 		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35
+		  Encode_Msg_Nx(&nx_tx_buf[0]);
+		  HAL_UART_Transmit_DMA(&huart6, &nx_tx_buf[0], 35);
 	  }
 
 
@@ -1558,6 +1562,55 @@ void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[33] = (int)gps_roll_adjust >> 8;
 	telemetry_tx_buf[34] = (int)gps_roll_adjust;
 }
+
+void Encode_Msg_Nx(unsigned char* nx_tx_buf)
+{
+	nx_tx_buf[0] = 0x88;
+	nx_tx_buf[1] = 0x18;
+
+	nx_tx_buf[2] = XAVIER_rx.mode;
+
+	nx_tx_buf[3] = l_lat_gps >> 24;
+	nx_tx_buf[4] = l_lat_gps >> 16;
+	nx_tx_buf[5] = l_lat_gps >> 8;
+	nx_tx_buf[6] = l_lat_gps;
+
+	nx_tx_buf[7] = l_lon_gps >> 24;
+	nx_tx_buf[8] = l_lon_gps >> 16;
+	nx_tx_buf[9] = l_lon_gps >> 8;
+	nx_tx_buf[10] = l_lon_gps;
+
+	nx_tx_buf[11] = pvt.iTOW >> 24;
+	nx_tx_buf[12] = pvt.iTOW >> 16;
+	nx_tx_buf[13] = pvt.iTOW >> 8;
+	nx_tx_buf[14] = pvt.iTOW;
+
+	nx_tx_buf[15] = (int)BNO080_Roll >> 24;
+	nx_tx_buf[16] = (int)BNO080_Roll >> 16;
+	nx_tx_buf[17] = (int)BNO080_Roll >> 8;
+	nx_tx_buf[18] = (int)BNO080_Roll;
+
+	nx_tx_buf[19] = (int)BNO080_Pitch >> 24;
+	nx_tx_buf[20] = (int)BNO080_Pitch >> 16;
+	nx_tx_buf[21] = (int)BNO080_Pitch >> 8;
+	nx_tx_buf[22] = (int)BNO080_Pitch;
+
+	nx_tx_buf[23] = (int)BNO080_Yaw >> 24;
+	nx_tx_buf[24] = (int)BNO080_Yaw >> 16;
+	nx_tx_buf[25] = (int)BNO080_Yaw >> 8;
+	nx_tx_buf[26] = (int)BNO080_Yaw;
+
+	nx_tx_buf[27] = (int)actual_pressure_fast >> 24;
+	nx_tx_buf[28] = (int)actual_pressure_fast >> 16;
+	nx_tx_buf[29] = (int)actual_pressure_fast >> 8;
+	nx_tx_buf[30] = (int)actual_pressure_fast;
+
+	nx_tx_buf[31] = (int)batVolt >> 24;
+	nx_tx_buf[32] = (int)batVolt >> 16;
+	nx_tx_buf[33] = (int)batVolt >> 8;
+	nx_tx_buf[34] = (int)batVolt;
+}
+
 
 void Read_Gps(void)
 {
