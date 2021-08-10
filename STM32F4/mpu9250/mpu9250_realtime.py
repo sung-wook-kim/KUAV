@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
 import threading
+from collections import deque
 
 plt.style.use('ggplot') # matplotlib visual style setting
 
@@ -18,7 +19,7 @@ t1 = time.time() # for calculating sample rate
 # prepping for visualization
 mpu6050_str = ['accel-x','accel-y','accel-z','gyro-x','gyro-y','gyro-z']
 AK8963_str = ['mag-x','mag-y','mag-z']
-ax,ay,az,wx,wy,wz,mx,my,mz= [],[],[],[],[],[],[],[],[]
+ax,ay,az,wx,wy,wz,mx,my,mz= deque(maxlen=50),deque(maxlen=50),deque(maxlen=50),deque(maxlen=50),deque(maxlen=50),deque(maxlen=50),deque(maxlen=50),deque(maxlen=50),deque(maxlen=50)
 
 print('recording data')
 
@@ -27,8 +28,17 @@ def mpu_read():
     global t1
     while True:
         try:
-            ax,ay,az,wx,wy,wz = mpu6050_conv() # read and convert mpu6050 data
-            mx,my,mz = AK8963_conv() # read and convert AK8963 magnetometer data
+            ax_temp,ay_temp,az_temp,wx_temp,wy_temp,wz_temp = mpu6050_conv() # read and convert mpu6050 data
+            ax.append(ax_temp)
+            ay.append(ay_temp)
+            az.append(az_temp)
+            wx.append(wx_temp)
+            wy.append(wy_temp)
+            wz.append(wz_temp)
+            mx_temp,my_temp,mz_temp = AK8963_conv() # read and convert AK8963 magnetometer data
+            mx.append(mx_temp)
+            my.append(my_temp)
+            mz.append(mz_temp)
         except:
             continue
         t2 = time.time()
