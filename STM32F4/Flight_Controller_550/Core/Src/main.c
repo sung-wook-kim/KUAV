@@ -129,7 +129,7 @@ float lon_gps_add;
 unsigned char new_gps_data_available;
 float gps_roll_adjust;
 float gps_pitch_adjust;
-#define GPS_PD_MAX 300
+#define GPS_PD_MAX 200
 #define GPS_PD_MIN -GPS_PD_MAX
 
 // Return to home value
@@ -186,13 +186,12 @@ void Encode_Msg_Gps(unsigned char* telemetry_tx_buf);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-#define MOTOR_FREQ_ADJUST 0.94f
+#define MOTOR_FREQ_ADJUST 0.9f
 #define BNO080_PITCH_OFFSET 1.9f
 #define BNO080_ROLL_OFFSET 0.8f
 
 float q[4];
 float quatRadianAccuracy;
-short gyro_x_offset = -6, gyro_y_offset = -19, gyro_z_offset = 4;
 unsigned short iBus_SwA_Prev = 0;
 unsigned char iBus_rx_cnt = 0;
 unsigned char iBus_VrB_flag = 0;
@@ -388,9 +387,9 @@ Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 5, yaw_rate.kp, yaw_rate.ki, yaw_rate.
 HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
 
 // Altitude Hold PID Gain
-altitude.out.kp = 3;
+altitude.out.kp = 2;
 altitude.out.ki = 0;
-altitude.out.kd = 0;
+altitude.out.kd = 0.01;
 altitude.in.kp = 1000;
 altitude.in.ki = 10;
 altitude.in.kd = 0;
@@ -496,14 +495,14 @@ lat.kd = 0;
   baro_offset = baro_offset / baro_cnt;
 
   // Read Initial GPS
-  while(lat_gps_home == 0 && lon_gps_home == 0)
-  {
-	  HAL_Delay(200);
-	  Read_Gps();
-
-	  lat_gps_home = l_lat_gps;
-	  lat_gps_home = l_lon_gps;
-  }
+//  while(lat_gps_home == 0 && lon_gps_home == 0)
+//  {
+//	  HAL_Delay(1);
+//	  Read_Gps();
+//
+//	  lat_gps_home = l_lat_gps;
+//	  lat_gps_home = l_lon_gps;
+//  }
 
   // Read Battery Voltage
   batVolt = adcVal * 0.00699563f;
@@ -570,6 +569,7 @@ lat.kd = 0;
 			  if(iBus.VrB < 1100) iBus_VrB_flag = 0; // Change Altitude Setpoint
 			  else if(iBus.VrB > 1200) iBus_VrB_flag = 1;
 
+
 			  if(iBus_VrB_flag==1 && iBus_VrB_Prev_flag==0) altitude_setpoint += 0.5f;
 			  iBus_VrB_Prev_flag = iBus_VrB_flag;
 
@@ -583,6 +583,8 @@ lat.kd = 0;
 				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result +yaw_rate.pid_result+altitude.in.pid_result;
 				  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result -yaw_rate.pid_result+altitude.in.pid_result;
 				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result +yaw_rate.pid_result+altitude.in.pid_result;
+				  ccr2 = (unsigned int)((float)ccr2 * MOTOR_FREQ_ADJUST);
+				  ccr4 = (unsigned int)((float)ccr4 * MOTOR_FREQ_ADJUST);
 			  }
 			  else
 			  {
@@ -591,6 +593,8 @@ lat.kd = 0;
 				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.pid_result + altitude.in.pid_result;
 				  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.pid_result + altitude.in.pid_result;
 				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.pid_result + altitude.in.pid_result;
+				  ccr2 = (unsigned int)((float)ccr2 * MOTOR_FREQ_ADJUST);
+				  ccr4 = (unsigned int)((float)ccr4 * MOTOR_FREQ_ADJUST);
 			  }
 		  }
 		  else if(flight_mode == 3 ) //GPS holding Mode
@@ -619,10 +623,12 @@ lat.kd = 0;
 			  if(is_yaw_middle == 0)
 			  {
 				  Single_Yaw_Rate_PID_Calculation(&yaw_rate, (iBus.LH-1500), ICM20602.gyro_z);
-				  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.pid_result + altitude.in.pid_result - gps_pitch_adjust + gps_roll_adjust;
-				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.pid_result + altitude.in.pid_result + gps_pitch_adjust + gps_roll_adjust;
-				  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.pid_result + altitude.in.pid_result + gps_pitch_adjust - gps_roll_adjust;
-				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.pid_result + altitude.in.pid_result - gps_pitch_adjust - gps_roll_adjust;
+				  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_rate.pid_result + altitude.in.pid_result - gps_pitch_adjust + gps_roll_adjust;
+				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_rate.pid_result + altitude.in.pid_result + gps_pitch_adjust + gps_roll_adjust;
+				  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_rate.pid_result + altitude.in.pid_result + gps_pitch_adjust - gps_roll_adjust;
+				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_rate.pid_result + altitude.in.pid_result - gps_pitch_adjust - gps_roll_adjust;
+				  ccr2 = (unsigned int)((float)ccr2 * MOTOR_FREQ_ADJUST);
+				  ccr4 = (unsigned int)((float)ccr4 * MOTOR_FREQ_ADJUST);
 			  }
 			  else
 			  {
@@ -631,6 +637,8 @@ lat.kd = 0;
 				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.pid_result + altitude.in.pid_result + gps_pitch_adjust + gps_roll_adjust;
 				  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.pid_result + altitude.in.pid_result + gps_pitch_adjust - gps_roll_adjust;
 				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.pid_result + altitude.in.pid_result - gps_pitch_adjust - gps_roll_adjust;
+				  ccr2 = (unsigned int)((float)ccr2 * MOTOR_FREQ_ADJUST);
+				  ccr4 = (unsigned int)((float)ccr4 * MOTOR_FREQ_ADJUST);
 			  }
 		  }
 		  else if(flight_mode == 4 ) // Return to Home Mode
@@ -679,8 +687,10 @@ lat.kd = 0;
 			  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.pid_result + altitude.in.pid_result + gps_pitch_adjust + gps_roll_adjust;
 			  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.pid_result + altitude.in.pid_result + gps_pitch_adjust - gps_roll_adjust;
 			  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.pid_result + altitude.in.pid_result - gps_pitch_adjust - gps_roll_adjust;
+			  ccr2 = (unsigned int)((float)ccr2 * MOTOR_FREQ_ADJUST);
+			  ccr4 = (unsigned int)((float)ccr4 * MOTOR_FREQ_ADJUST);
 		  }
-		  else// Default Angle Mode
+		  else// Default Manual Mode
 		  {
 			  if(is_yaw_middle == 0)
 			  {
@@ -690,6 +700,8 @@ lat.kd = 0;
 				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result + roll.in.pid_result +yaw_rate.pid_result;
 				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result - roll.in.pid_result -yaw_rate.pid_result;
 				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result - roll.in.pid_result +yaw_rate.pid_result;
+				  ccr2 = (unsigned int)((float)ccr2 * MOTOR_FREQ_ADJUST);
+				  ccr4 = (unsigned int)((float)ccr4 * MOTOR_FREQ_ADJUST);
 			  }
 			  else
 			  {
@@ -698,6 +710,8 @@ lat.kd = 0;
 				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result + roll.in.pid_result +yaw_heading.pid_result;
 				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result - roll.in.pid_result -yaw_heading.pid_result;
 				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result - roll.in.pid_result +yaw_heading.pid_result;
+				  ccr2 = (unsigned int)((float)ccr2 * MOTOR_FREQ_ADJUST);
+				  ccr4 = (unsigned int)((float)ccr4 * MOTOR_FREQ_ADJUST);
 			  }
 
 			  altitude_setpoint = actual_pressure_fast;
@@ -749,9 +763,6 @@ lat.kd = 0;
 	  {
 		  if(failsafe_flag == 0)
 		  {
-			  ccr2 = (unsigned int)((float)ccr2 * MOTOR_FREQ_ADJUST);
-			  ccr4 = (unsigned int)((float)ccr4 * MOTOR_FREQ_ADJUST);
-
 			  if(iBus.LV > 1050)
 			  {
 				  TIM5->CCR1 = ccr1 > 167999 ? 167999 : ccr1 < 84000 ? 84000 : ccr1;
@@ -853,11 +864,11 @@ lat.kd = 0;
 
 		  //moving average of altitude
 		  pressure_total_average -= pressure_rotating_mem[pressure_rotating_mem_location];
-		  pressure_rotating_mem[pressure_rotating_mem_location] = LPS22HH.baroAlt - baro_offset;
+		  pressure_rotating_mem[pressure_rotating_mem_location] = LPS22HH.baroAltGround;
 		  pressure_total_average += pressure_rotating_mem[pressure_rotating_mem_location];
 		  pressure_rotating_mem_location++;
-		  if(pressure_rotating_mem_location ==10) pressure_rotating_mem_location = 0;
-		  actual_pressure_fast = pressure_total_average / 10.0f;
+		  if(pressure_rotating_mem_location == 5) pressure_rotating_mem_location = 0;
+		  actual_pressure_fast = pressure_total_average / 5.0f;
 
 		  //1st order IIR
 /*		  actual_pressure_slow = actual_pressure_slow * 0.985f + actual_pressure_fast * 0.015f;
@@ -1661,7 +1672,7 @@ void return_to_home(void) {
 
 void Calculate_Takeoff_Throttle()
 {
-	takeoff_throttle = 84 * ( batVolt * (-32.314) + 2093.3 - 1000);
+	takeoff_throttle = 84 * ( batVolt * (-21.765) + 1874.829 - 1000);
 }
 /* USER CODE END 4 */
 

@@ -242,10 +242,11 @@ void Double_Altitude_PID_Calculation(PIDDouble* axis, float set_point_altitude, 
 #if !INNER_DERIV_FILT_ENABLE
 	axis->out.d_result = axis->out.error_deriv * axis->out.kd;				//Calculate D result of outer loop
 #else
-	axis->out.error_deriv_filt = axis->out.error_deriv_filt * 0.4f + axis->out.error_deriv * 0.6f;	//filter for derivative
+	axis->out.error_deriv_filt = axis->out.error_deriv_filt * 0.8f + axis->out.error_deriv * 0.2f;	//filter for derivative
+	axis->out.d_result = axis->out.error_deriv_filt * axis->out.kd;				//Calculate D result of outer loop
 #endif
 
-	axis->out.pid_result = axis->out.p_result;
+	axis->out.pid_result = axis->out.p_result + axis->out.d_result;
 	/****************************************************************************************/
 
 	/************ Double PID Inner Begin (Roll and Pitch Angular Rate Control) **************/
