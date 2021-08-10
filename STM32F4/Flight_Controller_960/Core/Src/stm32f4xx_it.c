@@ -64,7 +64,7 @@ uint8_t tim7_20ms_flag = 0;
 uint8_t tim7_100ms_flag = 0;
 uint8_t tim7_1000ms_flag = 0;
 
-uint8_t nx_rx_buf[11];
+uint8_t nx_rx_buf[20];
 uint8_t nx_rx_cplt_flag;
 
 /* USER CODE END PV */
@@ -82,7 +82,9 @@ uint8_t nx_rx_cplt_flag;
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_adc1;
 extern DMA_HandleTypeDef hdma_usart1_tx;
+extern DMA_HandleTypeDef hdma_usart6_tx;
 extern UART_HandleTypeDef huart1;
+extern UART_HandleTypeDef huart6;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -403,6 +405,20 @@ void DMA2_Stream0_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles DMA2 stream6 global interrupt.
+  */
+void DMA2_Stream6_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream6_IRQn 0 */
+
+  /* USER CODE END DMA2_Stream6_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart6_tx);
+  /* USER CODE BEGIN DMA2_Stream6_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream6_IRQn 1 */
+}
+
+/**
   * @brief This function handles DMA2 stream7 global interrupt.
   */
 void DMA2_Stream7_IRQHandler(void)
@@ -432,45 +448,46 @@ void USART6_IRQHandler(void)
 ////		LL_USART_TransmitData8(UART4, uart6_rx_data);
 //	}
 
-	static unsigned char cnt=0;
-	if(LL_USART_IsActiveFlag_RXNE(USART6))
-	{
-		LL_USART_ClearFlag_RXNE(USART6);
-		uart6_rx_data = LL_USART_ReceiveData8(USART6);
-		uart6_rx_flag = 1;
-		switch(cnt)
-		{
-		case 0:
-			if(uart6_rx_data==0x44)
-			{
-				nx_rx_buf[cnt]=uart6_rx_data;
-				cnt++;
-			}
-			break;
-		case 1:
-			if(uart6_rx_data==0x77)
-			{
-				nx_rx_buf[cnt]=uart6_rx_data;
-				cnt++;
-			}
-			else
-				cnt=0;
-			break;
-
-		case 11:
-			nx_rx_buf[cnt]=uart6_rx_data;
-			cnt=0;
-			nx_rx_cplt_flag = 1;
-			break;
-
-		default:
-			nx_rx_buf[cnt]=uart6_rx_data;
-			cnt++;
-			break;
-		}
-	}
+//	static unsigned char cnt=0;
+//	if(LL_USART_IsActiveFlag_RXNE(USART6))
+//	{
+//		LL_USART_ClearFlag_RXNE(USART6);
+//		uart6_rx_data = LL_USART_ReceiveData8(USART6);
+//		uart6_rx_flag = 1;
+//		switch(cnt)
+//		{
+//		case 0:
+//			if(uart6_rx_data==0x44)
+//			{
+//				nx_rx_buf[cnt]=uart6_rx_data;
+//				cnt++;
+//			}
+//			break;
+//		case 1:
+//			if(uart6_rx_data==0x77)
+//			{
+//				nx_rx_buf[cnt]=uart6_rx_data;
+//				cnt++;
+//			}
+//			else
+//				cnt=0;
+//			break;
+//
+//		case 11:
+//			nx_rx_buf[cnt]=uart6_rx_data;
+//			cnt=0;
+//			nx_rx_cplt_flag = 1;
+//			break;
+//
+//		default:
+//			nx_rx_buf[cnt]=uart6_rx_data;
+//			cnt++;
+//			break;
+//		}
+//	}
 
   /* USER CODE END USART6_IRQn 0 */
+  HAL_UART_IRQHandler(&huart6);
   /* USER CODE BEGIN USART6_IRQn 1 */
 
   /* USER CODE END USART6_IRQn 1 */

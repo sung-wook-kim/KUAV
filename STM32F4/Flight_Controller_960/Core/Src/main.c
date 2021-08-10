@@ -83,7 +83,7 @@ uint8_t telemetry_rx_buf[20];
 uint8_t telemetry_rx_cplt_flag;
 
 extern uint8_t nx_rx_cplt_flag;
-extern uint8_t nx_rx_buf;
+extern uint8_t nx_rx_buf[20];
 
 // Timer variables
 extern uint8_t tim7_1ms_flag;
@@ -244,6 +244,7 @@ unsigned short adcVal;
   LL_USART_EnableIT_RXNE(USART6); //Debug UART
 
   HAL_UART_Receive_IT(&huart1, &uart1_rx_data, 1); // Telemetry
+  HAL_UART_Receive_IT(&huart6, &uart6_rx_data, 1); // Nx
 
   LL_TIM_EnableCounter(TIM5); //Motor PWM
   LL_TIM_CC_EnableChannel(TIM5, LL_TIM_CHANNEL_CH1); //Enable Timer Counting
@@ -534,12 +535,12 @@ lat.kd = 0;
 
 
 	  /********************* NX Message Parsing ************************/
-//	  if(nx_rx_cplt_flag==1)
-//	  {
-//		  nx_rx_cplt_flag=0;
-//
-//		  XAVIER_Parsing(&nx_rx_buf, &XAVIER);
-//	  }
+	  if(nx_rx_cplt_flag==1)
+	  {
+		  nx_rx_cplt_flag=0;
+
+		  XAVIER_RX_Parsing(&nx_rx_buf[0], &XAVIER_rx);
+	  }
 
 	  /********************* Telemetry Communication ************************/
 	  Receive_Pid_Gain();
@@ -811,7 +812,7 @@ lat.kd = 0;
 //		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
 //		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
-		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
+		  Encode_Msg_Gps(&telemetry_tx_buf[0]);-
 		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35
 	  }
 
@@ -1159,41 +1160,74 @@ void BNO080_Calibration(void)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	static unsigned char cnt = 0;
-	if(huart->Instance = USART1)
-	{
-		HAL_UART_Receive_IT(&huart1, &uart1_rx_data, 1);
+		if(huart->Instance == USART1)
+		{
+			HAL_UART_Receive_IT(&huart1, &uart1_rx_data, 1);
 
-		switch(cnt)
-				{
-				case 0:
-					if(uart1_rx_data==0x47)
+			switch(cnt)
 					{
+					case 0:
+						if(uart1_rx_data==0x47)
+						{
+							telemetry_rx_buf[cnt]=uart1_rx_data;
+							cnt++;
+						}
+						break;
+					case 1:
+						if(uart1_rx_data==0x53)
+						{
+							telemetry_rx_buf[cnt]=uart1_rx_data;
+							cnt++;
+						}
+						else
+							cnt=0;
+						break;
+
+					case 19:
 						telemetry_rx_buf[cnt]=uart1_rx_data;
-						cnt++;
-					}
-					break;
-				case 1:
-					if(uart1_rx_data==0x53)
-					{
-						telemetry_rx_buf[cnt]=uart1_rx_data;
-						cnt++;
-					}
-					else
 						cnt=0;
-					break;
+						telemetry_rx_cplt_flag = 1;
+						break;
 
-				case 19:
-					telemetry_rx_buf[cnt]=uart1_rx_data;
-					cnt=0;
-					telemetry_rx_cplt_flag = 1;
-					break;
+					default:
+						telemetry_rx_buf[cnt]=uart1_rx_data;
+						cnt++;
+						break;
+					}
+		}
+		else if(huart->Instance == USART6)
+		{
+			HAL_UART_Receive_IT(&huart6, &uart6_rx_data, 1);
+			switch(cnt)
+					{
+					case 0:
+						if(uart6_rx_data==0x88)
+						{
+							nx_rx_buf[cnt]=uart6_rx_data;
+							cnt++;
+						}
+						break;
+					case 1:
+						if(uart6_rx_data==0x18)
+						{
+							nx_rx_buf[cnt]=uart6_rx_data;
+							cnt++;
+						}
+						else
+							cnt=0;
+						break;
+					case 13:
+						nx_rx_buf[cnt]=uart6_rx_data;
+						cnt=0;
+						nx_rx_cplt_flag = 1;
+						break;
 
-				default:
-					telemetry_rx_buf[cnt]=uart1_rx_data;
-					cnt++;
-					break;
-				}
-	}
+					default:
+						nx_rx_buf[cnt]=uart6_rx_data;
+						cnt++;
+						break;
+					}
+		}
 
 }
 
@@ -1487,7 +1521,7 @@ void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[4] = ((int)(batVolt * 100)) >> 8;
 	telemetry_tx_buf[5] = ((int)(batVolt * 100));
 
-	telemetry_tx_buf[6] = pvt.numSV;
+	telemetry_tx_buf[6] = XAVIER_rx.mode;
 
 	telemetry_tx_buf[7] = (int)BNO080_Yaw >> 24;
 	telemetry_tx_buf[8] = (int)BNO080_Yaw >> 16;
