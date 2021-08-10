@@ -196,6 +196,8 @@ unsigned short iBus_SwA_Prev = 0;
 unsigned char iBus_rx_cnt = 0;
 unsigned char iBus_VrB_flag = 0;
 unsigned char iBus_VrB_Prev_flag = 0;
+unsigned char iBus_VrA_Prev_flag = 0;
+unsigned char iBus_VrA_flag = 0;
 
 float yaw_heading_reference;
 
@@ -569,9 +571,14 @@ lat.kd = 0;
 			  if(iBus.VrB < 1100) iBus_VrB_flag = 0; // Change Altitude Setpoint
 			  else if(iBus.VrB > 1200) iBus_VrB_flag = 1;
 
-
 			  if(iBus_VrB_flag==1 && iBus_VrB_Prev_flag==0) altitude_setpoint += 0.5f;
 			  iBus_VrB_Prev_flag = iBus_VrB_flag;
+
+			  if(iBus.VrA > 1900)iBus_VrA_flag = 0;
+			  else if(iBus.VrA < 1800)iBus_VrA_flag = 1;
+
+			  if(iBus_VrA_flag == 1 && iBus_VrA_Prev_flag == 0) altitude_setpoint -= 0.5f;
+			  iBus_VrA_Prev_flag = iBus_VrA_flag;
 
 			  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, actual_pressure_fast);
 
@@ -810,9 +817,9 @@ lat.kd = 0;
 		  tim7_100ms_flag = 0;
 //		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
-//		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
-		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
-		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35
+		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
+//		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
+		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 26); // altitude : 26, gps : 35
 	  }
 
 
