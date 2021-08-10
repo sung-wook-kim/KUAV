@@ -18,12 +18,13 @@ t1 = time.time() # for calculating sample rate
 # prepping for visualization
 mpu6050_str = ['accel-x','accel-y','accel-z','gyro-x','gyro-y','gyro-z']
 AK8963_str = ['mag-x','mag-y','mag-z']
-ax,ay,az,wx,wy,wz, mx,my,mz= 0
+ax,ay,az,wx,wy,wz,mx,my,mz= [],[],[],[],[],[],[],[],[]
 
 print('recording data')
 
 def mpu_read():
     # global mpu6050_vec,AK8963_vec,t_vec
+    global t1
     while True:
         try:
             ax,ay,az,wx,wy,wz = mpu6050_conv() # read and convert mpu6050 data
@@ -36,23 +37,21 @@ def mpu_read():
 
 
 fig = plt.figure()
-# h , w 간격 조절
 fig.subplots_adjust(hspace=0.4, wspace=0.2)
 
-ax = plt.subplot(221, xlim=(0, 50), ylim=(-500, 500))
-ax.set_title("accelation")
+ax_1 = plt.subplot(221, xlim=(0, 50), ylim=(-500, 500))
+ax_1.set_title("accelation")
 ax_2 = plt.subplot(222, xlim=(0, 50), ylim=(-500, 500))
 ax_2.set_title("rotation")
 ax_3 = plt.subplot(223, xlim=(0, 50), ylim=(-500, 500))
 ax_3.set_title("direction")
 
 
-# 화면에 보여질 점의 개수 ( 길이 )
 max_points = 50
 
-line1, = ax.plot(ax, lw=2, label='ax')
-line2, = ax.plot(ay, lw=2, label='ay')
-line3, = ax.plot(az, lw=2, label='az')
+line1, = ax_1.plot(ax, lw=2, label='ax')
+line2, = ax_1.plot(ay, lw=2, label='ay')
+line3, = ax_1.plot(az, lw=2, label='az')
 
 line11, = ax_2.plot(wx, lw=2, label='wx')
 line12, = ax_2.plot(wy, lw=2, label='wy')
@@ -61,12 +60,6 @@ line13, = ax_2.plot(wz, lw=2, label='wz')
 line21, = ax_3.plot(mx, lw=2, label='mx')
 line22, = ax_3.plot(my, lw=2, label='my')
 line23, = ax_3.plot(mz, lw=2, label='mz')                
-
-def update(num):
-    line1.set_data(*new_data)
-    line2.set_data(*new_data)
-    line3.set_data(*new_data)
-
 
 def animate(i):
     line1.set_data(ax)
