@@ -45,12 +45,12 @@
 /* USER CODE BEGIN PTD */
 int _write(int file, char* p, int len)
 {
-	for(int i=0;i<len;i++)
-	{
-		while(!LL_USART_IsActiveFlag_TXE(USART6));
-		LL_USART_TransmitData8(USART6, *(p+i));
-		HAL_Delay(1);
-	}
+//	for(int i=0;i<len;i++)
+//	{
+//		while(!LL_USART_IsActiveFlag_TXE(USART6));
+//		LL_USART_TransmitData8(USART6, *(p+i));
+//		HAL_Delay(1);
+//	}
 }
 
 /* USER CODE END PTD */
@@ -82,13 +82,16 @@ uint8_t telemetry_tx_buf[40];
 uint8_t telemetry_rx_buf[20];
 uint8_t telemetry_rx_cplt_flag;
 
+extern uint8_t uart6_rx_data;
+extern uint8_t nx_rx_buf[20];
+extern uint8_t nx_tx_buf[40];
 extern uint8_t nx_rx_cplt_flag;
-extern uint8_t nx_rx_buf;
 
 // Timer variables
 extern uint8_t tim7_1ms_flag;
 extern uint8_t tim7_20ms_flag;
 extern uint8_t tim7_100ms_flag;
+extern uint8_t tim7_200ms_flag;
 extern uint8_t tim7_1000ms_flag;
 
 // System flag
@@ -96,6 +99,7 @@ unsigned char motor_arming_flag = 0;
 unsigned char failsafe_flag = 0;
 unsigned char low_bat_flag = 0;
 unsigned char flight_mode = 0; // 1 : manual, 2 : Altitude Hold, 3 : Gps Hold + Altitude hold 4 : Return to Home
+unsigned char mode = 0;
 
 // Altitude Value
 float altitude_setpoint;
@@ -171,6 +175,7 @@ void Encode_Msg_PID_Gain(unsigned char* telemetry_tx_buf, unsigned char id, floa
 void Encode_Msg_AHRS(unsigned char* telemetry_tx_buf);
 void Encode_Msg_Altitude(unsigned char* telemetry_tx_buf);
 void Encode_Msg_Gps(unsigned char* telemetry_tx_buf);
+void Encode_Msg_Nx(unsigned char* nx_tx_buf);
 
 /* USER CODE END PFP */
 
@@ -241,9 +246,10 @@ unsigned short adcVal;
 
   LL_USART_EnableIT_RXNE(UART4); //GPS
   LL_USART_EnableIT_RXNE(UART5); //FS-iA6B;
-  LL_USART_EnableIT_RXNE(USART6); //Debug UART
+//  LL_USART_EnableIT_RXNE(USART6); //Debug UART
 
   HAL_UART_Receive_IT(&huart1, &uart1_rx_data, 1); // Telemetry
+  HAL_UART_Receive_IT(&huart6, &uart6_rx_data, 1);  // NX
 
   LL_TIM_EnableCounter(TIM5); //Motor PWM
   LL_TIM_CC_EnableChannel(TIM5, LL_TIM_CHANNEL_CH1); //Enable Timer Counting
@@ -386,6 +392,7 @@ EP_PIDGain_Read(5, &yaw_rate.kp, &yaw_rate.ki, &yaw_rate.kd);
 Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 5, yaw_rate.kp, yaw_rate.ki, yaw_rate.kd);
 HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
 
+printf("Read PID Gain OK!");
 // Altitude Hold PID Gain
 altitude.out.kp = 2;
 altitude.out.ki = 0;
@@ -410,7 +417,7 @@ lat.kd = 0;
 
 	  HAL_Delay(200);
   }
-
+printf("Receive iBus is OK!");
   /**************************ESC Calibration***********************************/
   if(iBus.SwC == 2000)
   {
@@ -476,6 +483,7 @@ lat.kd = 0;
 	  HAL_Delay(70);
   }
 
+
   /*LPS22HH Initial Offset*/
   for(int i=0; i<20; i++)
   {
@@ -531,15 +539,13 @@ lat.kd = 0;
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-
 	  /********************* NX Message Parsing ************************/
-//	  if(nx_rx_cplt_flag==1)
-//	  {
-//		  nx_rx_cplt_flag=0;
-//
-//		  XAVIER_Parsing(&nx_rx_buf, &XAVIER);
-//	  }
+	  if(nx_rx_cplt_flag==1)
+	  {
+		  nx_rx_cplt_flag=0;
+
+		  XAVIER_RX_Parsing(&nx_rx_buf[0], &XAVIER_rx);
+	  }
 
 	  /********************* Telemetry Communication ************************/
 	  Receive_Pid_Gain();
@@ -796,24 +802,29 @@ lat.kd = 0;
 	  }
 
 
-	  /********************* Telemetry Communication ************************/
-	  if(tim7_20ms_flag == 1 && tim7_100ms_flag == 0)
+	  /********************* Timer Flag ************************/
+	  if(tim7_20ms_flag == 1)
 	  {
 		  tim7_20ms_flag = 0;
-//		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
-//		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 20);
 	  }
 
-	  else if(tim7_20ms_flag == 1 && tim7_100ms_flag == 1)
+	  if(tim7_100ms_flag == 1)
 	  {
-		  tim7_20ms_flag = 0;
 		  tim7_100ms_flag = 0;
 //		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
 //		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
-		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
-		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35
+//		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
+//		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35
 	  }
+
+	  if(tim7_200ms_flag = 1)
+	  {
+		  tim7_200ms_flag = 0;
+		  Encode_Msg_Nx(&nx_tx_buf[0]);
+		  HAL_UART_Transmit_DMA(&huart6,nx_tx_buf[0], 35); // altitude : 26, gps : 35
+	  }
+
 
 
 	  /***********************************************************************************************
@@ -1159,7 +1170,7 @@ void BNO080_Calibration(void)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	static unsigned char cnt = 0;
-	if(huart->Instance = USART1)
+	if(huart->Instance == USART1)
 	{
 		HAL_UART_Receive_IT(&huart1, &uart1_rx_data, 1);
 
@@ -1194,7 +1205,39 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 					break;
 				}
 	}
+	else if(huart->Instance == USART6)
+	{
+		HAL_UART_Receive_IT(&huart6, &uart6_rx_data, 1);
+		switch(cnt)
+				{
+				case 0:
+					if(uart6_rx_data==0x88)
+					{
+						nx_rx_buf[cnt]=uart6_rx_data;
+						cnt++;
+					}
+					break;
+				case 1:
+					if(uart6_rx_data==0x18)
+					{
+						nx_rx_buf[cnt]=uart6_rx_data;
+						cnt++;
+					}
+					else
+						cnt=0;
+					break;
+				case 13:
+					nx_rx_buf[cnt]=uart6_rx_data;
+					cnt=0;
+					nx_rx_cplt_flag = 1;
+					break;
 
+				default:
+					nx_rx_buf[cnt]=uart6_rx_data;
+					cnt++;
+					break;
+				}
+	}
 }
 
 void Encode_Msg_AHRS(unsigned char* telemetry_tx_buf)
@@ -1524,6 +1567,55 @@ void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[33] = (int)gps_roll_adjust >> 8;
 	telemetry_tx_buf[34] = (int)gps_roll_adjust;
 }
+
+void Encode_Msg_Nx(unsigned char* nx_tx_buf)
+{
+	nx_tx_buf[0] = 0x88;
+	nx_tx_buf[1] = 0x18;
+
+	nx_tx_buf[2] = XAVIER_rx.mode;
+
+	nx_tx_buf[3] = l_lat_gps >> 24;
+	nx_tx_buf[4] = l_lat_gps >> 16;
+	nx_tx_buf[5] = l_lat_gps >> 8;
+	nx_tx_buf[6] = l_lat_gps;
+
+	nx_tx_buf[7] = l_lon_gps >> 24;
+	nx_tx_buf[8] = l_lon_gps >> 16;
+	nx_tx_buf[9] = l_lon_gps >> 8;
+	nx_tx_buf[10] = l_lon_gps;
+
+	nx_tx_buf[11] = pvt.iTOW >> 24;
+	nx_tx_buf[12] = pvt.iTOW >> 16;
+	nx_tx_buf[13] = pvt.iTOW >> 8;
+	nx_tx_buf[14] = pvt.iTOW;
+
+	nx_tx_buf[15] = (int)BNO080_Roll >> 24;
+	nx_tx_buf[16] = (int)BNO080_Roll >> 16;
+	nx_tx_buf[17] = (int)BNO080_Roll >> 8;
+	nx_tx_buf[18] = (int)BNO080_Roll;
+
+	nx_tx_buf[19] = (int)BNO080_Pitch >> 24;
+	nx_tx_buf[20] = (int)BNO080_Pitch >> 16;
+	nx_tx_buf[21] = (int)BNO080_Pitch >> 8;
+	nx_tx_buf[22] = (int)BNO080_Pitch;
+
+	nx_tx_buf[23] = (int)BNO080_Yaw >> 24;
+	nx_tx_buf[24] = (int)BNO080_Yaw >> 16;
+	nx_tx_buf[25] = (int)BNO080_Yaw >> 8;
+	nx_tx_buf[26] = (int)BNO080_Yaw;
+
+	nx_tx_buf[27] = (int)actual_pressure_fast >> 24;
+	nx_tx_buf[28] = (int)actual_pressure_fast >> 16;
+	nx_tx_buf[29] = (int)actual_pressure_fast >> 8;
+	nx_tx_buf[30] = (int)actual_pressure_fast;
+
+	nx_tx_buf[31] = (int)batVolt >> 24;
+	nx_tx_buf[32] = (int)batVolt >> 16;
+	nx_tx_buf[33] = (int)batVolt >> 8;
+	nx_tx_buf[34] = (int)batVolt;
+}
+
 
 void Read_Gps(void)
 {

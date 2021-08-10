@@ -62,10 +62,13 @@ uint8_t uart1_rx_data = 0;
 uint8_t tim7_1ms_flag = 0;
 uint8_t tim7_20ms_flag = 0;
 uint8_t tim7_100ms_flag = 0;
+uint8_t tim7_200ms_flag = 0;
 uint8_t tim7_1000ms_flag = 0;
 
-uint8_t nx_rx_buf[11];
+uint8_t nx_rx_buf[20];
+uint8_t nx_tx_buf[40];
 uint8_t nx_rx_cplt_flag;
+uint8_t nx_tx_cplt_flag;
 
 /* USER CODE END PV */
 
@@ -82,7 +85,9 @@ uint8_t nx_rx_cplt_flag;
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_adc1;
 extern DMA_HandleTypeDef hdma_usart1_tx;
+extern DMA_HandleTypeDef hdma_usart6_tx;
 extern UART_HandleTypeDef huart1;
+extern UART_HandleTypeDef huart6;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -297,6 +302,8 @@ void UART4_IRQHandler(void)
 void UART5_IRQHandler(void)
 {
   /* USER CODE BEGIN UART5_IRQn 0 */
+
+
 	static unsigned char cnt=0;
 	if(LL_USART_IsActiveFlag_RXNE(UART5))
 	{
@@ -333,8 +340,8 @@ void UART5_IRQHandler(void)
 			cnt++;
 			break;
 		}
-//		while(!LL_USART_IsActiveFlag_TXE(USART6));
-//		LL_USART_TransmitData8(USART6, uart5_rx_data);
+		while(!LL_USART_IsActiveFlag_TXE(USART6));
+		LL_USART_TransmitData8(USART6, uart5_rx_data);
 
 	}
   /* USER CODE END UART5_IRQn 0 */
@@ -352,6 +359,7 @@ void TIM7_IRQHandler(void)
 	static unsigned char tim7_1ms_count = 0;
 	static unsigned char tim7_20ms_count = 0;
 	static unsigned char tim7_100ms_count = 0;
+	static unsigned char tim7_200ms_count = 0;
 	static unsigned short tim7_1000ms_count = 0;
 	if(LL_TIM_IsActiveFlag_UPDATE(TIM7))
 	{
@@ -374,6 +382,12 @@ void TIM7_IRQHandler(void)
 		{
 			tim7_100ms_count =0;
 			tim7_100ms_flag =1;
+		}
+		tim7_200ms_count = 0;
+		if(tim7_200ms_count == 200)
+		{
+			tim7_200ms_count =0;
+			tim7_200ms_flag =1;
 		}
 		tim7_1000ms_count++;
 		if(tim7_1000ms_count ==1000)
@@ -403,6 +417,20 @@ void DMA2_Stream0_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles DMA2 stream6 global interrupt.
+  */
+void DMA2_Stream6_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream6_IRQn 0 */
+
+  /* USER CODE END DMA2_Stream6_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart6_tx);
+  /* USER CODE BEGIN DMA2_Stream6_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream6_IRQn 1 */
+}
+
+/**
   * @brief This function handles DMA2 stream7 global interrupt.
   */
 void DMA2_Stream7_IRQHandler(void)
@@ -422,55 +450,9 @@ void DMA2_Stream7_IRQHandler(void)
 void USART6_IRQHandler(void)
 {
   /* USER CODE BEGIN USART6_IRQn 0 */
-//	if(LL_USART_IsActiveFlag_RXNE(USART6))
-//	{
-//		LL_USART_ClearFlag_RXNE(USART6);
-//		uart6_rx_data = LL_USART_ReceiveData8(USART6);
-//		uart6_rx_flag = 1;
-//
-////		while(!LL_USART_IsActiveFlag_TXE(USART4));
-////		LL_USART_TransmitData8(UART4, uart6_rx_data);
-//	}
-
-	static unsigned char cnt=0;
-	if(LL_USART_IsActiveFlag_RXNE(USART6))
-	{
-		LL_USART_ClearFlag_RXNE(USART6);
-		uart6_rx_data = LL_USART_ReceiveData8(USART6);
-		uart6_rx_flag = 1;
-		switch(cnt)
-		{
-		case 0:
-			if(uart6_rx_data==0x44)
-			{
-				nx_rx_buf[cnt]=uart6_rx_data;
-				cnt++;
-			}
-			break;
-		case 1:
-			if(uart6_rx_data==0x77)
-			{
-				nx_rx_buf[cnt]=uart6_rx_data;
-				cnt++;
-			}
-			else
-				cnt=0;
-			break;
-
-		case 11:
-			nx_rx_buf[cnt]=uart6_rx_data;
-			cnt=0;
-			nx_rx_cplt_flag = 1;
-			break;
-
-		default:
-			nx_rx_buf[cnt]=uart6_rx_data;
-			cnt++;
-			break;
-		}
-	}
 
   /* USER CODE END USART6_IRQn 0 */
+  HAL_UART_IRQHandler(&huart6);
   /* USER CODE BEGIN USART6_IRQn 1 */
 
   /* USER CODE END USART6_IRQn 1 */
