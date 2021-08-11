@@ -89,8 +89,8 @@ extern PIDDouble roll;
 extern PIDDouble pitch;
 
 extern PIDDouble altitude;
-extern PDSingle_GPS lat;
-extern PDSingle_GPS lon;
+extern PIDDouble lat;
+extern PIDDouble lon;
 
 extern PIDSingle yaw_heading;
 extern PIDSingle yaw_rate;

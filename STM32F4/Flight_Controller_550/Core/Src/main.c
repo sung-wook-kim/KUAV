@@ -187,8 +187,8 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 #define MOTOR_FREQ_ADJUST 0.9f
-#define BNO080_PITCH_OFFSET 1.9f
-#define BNO080_ROLL_OFFSET 0.8f
+#define BNO080_PITCH_OFFSET 2.55f
+#define BNO080_ROLL_OFFSET -0.1f
 
 float q[4];
 float quatRadianAccuracy;
@@ -397,10 +397,21 @@ altitude.in.ki = 10;
 altitude.in.kd = 0;
 
 // GPS Hold PID Gain
-lon.kp = 5;
-lon.kd = 2;
-lat.kp = 5;
-lat.kd = 2;
+lat.out.kp = 0.3;
+lat.out.ki = 0;
+lat.out.kd = 0.5;
+
+lat.in.kp = 10;
+lat.in.ki = 1;
+lat.in.kd = 0;
+
+lon.out.kp = 0.3;
+lon.out.ki = 0;
+lon.out.kd = 0.5;
+
+lon.in.kp = 10;
+lon.in.ki = 1;
+lon.in.kd = 0;
 
 /*Receiver Detection*/
   while(Is_iBus_Received() == 0)
@@ -608,12 +619,12 @@ lat.kd = 2;
 		  {
 			  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, actual_pressure_fast);
 
-			  Single_GPS_PD_Calculation(&lat, l_lat_waypoint, l_lat_gps);
-			  Single_GPS_PD_Calculation(&lon, l_lon_waypoint, l_lon_gps);
+			  Double_GPS_PID_Calculation(&lat, l_lat_waypoint, l_lat_gps);
+			  Double_GPS_PID_Calculation(&lon, l_lon_waypoint, l_lon_gps);
 
 			  //Because the correction is calculated as if the nose was facing north, we need to convert it for the current heading.
-			  gps_roll_adjust = ((float)lon.pd_result * cos((360.f - BNO080_Yaw) * 0.017453)) + ((float)lat.pd_result * sin((360.f - BNO080_Yaw) * 0.017453));
-			  gps_pitch_adjust = ((float)lat.pd_result * cos((360.f - BNO080_Yaw) * 0.017453)) - ((float)lon.pd_result * sin((360.f - BNO080_Yaw) * 0.017453));
+			  gps_roll_adjust = ((float)lon.in.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) + ((float)lat.in.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
+			  gps_pitch_adjust = ((float)lat.in.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) - ((float)lon.in.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
 
 			  //Limit the maximum correction to 300. This way we still have full controll with the pitch and roll stick on the transmitter.
 			  if (gps_roll_adjust > GPS_PD_MAX) gps_roll_adjust = GPS_PD_MAX;
@@ -671,12 +682,12 @@ lat.kd = 2;
 				  l_lon_gps_float_adjust ++;
 			  }
 
-			  Single_GPS_PD_Calculation(&lat, l_lat_waypoint, l_lat_gps);
-			  Single_GPS_PD_Calculation(&lon, l_lon_waypoint, l_lon_gps);
+			  Double_GPS_PID_Calculation(&lat, l_lat_waypoint, l_lat_gps);
+			  Double_GPS_PID_Calculation(&lon, l_lon_waypoint, l_lon_gps);
 
 			  //Because the correction is calculated as if the nose was facing north, we need to convert it for the current heading.
-			  gps_roll_adjust = ((float)lon.pd_result * cos(BNO080_Yaw * 0.017453)) + ((float)lat.pd_result * cos((BNO080_Yaw - 90) * 0.017453));
-			  gps_pitch_adjust = ((float)lat.pd_result * cos(BNO080_Yaw * 0.017453)) + ((float)lon.pd_result * cos((BNO080_Yaw + 90) * 0.017453));
+			  gps_roll_adjust = ((float)lon.in.pid_result * cos(BNO080_Yaw * 0.017453)) + ((float)lat.in.pid_result * cos((BNO080_Yaw - 90) * 0.017453));
+			  gps_pitch_adjust = ((float)lat.in.pid_result * cos(BNO080_Yaw * 0.017453)) + ((float)lon.in.pid_result * cos((BNO080_Yaw + 90) * 0.017453));
 
 			  //Limit the maximum correction to 300. This way we still have full controll with the pitch and roll stick on the transmitter.
 			  if (gps_roll_adjust > GPS_PD_MAX) gps_roll_adjust = GPS_PD_MAX;
@@ -722,8 +733,10 @@ lat.kd = 2;
 
 			  l_lat_waypoint = l_lat_gps;
 			  l_lon_waypoint = l_lon_gps;
-			  Reset_GPS_Integrator(&lat);
-			  Reset_GPS_Integrator(&lon);
+			  Reset_PID_Integrator(&lat.out);
+			  Reset_PID_Integrator(&lat.in);
+			  Reset_PID_Integrator(&lon.out);
+			  Reset_PID_Integrator(&lon.in);
 		  }
 	  }
 
