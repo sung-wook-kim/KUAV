@@ -90,6 +90,7 @@ extern uint8_t nx_tx_buf[40];
 extern uint8_t tim7_1ms_flag;
 extern uint8_t tim7_20ms_flag;
 extern uint8_t tim7_100ms_flag;
+extern uint8_t tim7_200ms_flag;
 extern uint8_t tim7_1000ms_flag;
 
 // System flag
@@ -800,22 +801,25 @@ lat.kd = 0;
 
 
 	  /********************* Telemetry Communication ************************/
-	  if(tim7_20ms_flag == 1 && tim7_100ms_flag == 0)
+	  if(tim7_20ms_flag == 1)
 	  {
 		  tim7_20ms_flag = 0;
-//		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
-//		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 20);
+
 	  }
 
-	  else if(tim7_20ms_flag == 1 && tim7_100ms_flag == 1)
+	  if(tim7_100ms_flag == 1)
 	  {
-		  tim7_20ms_flag = 0;
 		  tim7_100ms_flag = 0;
 //		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
 //		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
 		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
 		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35
+	  }
+
+	  if(tim7_200ms_flag == 1)
+	  {
+		  tim7_200ms_flag = 0;
 		  Encode_Msg_Nx(&nx_tx_buf[0]);
 		  HAL_UART_Transmit_DMA(&huart6, &nx_tx_buf[0], 35);
 	  }
@@ -1163,72 +1167,73 @@ void BNO080_Calibration(void)
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	static unsigned char cnt = 0;
+	static unsigned char cnt_1 = 0;
+	static unsigned char cnt_6 = 0;
 		if(huart->Instance == USART1)
 		{
 			HAL_UART_Receive_IT(&huart1, &uart1_rx_data, 1);
 
-			switch(cnt)
+			switch(cnt_1)
 					{
 					case 0:
 						if(uart1_rx_data==0x47)
 						{
-							telemetry_rx_buf[cnt]=uart1_rx_data;
-							cnt++;
+							telemetry_rx_buf[cnt_1]=uart1_rx_data;
+							cnt_1++;
 						}
 						break;
 					case 1:
 						if(uart1_rx_data==0x53)
 						{
-							telemetry_rx_buf[cnt]=uart1_rx_data;
-							cnt++;
+							telemetry_rx_buf[cnt_1]=uart1_rx_data;
+							cnt_1++;
 						}
 						else
-							cnt=0;
+							cnt_1=0;
 						break;
 
 					case 19:
-						telemetry_rx_buf[cnt]=uart1_rx_data;
-						cnt=0;
+						telemetry_rx_buf[cnt_1]=uart1_rx_data;
+						cnt_1=0;
 						telemetry_rx_cplt_flag = 1;
 						break;
 
 					default:
-						telemetry_rx_buf[cnt]=uart1_rx_data;
-						cnt++;
+						telemetry_rx_buf[cnt_1]=uart1_rx_data;
+						cnt_1++;
 						break;
 					}
 		}
 		else if(huart->Instance == USART6)
 		{
 			HAL_UART_Receive_IT(&huart6, &uart6_rx_data, 1);
-			switch(cnt)
+			switch(cnt_6)
 					{
 					case 0:
 						if(uart6_rx_data==0x88)
 						{
-							nx_rx_buf[cnt]=uart6_rx_data;
-							cnt++;
+							nx_rx_buf[cnt_6]=uart6_rx_data;
+							cnt_6++;
 						}
 						break;
 					case 1:
 						if(uart6_rx_data==0x18)
 						{
-							nx_rx_buf[cnt]=uart6_rx_data;
-							cnt++;
+							nx_rx_buf[cnt_6]=uart6_rx_data;
+							cnt_6++;
 						}
 						else
-							cnt=0;
+							cnt_6=0;
 						break;
 					case 13:
-						nx_rx_buf[cnt]=uart6_rx_data;
-						cnt=0;
+						nx_rx_buf[cnt_6]=uart6_rx_data;
+						cnt_6=0;
 						nx_rx_cplt_flag = 1;
 						break;
 
 					default:
-						nx_rx_buf[cnt]=uart6_rx_data;
-						cnt++;
+						nx_rx_buf[cnt_6]=uart6_rx_data;
+						cnt_6++;
 						break;
 					}
 		}
@@ -1525,7 +1530,7 @@ void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[4] = ((int)(batVolt * 100)) >> 8;
 	telemetry_tx_buf[5] = ((int)(batVolt * 100));
 
-	telemetry_tx_buf[6] = XAVIER_rx.mode;
+	telemetry_tx_buf[6] = pvt.numSV;
 
 	telemetry_tx_buf[7] = (int)BNO080_Yaw >> 24;
 	telemetry_tx_buf[8] = (int)BNO080_Yaw >> 16;

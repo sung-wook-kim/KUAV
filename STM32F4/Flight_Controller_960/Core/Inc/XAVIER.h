@@ -32,7 +32,6 @@
 	extern XAVIER_TX XAVIER_tx;
 
 	void XAVIER_RX_Parsing(unsigned char* data, XAVIER_RX* XAVIER_rx);
-//	void XAVIER_TX_Parsing(unsigned char* data, XAVIER_TX* XAVIER_tx);
 
 #ifdef _cplusplus
 }
