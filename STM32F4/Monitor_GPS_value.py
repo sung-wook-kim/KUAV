@@ -11,9 +11,28 @@ ser = serial.Serial('COM7', 115200)
 ser.flush()
 
 i = 0
-
+yaw_list = []
+lat_list = []
+lon_list = []
+target_lat_list = []
+target_lon_list = []
+pitch_adjust_list = []
+roll_adjust_list = []
 while True:
     i+=1
+    if i % 100 == 0:
+        now = time.localtime()
+        timevar = time.strftime('%d%H%M%S', now)
+        df = pd.DataFrame()
+        df['yaw'] = yaw_list
+        df['pvt_lat'] = lat_list
+        df['pvt_lon'] = lon_list
+        df['target_lat'] = target_lat_list
+        df['target_lon'] = target_lon_list
+        df['pitch_adjust'] = pitch_adjust_list
+        df['roll_adjust'] = roll_adjust_list
+        df.to_csv(f"{timevar}_gps_data.csv")
+
 
     a = int(ser.read(1).hex(), 16)
     if a == 0x77:
@@ -83,7 +102,12 @@ while True:
             if pitch_sign == 1: pitch_adjust = (pitch_adjust & 0x7fffffff) - 2 ** 31
             if roll_sign == 1: roll_adjust = (roll_adjust & 0x7fffffff) - 2 ** 31
 
-            print(f' {i} /// num_sv : {num_sv}, bno080_yaw : {bno080_yaw} , pvt_lat : {pvt_lat} , pvt_lon : {pvt_lon} \
+            print(f' {i} // bno080_yaw : {bno080_yaw} , lat_error : {target_lat - pvt_lat} , lon_error : {target_lon - pvt_lon} \
             , target_lat : {target_lat} , target_lon : {target_lon} , pitch_adjust : {pitch_adjust} , roll_adjust : {roll_adjust}, voltage : {voltage/100}')
-
-
+            yaw_list.append(bno080_yaw)
+            lat_list.append(pvt_lat)
+            lon_list.append(pvt_lon)
+            target_lat_list.append(target_lat)
+            target_lon_list.append(target_lon)
+            pitch_adjust_list.append(pitch_adjust)
+            roll_adjust_list.append(roll_adjust)

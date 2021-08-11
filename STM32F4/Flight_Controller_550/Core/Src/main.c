@@ -129,7 +129,7 @@ float lon_gps_add;
 unsigned char new_gps_data_available;
 float gps_roll_adjust;
 float gps_pitch_adjust;
-#define GPS_PD_MAX 200
+#define GPS_PD_MAX 6000
 #define GPS_PD_MIN -GPS_PD_MAX
 
 // Return to home value
@@ -397,10 +397,10 @@ altitude.in.ki = 10;
 altitude.in.kd = 0;
 
 // GPS Hold PID Gain
-lon.kp = 3;
-lon.kd = 0;
-lat.kp = 3;
-lat.kd = 0;
+lon.kp = 5;
+lon.kd = 2;
+lat.kp = 5;
+lat.kd = 2;
 
 /*Receiver Detection*/
   while(Is_iBus_Received() == 0)
@@ -522,7 +522,8 @@ lat.kd = 0;
 
   LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
 
-  printf("Start\n");
+
+("Start\n");
 
   /* USER CODE END 2 */
 
@@ -533,7 +534,6 @@ lat.kd = 0;
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
 
 	  /********************* NX Message Parsing ************************/
 //	  if(nx_rx_cplt_flag==1)
@@ -563,7 +563,7 @@ lat.kd = 0;
 
 		  flight_mode = 1;
 		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 2;
-		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1) flight_mode = 3;
+		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1 ) flight_mode = 3;
 
 
 		  if(flight_mode == 2) //Altitude Holding Mode
@@ -608,18 +608,12 @@ lat.kd = 0;
 		  {
 			  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, actual_pressure_fast);
 
-			  if (gps_add_counter >= 0)gps_add_counter --;
-			  Read_Gps();
-
-			  if(l_lat_waypoint == 0) l_lat_waypoint = l_lat_gps;
-			  else if(l_lon_waypoint == 0) l_lon_waypoint = l_lon_gps;
-
 			  Single_GPS_PD_Calculation(&lat, l_lat_waypoint, l_lat_gps);
 			  Single_GPS_PD_Calculation(&lon, l_lon_waypoint, l_lon_gps);
 
 			  //Because the correction is calculated as if the nose was facing north, we need to convert it for the current heading.
-			  gps_roll_adjust = ((float)lon.pd_result * cos(BNO080_Yaw * 0.017453)) + ((float)lat.pd_result * cos((BNO080_Yaw - 90) * 0.017453));
-			  gps_pitch_adjust = ((float)lat.pd_result * cos(BNO080_Yaw * 0.017453)) + ((float)lon.pd_result * cos((BNO080_Yaw + 90) * 0.017453));
+			  gps_roll_adjust = ((float)lon.pd_result * cos((360.f - BNO080_Yaw) * 0.017453)) + ((float)lat.pd_result * sin((360.f - BNO080_Yaw) * 0.017453));
+			  gps_pitch_adjust = ((float)lat.pd_result * cos((360.f - BNO080_Yaw) * 0.017453)) - ((float)lon.pd_result * sin((360.f - BNO080_Yaw) * 0.017453));
 
 			  //Limit the maximum correction to 300. This way we still have full controll with the pitch and roll stick on the transmitter.
 			  if (gps_roll_adjust > GPS_PD_MAX) gps_roll_adjust = GPS_PD_MAX;
@@ -629,6 +623,7 @@ lat.kd = 0;
 
 			  if(is_yaw_middle == 0)
 			  {
+				  yaw_heading_reference = BNO080_Yaw;
 				  Single_Yaw_Rate_PID_Calculation(&yaw_rate, (iBus.LH-1500), ICM20602.gyro_z);
 				  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_rate.pid_result + altitude.in.pid_result - gps_pitch_adjust + gps_roll_adjust;
 				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_rate.pid_result + altitude.in.pid_result + gps_pitch_adjust + gps_roll_adjust;
@@ -639,7 +634,7 @@ lat.kd = 0;
 			  }
 			  else
 			  {
-				  Single_Yaw_Heading_PID_Calculation(&yaw_heading, 0 , BNO080_Yaw, ICM20602.gyro_z);
+				  Single_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference , BNO080_Yaw, ICM20602.gyro_z);
 				  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.pid_result + altitude.in.pid_result - gps_pitch_adjust + gps_roll_adjust;
 				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.pid_result + altitude.in.pid_result + gps_pitch_adjust + gps_roll_adjust;
 				  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.pid_result + altitude.in.pid_result + gps_pitch_adjust - gps_roll_adjust;
@@ -725,8 +720,8 @@ lat.kd = 0;
 			  Reset_PID_Integrator(&altitude.out);
 			  Reset_PID_Integrator(&altitude.in);
 
-			  l_lat_waypoint = 0;
-			  l_lon_waypoint = 0;
+			  l_lat_waypoint = l_lat_gps;
+			  l_lon_waypoint = l_lon_gps;
 			  Reset_GPS_Integrator(&lat);
 			  Reset_GPS_Integrator(&lon);
 		  }
@@ -817,11 +812,13 @@ lat.kd = 0;
 		  tim7_100ms_flag = 0;
 //		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
-		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
-//		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
-		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 26); // altitude : 26, gps : 35
+//		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
+		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
+		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35
 	  }
 
+	  if (gps_add_counter >= 0)gps_add_counter --;
+	  Read_Gps();
 
 	  /***********************************************************************************************
 	----------------------------Check BNO080 Sensor Value(current Angle Data)-----------------------
