@@ -202,15 +202,14 @@ class NX(BaseCamera):
         dy_prev = 0
         dx_prev  = 0
         while True:
-            print("gimbal plag : " , NX.gimbal_plag )
             if NX.gimbal_plag == True:
                 NX.gimbal_plag = False
                 pitch_gain = 0.01
                 yaw_gain = -0.02
-                pitch_d = -0.0025 
-                yaw_d = 0.005
-                dy_term = NX.img_dy - dy_prev
-                dx_term = NX.img_dx - dx_prev
+#                pitch_d = -0.0025 
+#                yaw_d = 0.005
+#                dy_term = NX.img_dy - dy_prev
+#                dx_term = NX.img_dx - dx_prev
                 target_pitch += (pitch_gain * NX.img_dy )#+ dy_term * pitch_d) 
                 target_yaw += (yaw_gain * NX.img_dx )#+ dx_term * yaw_d)
                 #   Pitch     Roll      Yaw      axislimit
@@ -219,8 +218,8 @@ class NX(BaseCamera):
                 target_yaw = min(max(axislimit[4], target_yaw), axislimit[5])
                 print(f"img_dx {NX.img_dx}, img_dy {NX.img_dy}, target_pitch {target_pitch}, target_yaw {target_yaw}")
                 setpitchrollyaw(target_pitch, 0, target_yaw)
-                dy_prev = NX.img_dy
-                dx_prev = NX.img_dx
+#                dy_prev = NX.img_dy
+#                dx_prev = NX.img_dx
             else:
                 time.sleep(0.05)
 
@@ -247,7 +246,7 @@ class NX(BaseCamera):
                 elif plag == '9' and self.plag_9 == False:
                     self.mode = 9  # 비상 모터 정지
                     self.plag_9 = True
-                print(self.mode)  # 현재 모드 확인용
+                print("mode : " ,self.mode)  # 현재 모드 확인용
                 self.client_socket.sendall(sendingMsg.encode())
             except Exception as e:
                 # GCS connection off , connection waiting
@@ -269,17 +268,9 @@ class NX(BaseCamera):
                     self.serLIDAR.reset_input_buffer()
 
     def connectSTM(self):
-        # 연산 속도는 과연,,.?!
         header_1 = 0x88
         header_2 = 0x18
-        lat_drone =1
-        lon_drone =1
-        gps_time = 1
-        roll = 1
-        pitch = 1
-        heading_angle = 1
-        altitude = 1
-        voltage = 1
+        lat_drone = 1 ; lon_drone =1 ; gps_time = 1 ; roll = 1 ; pitch = 1 ; heading_angle = 1 ; altitude = 1 ; voltage = 1
         while True:
             countSTM = self.serSTM.in_waiting
             if countSTM > 34:
@@ -297,18 +288,18 @@ class NX(BaseCamera):
                     heading_angle = np.int32(np.int32(recvSTM[23] << 24) + np.int32(recvSTM[24] << 16) + np.int32(recvSTM[25] << 8 ) + recvSTM[26])
                     altitude = np.int32(np.int32(recvSTM[27] << 24) + np.int32(recvSTM[28] << 16) + np.int32(recvSTM[29] << 8 ) + recvSTM[30])
                     voltage = np.int32(np.int32(recvSTM[31] << 24) + np.int32(recvSTM[32] << 16) + np.int32(recvSTM[33] << 8 ) + recvSTM[34])
-                    print(mode_echo,lat_drone,lon_drone,gps_time,roll,pitch,heading_angle,altitude,voltage)
+                    print("From STM : " , mode_echo , lat_drone , lon_drone , gps_time , roll , pitch , heading_angle , altitude , voltage)
                     read = str(mode_echo) + '\n' + str(lat_drone) + '\n' + str(lon_drone) + '\n' + str(gps_time) +'\n' +  str(lat_drone+1) + '\n' + str(
                         lon_drone+1) + '\n' + str(altitude)
                     self.serSTM.reset_input_buffer()
                 # 특정 범위에 드론이 들어가면 , AVOID 모드 AVOID on ,off 이므로 확실히 구분 된 조건문
-                if lat_drone == self.AVOID_LAT and lon_drone == self.AVOID_LON:
+                if lat_drone == self.AVOID_LAT or lon_drone == self.AVOID_LON:
                     self.AVOID = True
                 # 벗어나면 , 일반 추적
-                elif lat_drone != self.AVOID_LAT and lon_drone != self.AVOID_LON:
+                else:
                     self.AVOID = False 
 
-                # 과도한 연산 방지를 위해 설정 ok
+                # 미션 좌표에 도착하면 모드를 2로 변경 ( 그전까지는 1임 )
                 if self.plag_2 == False and  lat_drone == self.MISSION_LAT and lon_drone == self.MISSION_LON:
                     self.mode = 2  # yaw를 회전하며 탐색 모드
                     self.plag_2 = True
@@ -330,7 +321,7 @@ class NX(BaseCamera):
                         lat_person = 500000 # 계산필요
                         lon_person = 500000 # 계산필요
                         
-                        yaw_error = 500            # time.sleep(0.2) # yolo를 통해 인식
+                        yaw_error = NX.img_dy  # yolo를 통해 인식
                     else: 
                         self.mode = 5 # 대기모드
                         new_gps_lat = lat_drone
@@ -346,7 +337,7 @@ class NX(BaseCamera):
                     lat_person = 500000 # 계산필요            # time.sleep(0.2)
                     lon_person = 500000 # 계산필요
         
-                    yaw_error = 50000 # yolo를 통해 인식
+                    yaw_error = NX.img_dy # yolo를 통해 인식
                 
                 new_gps_lat = 371231245
                 new_gps_lon = 1271232131
@@ -371,14 +362,13 @@ class NX(BaseCamera):
 
                 new_lon_first = (new_gps_lon >> 24) & 0xff ; new_lon_second = (new_gps_lon >> 16) & 0xff
                 new_lon_third = (new_gps_lon >> 8) & 0xff  ; new_lon_fourth = new_gps_lon & 0xff
-                # lat_drone = 32.1231231 ; lon_drone = 123.1231231 ; gps_time =5555  ; lat_person = 32.1231232 ; lon_person = 123.1231231 ;altitude =32   
+               
                 lat_person = lat_drone + 1  
                 lon_person = lon_drone + 1         
                 read = str(self.mode) + '\n' + str(lat_drone) + '\n' + str(lon_drone) + '\n' + str(gps_time) +'\n' +  str(lat_person) + '\n' + str(
                     lon_person) + '\n' + str(altitude)
                 print(NX.human_detect)
                 self.q.append(read)
-                yaw_error = 213
                 # 연산 후 바로 next_gps 전달
                 self.serSTM.write(
                     [header_1,header_2,self.mode,\
