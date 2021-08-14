@@ -22,8 +22,10 @@ class NX(BaseCamera):
     def __init__(self):
         self.serSTM = serial.Serial('/dev/ttyUSB0' , 115200,timeout=1)
         self.serSTM.flush()
+        print("stm")
         self.serLIDAR = serial.Serial('/dev/ttyUSB1', 115200 , timeout =1)
         self.serLIDAR.flush()
+        print("lidar")
         ##gimbalstart
         sys.stdout.flush()
         ser = serialinit()
@@ -36,8 +38,8 @@ class NX(BaseCamera):
         self.lidar_distance_1 = 0 ; self.lidar_distance_2 = 0
         self.MISSION_LAT = 0 ; self.MISSION_LON = 0
         self.plag_MISSION = False; self.plag_RTH = False
-        self.RTH_LAT = 0 ; self.RTH_LON = 0 
-        self.AVOID_LAT = 0 ; self.AVOID_LON = 0 
+        self.RTH_LAT = 2353 ; self.RTH_LON = 235
+        self.AVOID_LAT = 1234 ; self.AVOID_LON = 1234 
         self.mode = 0  # default = 0
         self.plag_1 = False; self.plag_2 = False; self.plag_6 = False
         self.plag_9 = False
@@ -68,6 +70,9 @@ class NX(BaseCamera):
     @staticmethod
     def set_human_init():
         NX.human_detect = False
+        NX.img_dx = 0
+        NX.img_dy = 0
+        NX.gimbal_plag = False
         print("human")
 
     @staticmethod
@@ -174,7 +179,7 @@ class NX(BaseCamera):
                             NX.human_detect = True
                             NX.img_dx = NX.img_human_center[0] - w / 2
                             NX.img_dy = NX.img_human_center[1] - h / 2
-
+                            NX.gimbal_plag = True
                     cv2.line(im0,
                              (int(NX.img_dx + im0.shape[1] / 2), int(im0.shape[0] / 2)),
                              (int(im0.shape[1] / 2), int(im0.shape[0] / 2)), (0, 0, 255),
@@ -191,24 +196,36 @@ class NX(BaseCamera):
 
             yield cv2.imencode('.jpg', im0)[1].tobytes()
 
-    @staticmethod
-    def connectGIMBAL():
+    def connectGIMBAL(self):
         target_pitch = 0
         target_yaw = 0
+        dy_prev = 0
+        dx_prev  = 0
         while True:
-            pitch_gain = 0.01
-            yaw_gain = -0.02
-            target_pitch += pitch_gain * NX.img_dy
-            target_yaw += yaw_gain * NX.img_dx
-            #   Pitch     Roll      Yaw      axislimit
-            # [Min, Max, Min, Max, Min, Max]
-            target_pitch = min(max(axislimit[0], target_pitch), axislimit[1])
-            target_yaw = min(max(axislimit[4], target_yaw), axislimit[5])
-            # print(f"img_dx {img_dx}, img_dy {img_dy}, target_pitch {target_pitch}, target_yaw {target_yaw}")
-            setpitchrollyaw(target_pitch, 0, target_yaw)
+            print("gimbal plag : " , NX.gimbal_plag )
+            if NX.gimbal_plag == True:
+                NX.gimbal_plag = False
+                pitch_gain = 0.01
+                yaw_gain = -0.02
+                pitch_d = -0.0025 
+                yaw_d = 0.005
+                dy_term = NX.img_dy - dy_prev
+                dx_term = NX.img_dx - dx_prev
+                target_pitch += (pitch_gain * NX.img_dy )#+ dy_term * pitch_d) 
+                target_yaw += (yaw_gain * NX.img_dx )#+ dx_term * yaw_d)
+                #   Pitch     Roll      Yaw      axislimit
+                # [Min, Max, Min, Max, Min, Max]
+                target_pitch = min(max(axislimit[0], target_pitch), axislimit[1])
+                target_yaw = min(max(axislimit[4], target_yaw), axislimit[5])
+                print(f"img_dx {NX.img_dx}, img_dy {NX.img_dy}, target_pitch {target_pitch}, target_yaw {target_yaw}")
+                setpitchrollyaw(target_pitch, 0, target_yaw)
+                dy_prev = NX.img_dy
+                dx_prev = NX.img_dx
+            else:
+                time.sleep(0.05)
 
     def connectGCS(self):
-        time.sleep(15)
+        time.sleep(10)
         while True:
             try:
                 sendingMsg = self.q.pop(-1)  # sendingmsg = 'mode \n lat_drone \n lon_drone \n gps_time \n lat_person \n lon_person \n altitude \n detection'
@@ -218,14 +235,14 @@ class NX(BaseCamera):
                 if plag == '1' and self.plag_1 == False:
                     self.mode = 1  # 임무 장소 이동 , 30M 고도 유지
                     self.plag_1 = True
-                    self.MISSION_LAT = plag[1]
-                    self.MISSION_LON = plag[2]
+                    self.MISSION_LAT = int(gcs[1])
+                    self.MISSION_LON = int(gcs[2])
                     self.plag_MISSION = True
                 elif plag == '6' and self.plag_6 == False:
                     self.mode = 6  # RTH = 착륙
                     self.plag_6 = True
-                    self.RTH_LAT = plag[1]
-                    self.RTH_LAT = plag[2]
+                    self.RTH_LAT = int(gcs[1])
+                    self.RTH_LAT = int(gcs[2])
                     self.plag_RTH = True
                 elif plag == '9' and self.plag_9 == False:
                     self.mode = 9  # 비상 모터 정지
@@ -255,13 +272,14 @@ class NX(BaseCamera):
         # 연산 속도는 과연,,.?!
         header_1 = 0x88
         header_2 = 0x18
-        lat_drone = 1
-        lon_drone = 1
-        lat_person = 1
-        lon_person = 1
-        altitude = 1
+        lat_drone =1
+        lon_drone =1
         gps_time = 1
-        mode_echo = 1
+        roll = 1
+        pitch = 1
+        heading_angle = 1
+        altitude = 1
+        voltage = 1
         while True:
             countSTM = self.serSTM.in_waiting
             if countSTM > 34:
@@ -353,7 +371,9 @@ class NX(BaseCamera):
 
                 new_lon_first = (new_gps_lon >> 24) & 0xff ; new_lon_second = (new_gps_lon >> 16) & 0xff
                 new_lon_third = (new_gps_lon >> 8) & 0xff  ; new_lon_fourth = new_gps_lon & 0xff
-                # lat_drone = 32.1231231 ; lon_drone = 123.1231231 ; gps_time =5555  ; lat_person = 32.1231232 ; lon_person = 123.1231231 ;altitude =32            
+                # lat_drone = 32.1231231 ; lon_drone = 123.1231231 ; gps_time =5555  ; lat_person = 32.1231232 ; lon_person = 123.1231231 ;altitude =32   
+                lat_person = lat_drone + 1  
+                lon_person = lon_drone + 1         
                 read = str(self.mode) + '\n' + str(lat_drone) + '\n' + str(lon_drone) + '\n' + str(gps_time) +'\n' +  str(lat_person) + '\n' + str(
                     lon_person) + '\n' + str(altitude)
                 print(NX.human_detect)
