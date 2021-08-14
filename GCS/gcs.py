@@ -23,7 +23,7 @@ class window(QtWidgets.QMainWindow):
         
         # streaming
         self.webview=QtWebEngineWidgets.QWebEngineView()
-        self.webview.setUrl(QUrl("http://192.168.43.185:5001"))
+        self.webview.setUrl(QUrl("http://223.171.80.232:5001"))
 
         # plot
         self.m = folium.Map(location=[37.5872530,127.0307692], tiles='cartodbpositron',zoom_start=13)
@@ -64,9 +64,9 @@ class window(QtWidgets.QMainWindow):
         self.timer = QTimer(self)
         self.timer.start(1000)
         self.rad = 1
-        self.HOST = '192.168.43.185'
+        self.HOST = '223.171.80.232'
         #self.HOST = '127.0.0.1'
-        self.port = 9999
+        self.port = 9998
         self.lat_drone = [] ;self.lon_drone = [] ; self.GPStime = [] ; self.lat_person = [] ;self.lon_person = [] ;self.altitude = []
         self.server_socket = 0 ; self.client_socket = 0 ; self.addr = 0;
         self.NX_data = b'0'
@@ -125,7 +125,7 @@ class window(QtWidgets.QMainWindow):
     def update_gps(self):
         self.client_socket.sendall(self.NX_data)
         self.NX_data = self.client_socket.recv(1024)
-        print(self.NX_data) # 값 들어오는거 확인용
+        print(self.NX_data) # 값 들어오는거 확인용 
         mode , lat_drone , lon_drone , gps_time , lat_person , lon_person , altitude  = self.NX_data.decode().split('\n')
         print(self.rad) # 역시 확인용
         self.automatic_li.append(self.automatic)
