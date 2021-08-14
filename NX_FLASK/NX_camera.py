@@ -208,7 +208,7 @@ class NX(BaseCamera):
             setpitchrollyaw(target_pitch, 0, target_yaw)
 
     def connectGCS(self):
-        time.sleep(15)
+        time.sleep(10)
         while True:
             try:
                 sendingMsg = self.q.pop(-1)  # sendingmsg = 'mode \n lat_drone \n lon_drone \n gps_time \n lat_person \n lon_person \n altitude \n detection'
@@ -218,8 +218,8 @@ class NX(BaseCamera):
                 if plag == '1' and self.plag_1 == False:
                     self.mode = 1  # 임무 장소 이동 , 30M 고도 유지
                     self.plag_1 = True
-                    self.MISSION_LAT = plag[1]
-                    self.MISSION_LON = plag[2]
+                    self.MISSION_LAT = int(gcs[1])
+                    self.MISSION_LON = int(gcs[2])
                     self.plag_MISSION = True
                 elif plag == '6' and self.plag_6 == False:
                     self.mode = 6  # RTH = 착륙
@@ -255,13 +255,6 @@ class NX(BaseCamera):
         # 연산 속도는 과연,,.?!
         header_1 = 0x88
         header_2 = 0x18
-        lat_drone = 1
-        lon_drone = 1
-        lat_person = 1
-        lon_person = 1
-        altitude = 1
-        gps_time = 1
-        mode_echo = 1
         while True:
             countSTM = self.serSTM.in_waiting
             if countSTM > 34:
