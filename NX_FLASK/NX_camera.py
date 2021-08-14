@@ -33,7 +33,7 @@ class NX(BaseCamera):
         self.mode = 0  # default = 0
         self.plag_1 = False; self.plag_2 = False; self.plag_6 = False
         self.plag_9 = False
-        self.AVOID = False;
+        self.AVOID = False
         self.q = [0, 0, 0]
         # NX - GCS socket , NX = server
         self.HOST = '223.171.80.232'
@@ -262,7 +262,7 @@ class NX(BaseCamera):
         time.sleep(15)
         while True:
             try:
-                sendingMsg = self.q.pop(-1)  # sendingmsg = 'mode \n lat_drone \n lon_drone \n gps_time \n lat_person \n lon_person \n altitude'
+                sendingMsg = self.q.pop(-1)  # sendingmsg = 'mode \n lat_drone \n lon_drone \n gps_time \n lat_person \n lon_person \n altitude \n detection'
                 gcs = self.client_socket.recv(1024).decode().split('\n')
                 print(gcs)
                 NX.human_detect = True
@@ -327,10 +327,6 @@ class NX(BaseCamera):
  
                     print(mode_echo,lat_drone,lon_drone,gps_time,roll,pitch,heading_angle,altitude)
                     self.serSTM.reset_input_buffer()
-            # lat_drone = 38.00123112 ; lon_drone = 127.12312342 ; 
-            # lat_person = 32.123123213 ; lon_person = 123.2323123
-            # gps_time = 32112342 
-            # roll = 321 ; pitch = 122 ; heading_angle =123 ; altitude =21
             # 특정 범위에 드론이 들어가면 , AVOID 모드 AVOID on ,off 이므로 확실히 구분 된 조건문
             if lat_drone == self.AVOID_LAT and lon_drone == self.AVOID_LON:
                 self.AVOID = True
@@ -338,13 +334,11 @@ class NX(BaseCamera):
             elif lat_drone != self.AVOID_LAT and lon_drone != self.AVOID_LON:
                 self.AVOID = False 
 
-
             # 과도한 연산 방지를 위해 설정 ok
             if self.plag_2 == False and  lat_drone == self.MISSION_LAT and lon_drone == self.MISSION_LON:
                 self.mode = 2  # yaw를 회전하며 탐색 모드
                 self.plag_2 = True
                 self.plag_MISSION = False
-
 
             # 2번 임무 , 사람이 detect 되지 않았으면 임의의 값을 통해 회전 
             if self.mode == 2 and NX.human_detect == False:
@@ -405,7 +399,7 @@ class NX(BaseCamera):
             new_lon_third = (new_gps_lon >> 8) & 0xff  ; new_lon_fourth = new_gps_lon & 0xff
             
             read = str(self.mode) + '\n' + str(lat_drone) + '\n' + str(lon_drone) + '\n' + str(gps_time) +'\n' +  str(lat_person) + '\n' + str(
-                lon_person) + '\n' + str(altitude)
+                lon_person) + '\n' + str(altitude) + '\n' + str(NX.human_detect)
             print(NX.human_detect)
             self.q.append(read)
             # time.sleep(0.2)
