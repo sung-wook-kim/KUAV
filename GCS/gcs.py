@@ -88,19 +88,19 @@ class window(QtWidgets.QMainWindow):
 
 
     def missionlatFunction(self):
-        self.MISSION_LAT = float(self.mission_lat.text())
+        self.MISSION_LAT = int(float(self.mission_lat.text())*10**7)
         print(self.MISSION_LAT)
 
     def missionlonFunction(self):
-        self.MISSION_LON = float(self.mission_lon.text())
+        self.MISSION_LON = int(float(self.mission_lon.text())*10**7)
         print(self.MISSION_LON)
         
     def RTHlatFunction(self):
-        self.RTH_LAT = float(self.RTH_lat.text())
+        self.RTH_LAT = int(float(self.RTH_lat.text())*10**7)
         print(self.RTH_LAT)
 
     def RTHlonFunction(self):
-        self.RTH_LON = float(self.RTH_lon.text())
+        self.RTH_LON = int(float(self.RTH_lon.text())*10**7)
         print(self.RTH_LON)
 
     # GCS - STM32 serial ( telemetry maybe)
@@ -144,7 +144,7 @@ class window(QtWidgets.QMainWindow):
             self.webview2.setHtml(self.data.getvalue().decode())
 
         self.rad +=1
-        self.altstatus.setText(f"고도 : {self.rad}m")
+        self.altstatus.setText(f"고도 : {altitude}m")
     # 이륙 명령 -> NX한테 이륙 명령 코드를 보낸다.
     def takeoff(self):
         msgT = f"1\n{self.MISSION_LAT}\n{self.MISSION_LON}"
