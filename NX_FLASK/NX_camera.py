@@ -20,12 +20,19 @@ class NX(BaseCamera):
     video_source = 'test.mp4'
     
     def __init__(self):
-        #self.serSTM = serial.Serial('/dev/ttyUSB0' , 115200,timeout=1)
-        #self.serSTM.flush()
+        self.serSTM = serial.Serial('/dev/ttyUSB1' , 115200,timeout=1)
+        self.serSTM.flush()
         self.serLIDAR = serial.Serial('/dev/ttyUSB0', 115200 , timeout =1)
         self.serLIDAR.flush()
-        self.serGIMBAL = serial.Serial('/dev/ttyUSB1', 115200 , timeout =1)
-        self.serGIMBAL.flush()
+        ##gimbalstart
+        sys.stdout.flush()
+        ser = serialinit()
+        safemode = responsetest(ser)
+        paramstore(safemode)
+        sleepmultipliercalc()
+        intervalcalc()
+        setpitchrollyaw(0,0,0)
+        print("gimbal init")
         self.lidar_distance_1 = 0 ; self.lidar_distance_2 = 0
         self.MISSION_LAT = 0 ; self.MISSION_LON = 0
         self.plag_MISSION = False; self.plag_RTH = False
@@ -47,11 +54,11 @@ class NX(BaseCamera):
         print("connect")
         self.human_detect = False
         print("human")
-        # NX.set_human_init()
-        #self.threadSTM = threading.Thread(target=self.connectSTM)
+        NX.set_human_init()
+        self.threadSTM = threading.Thread(target=self.connectSTM)
         self.threadGCS = threading.Thread(target=self.connectGCS)
         self.threadLIDAR = threading.Thread(target=self.connectLIDAR)
-        #self.threadSTM.start()
+        self.threadSTM.start()
         self.threadGCS.start()
         self.threadLIDAR.start()    
 
@@ -71,7 +78,7 @@ class NX(BaseCamera):
     @staticmethod
     def frames():
         out, weights, imgsz, stride = \
-            'inference/output', 'weights/yolov5s.pt', 640, 32
+            'inference/output', '/home/drone/kuav/NX_FLASK/weights/yolov5s.pt', 640, 32
         # source = 'test.mp4'
         source = 0
         device = torch_utils.select_device()
@@ -170,7 +177,7 @@ class NX(BaseCamera):
                     img_dx = NX.img_human_foot[0] - w / 2
                     img_dy = NX.img_human_foot[1] - h / 2
                     # gimbal control code
-                    pitch_gain = 0.01
+                    pitch_gain = -0.01
                     yaw_gain = -0.02
                     target_pitch += pitch_gain * img_dy
                     target_yaw += yaw_gain * img_dx
@@ -238,113 +245,123 @@ class NX(BaseCamera):
                 if recv[0] == 0x59 and recv[1] == 0x59:  # python3
                     self.lidar_distance_1 = recv[2] # np.int16(recv[2] + np.int16(recv[3] << 8))
                     self.lidar_distance_2 = recv[3]
-                    time.sleep(0.2)
+                    time.sleep(0.05)
+                    print(self.lidar_distance_1)
                     self.serLIDAR.reset_input_buffer()
 
     def connectSTM(self):
         # 연산 속도는 과연,,.?!
         header_1 = 0x88
         header_2 = 0x18
+        lat_drone = 1
+        lon_drone = 1
+        lat_person = 1
+        lon_person = 1
+        altitude = 1
+        gps_time = 1
+        mode_echo = 1
         while True:
             countSTM = self.serSTM.in_waiting
-            if countSTM > 18:
-                recvSTM = self.serSTM.read(19)
+            if countSTM > 34:
+                recvSTM = self.serSTM.read(35)
                 self.serSTM.reset_input_buffer() 
                 if recvSTM[0] == 0x88 and recvSTM[1] == 0x18:
                     mode_echo = np.int16(recvSTM[2])
 
-                    lat_drone = np.int16(np.int16(recvSTM[3] << 24) + np.int16(recvSTM[4] << 16) + np.int16(recvSTM[5] << 8 ) + recvSTM[6])
-                    lon_drone = np.int16(np.int16(recvSTM[7] << 24) + np.int16(recvSTM[8] << 16) + np.int16(recvSTM[9] << 8 ) + recvSTM[10])
-                    gps_time = np.int16(np.int16(recvSTM[11] << 24) + np.int16(recvSTM[12] << 16) + np.int16(recvSTM[13] << 8 ) + recvSTM[14])
+                    lat_drone = np.int32(np.int32(recvSTM[3] << 24) + np.int32(recvSTM[4] << 16) + np.int32(recvSTM[5] << 8 ) + recvSTM[6]) / 10**7
+                    lon_drone = np.int32(np.int32(recvSTM[7] << 24) + np.int32(recvSTM[8] << 16) + np.int32(recvSTM[9] << 8 ) + recvSTM[10]) / 10**7
+                    gps_time = np.int32(np.int32(recvSTM[11] << 24) + np.int32(recvSTM[12] << 16) + np.int32(recvSTM[13] << 8 ) + recvSTM[14])
 
-                    roll = np.int16(np.int16(recvSTM[15] << 24) + np.int16(recvSTM[16] << 16) + np.int16(recvSTM[17] << 8 ) + recvSTM[18])
-                    pitch = np.int16(np.int16(recvSTM[19] << 24) + np.int16(recvSTM[20] << 16) + np.int16(recvSTM[21] << 8 ) + recvSTM[22])
-                    heading_angle = np.int16(np.int16(recvSTM[23] << 24) + np.int16(recvSTM[24] << 16) + np.int16(recvSTM[25] << 8 ) + recvSTM[26])
-                    altitude = np.int16(np.int16(recvSTM[27] << 24) + np.int16(recvSTM[28] << 16) + np.int16(recvSTM[29] << 8 ) + recvSTM[30])
- 
-                    print(mode_echo,lat_drone,lon_drone,gps_time,roll,pitch,heading_angle,altitude)
+                    roll = np.int32(np.int32(recvSTM[15] << 24) + np.int32(recvSTM[16] << 16) + np.int32(recvSTM[17] << 8 ) + recvSTM[18])
+                    pitch = np.int32(np.int32(recvSTM[19] << 24) + np.int32(recvSTM[20] << 16) + np.int32(recvSTM[21] << 8 ) + recvSTM[22])
+                    heading_angle = np.int32(np.int32(recvSTM[23] << 24) + np.int32(recvSTM[24] << 16) + np.int32(recvSTM[25] << 8 ) + recvSTM[26])
+                    altitude = np.int32(np.int32(recvSTM[27] << 24) + np.int32(recvSTM[28] << 16) + np.int32(recvSTM[29] << 8 ) + recvSTM[30])
+                    voltage = np.int32(np.int32(recvSTM[31] << 24) + np.int32(recvSTM[32] << 16) + np.int32(recvSTM[33] << 8 ) + recvSTM[34])
+                    print(mode_echo,lat_drone,lon_drone,gps_time,roll,pitch,heading_angle,altitude,voltage)
+                    read = str(mode_echo) + '\n' + str(lat_drone) + '\n' + str(lon_drone) + '\n' + str(gps_time) +'\n' +  str(lat_drone+1) + '\n' + str(
+                        lon_drone+1) + '\n' + str(altitude)
                     self.serSTM.reset_input_buffer()
-            # 특정 범위에 드론이 들어가면 , AVOID 모드 AVOID on ,off 이므로 확실히 구분 된 조건문
-            if lat_drone == self.AVOID_LAT and lon_drone == self.AVOID_LON:
-                self.AVOID = True
-            # 벗어나면 , 일반 추적
-            elif lat_drone != self.AVOID_LAT and lon_drone != self.AVOID_LON:
-                self.AVOID = False 
+                # 특정 범위에 드론이 들어가면 , AVOID 모드 AVOID on ,off 이므로 확실히 구분 된 조건문
+                if lat_drone == self.AVOID_LAT and lon_drone == self.AVOID_LON:
+                    self.AVOID = True
+                # 벗어나면 , 일반 추적
+                elif lat_drone != self.AVOID_LAT and lon_drone != self.AVOID_LON:
+                    self.AVOID = False 
 
-            # 과도한 연산 방지를 위해 설정 ok
-            if self.plag_2 == False and  lat_drone == self.MISSION_LAT and lon_drone == self.MISSION_LON:
-                self.mode = 2  # yaw를 회전하며 탐색 모드
-                self.plag_2 = True
-                self.plag_MISSION = False
+                # 과도한 연산 방지를 위해 설정 ok
+                if self.plag_2 == False and  lat_drone == self.MISSION_LAT and lon_drone == self.MISSION_LON:
+                    self.mode = 2  # yaw를 회전하며 탐색 모드
+                    self.plag_2 = True
+                    self.plag_MISSION = False
 
-            # 2번 임무 , 사람이 detect 되지 않았으면 임의의 값을 통해 회전 
-            if self.mode == 2 and NX.human_detect == False:
-                new_gps_lat = lat_drone
-                new_gps_lon = lon_drone
-                yaw_error = 20 
+                # 2번 임무 , 사람이 detect 되지 않았으면 임의의 값을 통해 회전 
+                if self.mode == 2 and NX.human_detect == False:
+                    new_gps_lat = lat_drone
+                    new_gps_lon = lon_drone
+                    yaw_error = 20 
 
-            # 금지구역 모드 X 
-            if self.AVOID == False:
-                if NX.human_detect == True:
-                    self.mode = 3 # 추적모드
+                # 금지구역 모드 X 
+                if self.AVOID == False:
+                    if NX.human_detect == True:
+                        self.mode = 3 # 추적모드
+                        new_gps_lat = lat_drone + 1 # 계산필요
+                        new_gps_lon = lon_drone + 1 # 계산필요
+                        
+                        lat_person = 500000 # 계산필요
+                        lon_person = 500000 # 계산필요
+                        
+                        yaw_error = 500            # time.sleep(0.2) # yolo를 통해 인식
+                    else: 
+                        self.mode = 5 # 대기모드
+                        new_gps_lat = lat_drone
+                        new_gps_lon = lat_drone
+                        yaw_error = 0
+
+                # 금지구역 모드
+                else:
+                    self.mode = 4
                     new_gps_lat = lat_drone + 1 # 계산필요
                     new_gps_lon = lon_drone + 1 # 계산필요
                     
-                    lat_person = 500000 # 계산필요
+                    lat_person = 500000 # 계산필요            # time.sleep(0.2)
                     lon_person = 500000 # 계산필요
-                    
-                    yaw_error = 500            # time.sleep(0.2) # yolo를 통해 인식
-                else: 
-                    self.mode = 5 # 대기모드
-                    new_gps_lat = lat_drone
-                    new_gps_lon = lat_drone
-                    yaw_error = 0
-
-            # 금지구역 모드
-            else:
-                self.mode = 4
-                new_gps_lat = lat_drone + 1 # 계산필요
-                new_gps_lon = lon_drone + 1 # 계산필요
+        
+                    yaw_error = 50000 # yolo를 통해 인식
                 
-                lat_person = 500000 # 계산필요            # time.sleep(0.2)
-                lon_person = 500000 # 계산필요
-     
-                yaw_error = 500000000 # yolo를 통해 인식
-            
-            new_gps_lat = 37.123124512
-            new_gps_lon = 127.1232131
-            ## 1번 , 6번 수행중이라면
-            if self.plag_MISSION == True:
-                new_gps_lat = self.MISSION_LAT
-                new_gps_lon = self.MISSION_LON
-                yaw_error = 0
-                self.mode = 1
+                new_gps_lat = 371231245
+                new_gps_lon = 1271232131
+                ## 1번 , 6번 수행중이라면
+                if self.plag_MISSION == True:
+                    new_gps_lat = self.MISSION_LAT
+                    new_gps_lon = self.MISSION_LON
+                    yaw_error = 0
+                    self.mode = 1
 
-            if self.plag_RTH == True:
-                new_gps_lat = self.RTH_LAT
-                new_gps_lon = self.RTH_LON 
-                yaw_error = 0
-                self.mode = 6
-            # if yaw_error <= 20: # 안전범위 이내라고 판단된다면
-            #         yaw_error = 0 # 과도한 조절을 하지 않기 위해 설정
-            
-            # 통신을 위한 변경 코드
-            new_lat_first = (new_gps_lat >> 24) & 0xff ; new_lat_second = (new_gps_lat >> 16) & 0xff
-            new_lat_third = (new_gps_lat >> 8) & 0xff  ; new_lat_fourth = new_gps_lat & 0xff
+                if self.plag_RTH == True:
+                    new_gps_lat = self.RTH_LAT
+                    new_gps_lon = self.RTH_LON 
+                    yaw_error = 0
+                    self.mode = 6
+                # if yaw_error <= 20: # 안전범위 이내라고 판단된다면
+                #         yaw_error = 0 # 과도한 조절을 하지 않기 위해 설정
+                
+                # 통신을 위한 변경 코드
+                new_lat_first = (new_gps_lat >> 24) & 0xff ; new_lat_second = (new_gps_lat >> 16) & 0xff
+                new_lat_third = (new_gps_lat >> 8) & 0xff  ; new_lat_fourth = new_gps_lat & 0xff
 
-            new_lon_first = (new_gps_lon >> 24) & 0xff ; new_lon_second = (new_gps_lon >> 16) & 0xff
-            new_lon_third = (new_gps_lon >> 8) & 0xff  ; new_lon_fourth = new_gps_lon & 0xff
-            
-            read = str(self.mode) + '\n' + str(lat_drone) + '\n' + str(lon_drone) + '\n' + str(gps_time) +'\n' +  str(lat_person) + '\n' + str(
-                lon_person) + '\n' + str(altitude) + '\n' + str(NX.human_detect)
-            print(NX.human_detect)
-            self.q.append(read)
-            # time.sleep(0.2)
-            print("STM")
-            # 연산 후 바로 next_gps 전달
-            self.ser.write(
-                [header_1,header_2,self.mode,\
-                new_lat_first,new_lat_second,new_lat_third,new_lat_fourth,\
-                new_lon_first,new_lon_second,new_lon_third,new_lon_fourth,\
-                yaw_error , self.lidar_distance_1 , self.lidar_distance_2]
-            )
+                new_lon_first = (new_gps_lon >> 24) & 0xff ; new_lon_second = (new_gps_lon >> 16) & 0xff
+                new_lon_third = (new_gps_lon >> 8) & 0xff  ; new_lon_fourth = new_gps_lon & 0xff
+                # lat_drone = 32.1231231 ; lon_drone = 123.1231231 ; gps_time =5555  ; lat_person = 32.1231232 ; lon_person = 123.1231231 ;altitude =32            
+                read = str(self.mode) + '\n' + str(lat_drone) + '\n' + str(lon_drone) + '\n' + str(gps_time) +'\n' +  str(lat_person) + '\n' + str(
+                    lon_person) + '\n' + str(altitude)
+                print(NX.human_detect)
+                self.q.append(read)
+                time.sleep(0.2)
+                print("STM")
+                # 연산 후 바로 next_gps 전달
+                self.serSTM.write(
+                    [header_1,header_2,self.mode,\
+                    new_lat_first,new_lat_second,new_lat_third,new_lat_fourth,\
+                    new_lon_first,new_lon_second,new_lon_third,new_lon_fourth,\
+                    yaw_error , self.lidar_distance_1 , self.lidar_distance_2]
+                )

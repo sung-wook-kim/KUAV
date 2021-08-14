@@ -23,7 +23,7 @@ WIP to do list
 
 ######################Global variable declaration(User Specific)#######################
 baud = 115200  # Having the wrong value here will cause serial communication issues.
-com = 'COM5'  # Change this value to your COM port
+com = '/dev/ttyACM0'  # Change this value to your COM port
 crc = '3334'  # Non-mavlink CRC dummy value. Should not need to change!
 sleeptime = [None, .001]  # In seconds. [Movement CMD delay, Non-movement CMD delay]
 
