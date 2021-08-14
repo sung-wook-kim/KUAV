@@ -56,10 +56,11 @@ class NX(BaseCamera):
         self.threadSTM = threading.Thread(target=self.connectSTM)
         self.threadGCS = threading.Thread(target=self.connectGCS)
         self.threadLIDAR = threading.Thread(target=self.connectLIDAR)
+        self.threadGIMBAL = threading.Thread(target=self.connectGIMBAL)
         self.threadSTM.start()
         self.threadGCS.start()
-        self.threadLIDAR.start()    
-
+        self.threadLIDAR.start()
+        self.threadGIMBAL.start()
         if os.environ.get('OPENCV_CAMERA_SOURCE'):
             NX.set_video_source(int(os.environ['OPENCV_CAMERA_SOURCE']))
         super(NX, self).__init__()
@@ -118,8 +119,8 @@ class NX(BaseCamera):
         w, h = int(dataset.imgs[0].shape[1]), int(dataset.imgs[0].shape[0])
         NX.img_human_center = (int(w / 2), int(h / 2))
         NX.img_human_foot = NX.img_human_center
-        target_yaw = 0
-        target_pitch = 0
+        NX.img_dx = 0
+        NX.img_dy = 0
         n = 0  # the number of detect iteration
         conf_thres = 0.4
         fontFace = cv2.FONT_HERSHEY_SIMPLEX
@@ -171,27 +172,15 @@ class NX(BaseCamera):
                             NX.img_human_center = center
                             NX.img_human_foot = foot
                             NX.human_detect = True
-
-                    img_dx = NX.img_human_foot[0] - w / 2
-                    img_dy = NX.img_human_foot[1] - h / 2
-                    # gimbal control code
-                    pitch_gain = -0.01
-                    yaw_gain = -0.02
-                    target_pitch += pitch_gain * img_dy
-                    target_yaw += yaw_gain * img_dx
-                    #   Pitch     Roll      Yaw      axislimit
-                    # [Min, Max, Min, Max, Min, Max]
-                    target_pitch = min(max(axislimit[0], target_pitch), axislimit[1])
-                    target_yaw = min(max(axislimit[4], target_yaw), axislimit[5])
-                    # print(f"img_dx {img_dx}, img_dy {img_dy}, target_pitch {target_pitch}, target_yaw {target_yaw}")
-                    setpitchrollyaw(target_pitch, 0, target_yaw)
+                            NX.img_dx = NX.img_human_center[0] - w / 2
+                            NX.img_dy = NX.img_human_center[1] - h / 2
 
                     cv2.line(im0,
-                             (int(img_dx + im0.shape[1] / 2), int(im0.shape[0] / 2)),
+                             (int(NX.img_dx + im0.shape[1] / 2), int(im0.shape[0] / 2)),
                              (int(im0.shape[1] / 2), int(im0.shape[0] / 2)), (0, 0, 255),
                              thickness=1, lineType=cv2.LINE_AA)
                     cv2.line(im0,
-                             (int(im0.shape[1] / 2), int(img_dy + im0.shape[0] / 2)),
+                             (int(im0.shape[1] / 2), int(NX.img_dy + im0.shape[0] / 2)),
                              (int(im0.shape[1] / 2), int(im0.shape[0] / 2)), (0, 0, 255),
                              thickness=1, lineType=cv2.LINE_AA)
                     cv2.putText(im0, 'Human Detection ' + str(NX.human_detect), (10, 10 + textSize[1]), fontFace,
@@ -201,6 +190,22 @@ class NX(BaseCamera):
                 print('%sDone. (%.3fs)' % (s, t2 - t1), NX.img_human_center)
 
             yield cv2.imencode('.jpg', im0)[1].tobytes()
+
+    @staticmethod
+    def connectGIMBAL():
+        target_pitch = 0
+        target_yaw = 0
+        while True:
+            pitch_gain = 0.01
+            yaw_gain = -0.02
+            target_pitch += pitch_gain * NX.img_dy
+            target_yaw += yaw_gain * NX.img_dx
+            #   Pitch     Roll      Yaw      axislimit
+            # [Min, Max, Min, Max, Min, Max]
+            target_pitch = min(max(axislimit[0], target_pitch), axislimit[1])
+            target_yaw = min(max(axislimit[4], target_yaw), axislimit[5])
+            # print(f"img_dx {img_dx}, img_dy {img_dy}, target_pitch {target_pitch}, target_yaw {target_yaw}")
+            setpitchrollyaw(target_pitch, 0, target_yaw)
 
     def connectGCS(self):
         time.sleep(15)
