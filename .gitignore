@@ -11,3 +11,4 @@ STM32F4/Flight_Controller_550/Debug/
 STM32F4/Flight_Controller_550/*.launch
 STM32F4/Flight_Controller_960/Debug/
 STM32F4/Flight_Controller_960/*.launch
+NX_FLASK/socketex.py
