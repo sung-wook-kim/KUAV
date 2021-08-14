@@ -235,7 +235,7 @@ class LoadStreams:  # multiple IP or RTSP cameras
         for i, s in enumerate(sources):
             # Start the thread to read frames from the video stream
             print('%g/%g: %s... ' % (i + 1, n, s), end='')
-            cap = cv2.VideoCapture(" nvarguscamerasrc ! video/x-raw(memory:NVMM), width=1920, height=1080, format=(string)NV12, framerate=60/1 !  nvvidconv flip-method=0 ! video/x-raw, width=820, height=616, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink",cv2.CAP_GSTREAMER)
+            cap = cv2.VideoCapture(" nvarguscamerasrc ! video/x-raw(memory:NVMM), width=1920, height=1080, format=(string)NV12, framerate=60/1 !  nvvidconv flip-method=2 ! video/x-raw, width=820, height=616, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink",cv2.CAP_GSTREAMER)
             # cap = cv2.VideoCapture(0)
             assert cap.isOpened(), 'Failed to open %s' % s
             w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
