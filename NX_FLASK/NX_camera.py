@@ -20,9 +20,9 @@ class NX(BaseCamera):
     video_source = 'test.mp4'
     
     def __init__(self):
-        self.serSTM = serial.Serial('/dev/ttyUSB1' , 115200,timeout=1)
+        self.serSTM = serial.Serial('/dev/ttyUSB0' , 115200,timeout=1)
         self.serSTM.flush()
-        self.serLIDAR = serial.Serial('/dev/ttyUSB0', 115200 , timeout =1)
+        self.serLIDAR = serial.Serial('/dev/ttyUSB1', 115200 , timeout =1)
         self.serLIDAR.flush()
         ##gimbalstart
         sys.stdout.flush()
@@ -211,7 +211,6 @@ class NX(BaseCamera):
                 sendingMsg = self.q.pop(-1)  # sendingmsg = 'mode \n lat_drone \n lon_drone \n gps_time \n lat_person \n lon_person \n altitude \n detection'
                 gcs = self.client_socket.recv(1024).decode().split('\n')
                 print(gcs)
-                NX.human_detect = True
                 plag = gcs[0]
                 if plag == '1' and self.plag_1 == False:
                     self.mode = 1  # 임무 장소 이동 , 30M 고도 유지
@@ -245,8 +244,8 @@ class NX(BaseCamera):
                 if recv[0] == 0x59 and recv[1] == 0x59:  # python3
                     self.lidar_distance_1 = recv[2] # np.int16(recv[2] + np.int16(recv[3] << 8))
                     self.lidar_distance_2 = recv[3]
-                    time.sleep(0.05)
-                    print(self.lidar_distance_1)
+                    time.sleep(0.2)
+                    print("LIDAR  : ",self.lidar_distance_1)
                     self.serLIDAR.reset_input_buffer()
 
     def connectSTM(self):
@@ -356,8 +355,7 @@ class NX(BaseCamera):
                     lon_person) + '\n' + str(altitude)
                 print(NX.human_detect)
                 self.q.append(read)
-                time.sleep(0.2)
-                print("STM")
+                yaw_error = 213
                 # 연산 후 바로 next_gps 전달
                 self.serSTM.write(
                     [header_1,header_2,self.mode,\
