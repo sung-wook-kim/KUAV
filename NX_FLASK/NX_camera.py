@@ -19,12 +19,12 @@ class NX(BaseCamera):
     video_source = 'test.mp4'
     
     def __init__(self):
-        self.serSTM = serial.Serial('/dev/ttyUSB0' , 115200,timeout=1)
-        self.serSTM.flush()
+        #self.serSTM = serial.Serial('/dev/ttyUSB0' , 115200,timeout=1)
+        #self.serSTM.flush()
         self.serLIDAR = serial.Serial('/dev/ttyUSB0', 115200 , timeout =1)
         self.serLIDAR.flush()
-        #self.serGIMBAL = serial.Serial('/dev/ttyUSB1', 115200 , timeout =1)
-        #self.serGIMBAL.flush()
+        self.serGIMBAL = serial.Serial('/dev/ttyUSB1', 115200 , timeout =1)
+        self.serGIMBAL.flush()
         self.lidar_distance_1 = 0 ; self.lidar_distance_2 = 0
         self.MISSION_LAT = 0 ; self.MISSION_LON = 0
         self.plag_MISSION = False; self.plag_RTH = False
@@ -33,12 +33,11 @@ class NX(BaseCamera):
         self.mode = 0  # default = 0
         self.plag_1 = False; self.plag_2 = False; self.plag_6 = False
         self.plag_9 = False
-        self.AVOID = False; self.HIDE = False; self.MIDPOINT = False
+        self.AVOID = False;
         self.q = [0, 0, 0]
         # NX - GCS socket , NX = server
-        self.HOST = '192.168.43.185'
-        #self.HOST = '127.0.0.1'
-        self.PORT = 9999
+        self.HOST = '223.171.80.232'
+        self.PORT = 9998
         print("Waiting")
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind(('', self.PORT))
@@ -46,14 +45,14 @@ class NX(BaseCamera):
         self.client_socket, self.addr = self.server_socket.accept()
         print("connect")
         NX.set_human_init()
-        self.thread1 = threading.Thread(target=self.connectSTM)
-        self.thread2 = threading.Thread(target=self.connectGCS)
-        self.thread3 = threading.Thread(target=self.connectLIDAR)
-        #self.thread4 = threading.Thread(target=self.connectGIMBAL)
-        self.thread1.start()
-        self.thread2.start()
-        self.thread3.start()    
-        #self.thread4.start()
+        #self.threadSTM = threading.Thread(target=self.connectSTM)
+        self.threadGCS = threading.Thread(target=self.connectGCS)
+        self.threadLIDAR = threading.Thread(target=self.connectLIDAR)
+        self.threadGIMBAL = threading.Thread(target=self.connectGIMBAL)
+        #self.threadSTM.start()
+        self.threadGCS.start()
+        self.threadLIDAR.start()    
+        self.threadGIMBAL.start()
         
         if os.environ.get('OPENCV_CAMERA_SOURCE'):
             NX.set_video_source(int(os.environ['OPENCV_CAMERA_SOURCE']))
@@ -302,7 +301,9 @@ class NX(BaseCamera):
                     self.lidar_distance_2 = recv[3]
                     time.sleep(0.2)
                     self.serLIDAR.reset_input_buffer()
-                    
+
+    def connectGIBMAL(self):
+        pass  
     def connectSTM(self):
         # 연산 속도는 과연,,.?!
         header_1 = 0x88
