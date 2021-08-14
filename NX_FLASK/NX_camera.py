@@ -19,21 +19,17 @@ class NX(BaseCamera):
     video_source = 'test.mp4'
     
     def __init__(self):
-        #self.serSTM = serial.Serial('/dev/ttyUSB0' , 115200,timeout=1)
-        #self.serSTM.flush()
+        self.serSTM = serial.Serial('/dev/ttyUSB0' , 115200,timeout=1)
+        self.serSTM.flush()
         self.serLIDAR = serial.Serial('/dev/ttyUSB0', 115200 , timeout =1)
         self.serLIDAR.flush()
         #self.serGIMBAL = serial.Serial('/dev/ttyUSB1', 115200 , timeout =1)
         #self.serGIMBAL.flush()
-        self.distance = 0
-        self.MISSION_LAT = 0
-        self.MISSION_LON = 0
-        self.plag_MISSION = False;
-        self.RTH_LAT = 0
-        self.RTH_LON = 0 
-        self.plag_RTH = False;
-        self.AVOID_LAT = 0
-        self.AVOID_LON = 0 
+        self.lidar_distance_1 = 0 ; self.lidar_distance_2 = 0
+        self.MISSION_LAT = 0 ; self.MISSION_LON = 0
+        self.plag_MISSION = False; self.plag_RTH = False
+        self.RTH_LAT = 0 ; self.RTH_LON = 0 
+        self.AVOID_LAT = 0 ; self.AVOID_LON = 0 
         self.mode = 0  # default = 0
         self.plag_1 = False; self.plag_2 = False; self.plag_6 = False
         self.plag_9 = False
@@ -294,6 +290,7 @@ class NX(BaseCamera):
                 print("connection error")
                 self.client_socket.close()
                 self.client_socket, self.addr = self.server_socket.accept()
+
     def connectLIDAR(self):
         while True:
             count = self.serLIDAR.in_waiting 
@@ -301,37 +298,38 @@ class NX(BaseCamera):
                 recv = self.serLIDAR.read(9) # read
                 self.serLIDAR.reset_input_buffer() # 리셋
                 if recv[0] == 0x59 and recv[1] == 0x59:  # python3
-                    self.distance = np.int16(recv[2] + np.int16(recv[3] << 8))
-                    print(f'distance = {self.distance}cm')
+                    self.lidar_distance_1 = recv[2] # np.int16(recv[2] + np.int16(recv[3] << 8))
+                    self.lidar_distance_2 = recv[3]
                     time.sleep(0.2)
                     self.serLIDAR.reset_input_buffer()
+                    
     def connectSTM(self):
         # 연산 속도는 과연,,.?!
-        header_1 = 0x44
-        header_2 = 0x77
+        header_1 = 0x88
+        header_2 = 0x18
         while True:
-            # countSTM = self.serSTM.in_waiting
-            # if countSTM > 18:
-            #     recvSTM = self.serSTM.read(19)
-            #     self.serSTM.reset_input_buffer() 
-            #     if recvSTM[0] == 0x88 and recvSTM[1] == 0x18:
-            #         mode_echo = np.int16(recvSTM[2])
+            countSTM = self.serSTM.in_waiting
+            if countSTM > 18:
+                recvSTM = self.serSTM.read(19)
+                self.serSTM.reset_input_buffer() 
+                if recvSTM[0] == 0x88 and recvSTM[1] == 0x18:
+                    mode_echo = np.int16(recvSTM[2])
 
-            #         lat_drone = np.int16(np.int16(recvSTM[3] << 24) + np.int16(recvSTM[4] << 16) + np.int16(recvSTM[5] << 8 ) + recvSTM[6])
-            #         lon_drone = np.int16(np.int16(recvSTM[7] << 24) + np.int16(recvSTM[8] << 16) + np.int16(recvSTM[9] << 8 ) + recvSTM[10])
-            #         gps_time = np.int16(np.int16(recvSTM[11] << 24) + np.int16(recvSTM[12] << 16) + np.int16(recvSTM[13] << 8 ) + recvSTM[14])
+                    lat_drone = np.int16(np.int16(recvSTM[3] << 24) + np.int16(recvSTM[4] << 16) + np.int16(recvSTM[5] << 8 ) + recvSTM[6])
+                    lon_drone = np.int16(np.int16(recvSTM[7] << 24) + np.int16(recvSTM[8] << 16) + np.int16(recvSTM[9] << 8 ) + recvSTM[10])
+                    gps_time = np.int16(np.int16(recvSTM[11] << 24) + np.int16(recvSTM[12] << 16) + np.int16(recvSTM[13] << 8 ) + recvSTM[14])
 
-            #         roll = np.int16(recvSTM[15])
-            #         pitch = np.int16(recvSTM[16])
-            #         heading_angle = np.int16(recvSTM[17])
-            #         altitude = np.int16(recvSTM[18])
+                    roll = np.int16(np.int16(recvSTM[15] << 24) + np.int16(recvSTM[16] << 16) + np.int16(recvSTM[17] << 8 ) + recvSTM[18])
+                    pitch = np.int16(np.int16(recvSTM[19] << 24) + np.int16(recvSTM[20] << 16) + np.int16(recvSTM[21] << 8 ) + recvSTM[22])
+                    heading_angle = np.int16(np.int16(recvSTM[23] << 24) + np.int16(recvSTM[24] << 16) + np.int16(recvSTM[25] << 8 ) + recvSTM[26])
+                    altitude = np.int16(np.int16(recvSTM[27] << 24) + np.int16(recvSTM[28] << 16) + np.int16(recvSTM[29] << 8 ) + recvSTM[30])
  
-            #         print(mode_echo,lat_drone,lon_drone,gps_time,roll,pitch,heading_angle,altitude)
-            #         self.serSTM.reset_input_buffer()
-            lat_drone = 38.00123112 ; lon_drone = 127.12312342 ; 
-            lat_person = 32.123123213 ; lon_person = 123.2323123
-            gps_time = 32112342 
-            roll = 321 ; pitch = 122 ; heading_angle =123 ; altitude =21
+                    print(mode_echo,lat_drone,lon_drone,gps_time,roll,pitch,heading_angle,altitude)
+                    self.serSTM.reset_input_buffer()
+            # lat_drone = 38.00123112 ; lon_drone = 127.12312342 ; 
+            # lat_person = 32.123123213 ; lon_person = 123.2323123
+            # gps_time = 32112342 
+            # roll = 321 ; pitch = 122 ; heading_angle =123 ; altitude =21
             # 특정 범위에 드론이 들어가면 , AVOID 모드 AVOID on ,off 이므로 확실히 구분 된 조건문
             if lat_drone == self.AVOID_LAT and lon_drone == self.AVOID_LON:
                 self.AVOID = True
@@ -363,7 +361,7 @@ class NX(BaseCamera):
                     lat_person = 500000 # 계산필요
                     lon_person = 500000 # 계산필요
                     
-                    yaw_error = 500000000 # yolo를 통해 인식
+                    yaw_error = 500            # time.sleep(0.2) # yolo를 통해 인식
                 else: 
                     self.mode = 5 # 대기모드
                     new_gps_lat = lat_drone
@@ -376,7 +374,7 @@ class NX(BaseCamera):
                 new_gps_lat = lat_drone + 1 # 계산필요
                 new_gps_lon = lon_drone + 1 # 계산필요
                 
-                lat_person = 500000 # 계산필요
+                lat_person = 500000 # 계산필요            # time.sleep(0.2)
                 lon_person = 500000 # 계산필요
      
                 yaw_error = 500000000 # yolo를 통해 인식
@@ -399,22 +397,22 @@ class NX(BaseCamera):
             #         yaw_error = 0 # 과도한 조절을 하지 않기 위해 설정
             
             # 통신을 위한 변경 코드
-            # new_lat_first = (new_gps_lat >> 24) & 0xff ; new_lat_second = (new_gps_lat >> 16) & 0xff
-            # new_lat_third = (new_gps_lat >> 8) & 0xff  ; new_lat_fourth = new_gps_lat & 0xff
+            new_lat_first = (new_gps_lat >> 24) & 0xff ; new_lat_second = (new_gps_lat >> 16) & 0xff
+            new_lat_third = (new_gps_lat >> 8) & 0xff  ; new_lat_fourth = new_gps_lat & 0xff
 
-            # new_lon_first = (new_gps_lon >> 24) & 0xff ; new_lon_second = (new_gps_lon >> 16) & 0xff
-            # new_lon_third = (new_gps_lon >> 8) & 0xff  ; new_lon_fourth = new_gps_lon & 0xff
+            new_lon_first = (new_gps_lon >> 24) & 0xff ; new_lon_second = (new_gps_lon >> 16) & 0xff
+            new_lon_third = (new_gps_lon >> 8) & 0xff  ; new_lon_fourth = new_gps_lon & 0xff
             
             read = str(self.mode) + '\n' + str(lat_drone) + '\n' + str(lon_drone) + '\n' + str(gps_time) +'\n' +  str(lat_person) + '\n' + str(
                 lon_person) + '\n' + str(altitude)
             print(NX.human_detect)
             self.q.append(read)
-            time.sleep(0.2)
+            # time.sleep(0.2)
             print("STM")
             # 연산 후 바로 next_gps 전달
-            # self.ser.write(
-            #     [header_1,header_2,self.mode,\
-            #     new_lat_first,new_lat_second,new_lat_third,new_lat_fourth,\
-            #     new_lon_first,new_lon_second,new_lon_third,new_lon_fourth,\
-            #     yaw_error , self.distance]
-            # )
+            self.ser.write(
+                [header_1,header_2,self.mode,\
+                new_lat_first,new_lat_second,new_lat_third,new_lat_fourth,\
+                new_lon_first,new_lon_second,new_lon_third,new_lon_fourth,\
+                yaw_error , self.lidar_distance_1 , self.lidar_distance_2]
+            )
