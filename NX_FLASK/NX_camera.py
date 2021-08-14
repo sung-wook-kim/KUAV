@@ -36,8 +36,8 @@ class NX(BaseCamera):
         self.lidar_distance_1 = 0 ; self.lidar_distance_2 = 0
         self.MISSION_LAT = 0 ; self.MISSION_LON = 0
         self.plag_MISSION = False; self.plag_RTH = False
-        self.RTH_LAT = 0 ; self.RTH_LON = 0 
-        self.AVOID_LAT = 0 ; self.AVOID_LON = 0 
+        self.RTH_LAT = 2353 ; self.RTH_LON = 235
+        self.AVOID_LAT = 1234 ; self.AVOID_LON = 1234 
         self.mode = 0  # default = 0
         self.plag_1 = False; self.plag_2 = False; self.plag_6 = False
         self.plag_9 = False
@@ -52,8 +52,6 @@ class NX(BaseCamera):
         self.server_socket.listen()
         self.client_socket, self.addr = self.server_socket.accept()
         print("connect")
-        self.human_detect = False
-        print("human")
         NX.set_human_init()
         self.threadSTM = threading.Thread(target=self.connectSTM)
         self.threadGCS = threading.Thread(target=self.connectGCS)
