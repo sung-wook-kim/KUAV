@@ -189,9 +189,9 @@ void Encode_Msg_Nx(unsigned char* nx_tx_buf);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-#define MOTOR_FREQ_ADJUST 0.9f
-#define BNO080_PITCH_OFFSET 1.9f
-#define BNO080_ROLL_OFFSET 0.8f
+#define MOTOR_FREQ_ADJUST 1.0f
+#define BNO080_PITCH_OFFSET 0.0f
+#define BNO080_ROLL_OFFSET 0.0f
 
 float q[4];
 float quatRadianAccuracy;
@@ -810,18 +810,18 @@ lat.kd = 0;
 	  if(tim7_100ms_flag == 1)
 	  {
 		  tim7_100ms_flag = 0;
-//		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
-//		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
+		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
+		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
 //		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
-		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
-		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35
+//		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
+//		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35
 	  }
 
 	  if(tim7_200ms_flag == 1)
 	  {
 		  tim7_200ms_flag = 0;
-		  Encode_Msg_Nx(&nx_tx_buf[0]);
-		  HAL_UART_Transmit_DMA(&huart6, &nx_tx_buf[0], 35);
+//		  Encode_Msg_Nx(&nx_tx_buf[0]);
+//		  HAL_UART_Transmit_DMA(&huart6, &nx_tx_buf[0], 35);
 	  }
 
 
