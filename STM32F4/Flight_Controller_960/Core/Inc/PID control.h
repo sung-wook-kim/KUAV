@@ -89,8 +89,8 @@ extern PIDDouble roll;
 extern PIDDouble pitch;
 
 extern PIDDouble altitude;
-extern PDSingle_GPS lat;
-extern PDSingle_GPS lon;
+extern PIDDouble lat;
+extern PIDDouble lon;
 
 extern PIDSingle yaw_heading;
 extern PIDSingle yaw_rate;
@@ -102,9 +102,7 @@ void Single_Yaw_Heading_PID_Calculation(PIDSingle* axis, float set_point, float 
 void Reset_PID_Integrator(PIDSingle* axis);
 void Reset_GPS_Integrator(PDSingle_GPS* axis);
 void Reset_All_PID_Integrator(void);
-void Single_Alt_PID_Calculation(PIDSingle* axis, float set_point_alt, float baro);
 
-void Single_Altitude_PID_Calculation(PIDSingle* axis, float set_point_altitude, float current_altitude);
 void Double_Altitude_PID_Calculation(PIDDouble* axis, float set_point_antitude, float anltitude);
 void Single_GPS_PD_Calculation(PDSingle_GPS* axis, signed int set_point_gps, signed int gps);
 void Double_GPS_PID_Calculation(PIDDouble* axis, float set_point_gps, float gps);
