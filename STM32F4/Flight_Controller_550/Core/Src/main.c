@@ -187,8 +187,8 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 #define MOTOR_FREQ_ADJUST 0.9f
-#define BNO080_PITCH_OFFSET 2.55f
-#define BNO080_ROLL_OFFSET -0.1f
+#define BNO080_PITCH_OFFSET 2.38f
+#define BNO080_ROLL_OFFSET -1.8f
 
 float q[4];
 float quatRadianAccuracy;
