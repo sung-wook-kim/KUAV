@@ -194,10 +194,8 @@ float q[4];
 float quatRadianAccuracy;
 unsigned short iBus_SwA_Prev = 0;
 unsigned char iBus_rx_cnt = 0;
-unsigned char iBus_VrB_flag = 0;
-unsigned char iBus_VrB_Prev_flag = 0;
-unsigned char iBus_VrA_Prev_flag = 0;
-unsigned char iBus_VrA_flag = 0;
+unsigned char iBus_VrB_flag = 1; //0 : 1000~1100, 1 : 1100 ~ 1900, 2 : 1900 ~ 2000
+unsigned char iBus_VrB_Prev_flag = 1;
 
 float yaw_heading_reference;
 
@@ -578,17 +576,14 @@ lon.in.kd = 0;
 
 		  if(flight_mode == 2) //Altitude Holding Mode
 		  {
-			  if(iBus.VrB < 1100) iBus_VrB_flag = 0; // Change Altitude Setpoint
-			  else if(iBus.VrB > 1200) iBus_VrB_flag = 1;
+			  if(iBus.VrB < 1100) iBus_VrB_flag = 0;
+			  else if(iBus.VrB > 1900) iBus_VrB_flag = 2;
+			  else iBus_VrB_flag = 1;
 
-			  if(iBus_VrB_flag==1 && iBus_VrB_Prev_flag==0) altitude_setpoint += 0.5f;
+			  if(iBus_VrB_flag==0 && iBus_VrB_Prev_flag==1) altitude_setpoint -= 0.5f;
+			  else if(iBus_VrB_flag==2 && iBus_VrB_Prev_flag==1) altitude_setpoint += 0.5f;
+
 			  iBus_VrB_Prev_flag = iBus_VrB_flag;
-
-			  if(iBus.VrA > 1900)iBus_VrA_flag = 0;
-			  else if(iBus.VrA < 1800)iBus_VrA_flag = 1;
-
-			  if(iBus_VrA_flag == 1 && iBus_VrA_Prev_flag == 0) altitude_setpoint -= 0.5f;
-			  iBus_VrA_Prev_flag = iBus_VrA_flag;
 
 			  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, actual_pressure_fast);
 
