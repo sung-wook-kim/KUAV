@@ -301,8 +301,7 @@ class NX(BaseCamera):
                     self.AVOID = True
                 # 벗어나면 , 일반 추적
                 else:
-                    self.AVOID = False 
-
+                    self.AVOID = False  
                 # 미션 좌표에 도착하면 모드를 2로 변경 ( 그전까지는 1임 )
                 # 0.0000462 -> 2m
                 if self.plag_2 == False and  (lat_drone - self.MISSION_LAT) <= 0.0000185 and (lon_drone - self.MISSION_LON) <= 0.0000185:
@@ -329,9 +328,9 @@ class NX(BaseCamera):
                         yaw_error = NX.img_dy  # yolo를 통해 인식
                         #print("mode 3 : " , self.mode)
                     else: 
-                        self.mode = 5 # 대기모드
-                        new_gps_lat = lat_drone
-                        new_gps_lon = lon_drone
+                        self.mode = 5 # 사람이 추적되지않는 대기모드 일 경우 마지막 추적값을 유지
+                        new_gps_lat = lat drone if lat_prev == 0 else lat_prev
+                        new_gps_lon = lon_drone if lon_prev == 0 else lon_prev
                         yaw_error = 0
                         #print("mode 5 : " , self.mode)
 
@@ -349,6 +348,7 @@ class NX(BaseCamera):
                 new_gps_lat = 371231245
                 new_gps_lon = 1271232131
                 ## 1번 , 6번 수행중이라면
+                # 어차피 마지막에 덮어씌우게된다.
                 if self.plag_MISSION == True:
                     new_gps_lat = self.MISSION_LAT
                     new_gps_lon = self.MISSION_LON
@@ -362,8 +362,9 @@ class NX(BaseCamera):
                     self.mode = 6
                 # if yaw_error <= 20: # 안전범위 이내라고 판단된다면
                 #         yaw_error = 0 # 과도한 조절을 하지 않기 위해 설정
-                
                 # 통신을 위한 변경 코드
+                lat_prev = new_gps_lat
+                lon_prev = new_gps_lon
                 new_lat_first = (new_gps_lat >> 24) & 0xff ; new_lat_second = (new_gps_lat >> 16) & 0xff
                 new_lat_third = (new_gps_lat >> 8) & 0xff  ; new_lat_fourth = new_gps_lat & 0xff
 
