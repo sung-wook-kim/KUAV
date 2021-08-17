@@ -23,7 +23,9 @@ class window(QtWidgets.QMainWindow):
         
         # streaming
         self.webview=QtWebEngineWidgets.QWebEngineView()
-        self.webview.setUrl(QUrl("http://223.171.80.232:5001"))
+        #self.webview.setUrl(QUrl("http://223.171.80.232:5001"))
+        #self.webview.setUrl(QUrl("http://192.168.43.185:5001"))
+        self.webview.setUrl(QUrl("http://127.0.0.1"))
 
         # plot
         self.m = folium.Map(location=[37.5872530,127.0307692], tiles='cartodbpositron',zoom_start=13)
@@ -64,8 +66,8 @@ class window(QtWidgets.QMainWindow):
         self.timer = QTimer(self)
         self.timer.start(1000)
         self.rad = 1
-        self.HOST = '223.171.80.232'
-        #self.HOST = '127.0.0.1'
+        #self.HOST = '223.171.80.232'
+        self.HOST = '192.168.43.185'
         self.port = 9998
         self.lat_drone_li = [] ;self.lon_drone_li = [] ; self.GPStime = [] ; self.lat_person = [] ;self.lon_person = [] ;self.altitude = []
         self.server_socket = 0 ; self.client_socket = 0 ; self.addr = 0;
@@ -99,11 +101,11 @@ class window(QtWidgets.QMainWindow):
         
     def RTHlatFunction(self):
         self.RTH_LAT = int(self.lat_drone)
-        print(self.RTH_lat)
+        print(self.RTH_LAT)
 
     def RTHlonFunction(self):
         self.RTH_LON = int(self.lon_drone)
-        print(self.RTH_lat)
+        print(self.RTH_LON)
 
     # GCS - STM32 serial ( telemetry maybe)
     def connectSerial(self):
@@ -151,19 +153,19 @@ class window(QtWidgets.QMainWindow):
     def takeoff(self):
         msgT = f"1\n{self.MISSION_LAT}\n{self.MISSION_LON}"
         self.client_socket.sendall(msgT.encode())
-        _ = self.client_socket.recv(1024) # don't need this
+        _ = self.client_socket.recv(512) # don't need this
         self.automatic = 0
     
     # 리턴투홈
     def RTH(self):
         msgR = f"6\n{self.RTH_LAT}\n{self.RTH_LON}"
         self.client_socket.sendall(msgR.encode())
-        _ = self.client_socket.recv(1024)
+        _ = self.client_socket.recv(512)
         
     # 강제종료
     def forceTerminate(self):
         self.client_socket.sendall(b"9\n")
-        _ = self.client_socket.recv(1024)
+        _ = self.client_socket.recv(512)
     # 데이터 저장 
     # 비행 데이터  : (자동 : 0 , 수동 : 1) / mode / Gps time / lat / lon / alt
     def datasave(self):
