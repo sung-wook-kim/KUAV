@@ -272,8 +272,10 @@ class NX(BaseCamera):
     def connectSTM(self):
         header_1 = 0x88
         header_2 = 0x18
-        lat_drone = 1 ; lon_drone =1 ; gps_time = 1 ; roll = 1 ; pitch = 1 ; heading_angle = 1 ; altitude = 1 ; voltage = 1 ; lat_person = 1 ; lon_person = 1
+        lat_drone = 1 ; lon_drone =1 ; gps_time = 1 ;
+        roll = 1 ; pitch = 1 ; heading_angle = 1 ; altitude = 1 ; voltage = 1 ; lat_person = 1 ; lon_person = 1
         mode_echo = 0
+        lat_prev = 0 ; lon_prev = 0
         while True:
             countSTM = self.serSTM.in_waiting
             if countSTM > 34:
