@@ -47,7 +47,7 @@ class NX(BaseCamera):
         self.q = [0, 0, 0]
         # NX - GCS socket , NX = server
         #self.HOST = '223.171.80.232'
-        self.HOST = '192.168.43.185'
+        self.HOST = '172.20.10.2'
         self.PORT = 9998
         print("Waiting GCS")
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -221,7 +221,7 @@ class NX(BaseCamera):
 #                dy_prev = NX.img_dy
 #                dx_prev = NX.img_dx
             else:
-                time.sleep(0.05)
+                time.sleep(0.01)
 
     # 1hz because of gcs -> update_gps 
     def connectGCS(self):
@@ -331,7 +331,7 @@ class NX(BaseCamera):
                         #print("mode 3 : " , self.mode)
                     else: 
                         self.mode = 5 # 사람이 추적되지않는 대기모드 일 경우 마지막 추적값을 유지
-                        new_gps_lat = lat drone if lat_prev == 0 else lat_prev
+                        new_gps_lat = lat_drone if lat_prev == 0 else lat_prev
                         new_gps_lon = lon_drone if lon_prev == 0 else lon_prev
                         yaw_error = 0
                         #print("mode 5 : " , self.mode)
