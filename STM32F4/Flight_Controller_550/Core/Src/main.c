@@ -545,7 +545,6 @@ lon.in.kd = 0;
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
 	  /********************* NX Message Parsing ************************/
 //	  if(nx_rx_cplt_flag==1)
 //	  {
