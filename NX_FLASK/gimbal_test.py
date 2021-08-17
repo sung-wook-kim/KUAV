@@ -139,7 +139,7 @@ class NX(BaseCamera):
                         s += '%g %s, ' % (n, names[int(c)])  # add to string
 
                     # write result of crop version
-                    NX.human_detect = False
+                    # NX.human_detect = False
                     # write result of original version
                     for *xyxy, conf, cls in det:
                         label = '%s %.2f' % (names[int(cls)], conf)
@@ -176,14 +176,14 @@ class NX(BaseCamera):
         while True:
             if NX.gimbal_plag == True:
                 NX.gimbal_plag = False
-                pitch_gain = 0.01
-                yaw_gain = -0.02
+                pitch_gain = 0.007
+                yaw_gain = -0.007
 #                pitch_d = -0.0025 
 #                yaw_d = 0.005
 #                dy_term = NX.img_dy - dy_prev
 #                dx_term = NX.img_dx - dx_prev
                 target_pitch += round((pitch_gain * NX.img_dy ),2)#+ dy_term * pitch_d) 
-                target_yaw += -math.atan(NX.img_dx/410*math.tan(63))*180/math.pi #+ dx_term * yaw_d)
+                target_yaw += round((yaw_gain * NX.img_dx ),2) #+ dx_term * yaw_d)
                 #   Pitch     Roll      Yaw      axislimit
                 # [Min, Max, Min, Max, Min, Max]
                 target_pitch = min(max(axislimit[0], target_pitch), axislimit[1])

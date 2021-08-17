@@ -1,6 +1,7 @@
 from importlib import import_module
 import os
 from flask import Flask, render_template, Response
+os.system('sudo systemctl restart nvargus-daemon')
 
 # import camera driver
 if os.environ.get('CAMERA'):

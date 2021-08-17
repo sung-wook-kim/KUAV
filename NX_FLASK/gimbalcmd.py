@@ -68,8 +68,8 @@ def serialinit():
             parity=serial.PARITY_NONE,
             stopbits=serial.STOPBITS_ONE,
             bytesize=serial.EIGHTBITS,
-            timeout=1.0,  # IMPORTANT, can be lower or higher
-            inter_byte_timeout=0.1))
+            timeout=0.2,  # IMPORTANT, can be lower or higher
+            inter_byte_timeout=0.01))
     except SerialException:
         sys.exit('Serial port unavailable, script cancelled!')
     ser.close()
@@ -126,12 +126,14 @@ def setyaw(yawin):
 
 
 def setpitchrollyaw(pitchin, rollin, yawin):
+    print(1)
     pitch = pitchconvert(pitchin)
     roll = rollconvert(rollin)
     yaw = yawconvert(yawin)
     cmd = bytes.fromhex('FA0612' + pitch + roll + yaw + crc)
+    print(2)
     cmdexecute(cmd, sleep)
-
+    print(3)
 
 ######################################################
 ######################################################
@@ -382,8 +384,8 @@ def main():
 
     # datalog(safemode)
     # array = ['helloworld']
-    for i in range(10):
-        setpitchrollyaw(0, 0, i * 2)
+    for i in range(3):
+        setpitchrollyaw(0, 0, i * 60)
 
 # if __name__=="__main__":
 #     main()	 
@@ -394,4 +396,4 @@ def main():
 # setpitch(10)
 # setroll(10)
 # setyaw(50)
-# homeall()
+# # homeall()
