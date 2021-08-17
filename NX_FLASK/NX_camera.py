@@ -48,12 +48,12 @@ class NX(BaseCamera):
         # NX - GCS socket , NX = server
         self.HOST = '223.171.80.232'
         self.PORT = 9998
-        print("Waiting")
+        print("Waiting GCS")
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind(('', self.PORT))
         self.server_socket.listen()
         self.client_socket, self.addr = self.server_socket.accept()
-        print("connect")
+        print("connected tp GCS")
         NX.set_human_init()
         self.threadSTM = threading.Thread(target=self.connectSTM)
         self.threadGCS = threading.Thread(target=self.connectGCS)
@@ -73,7 +73,6 @@ class NX(BaseCamera):
         NX.img_dx = 0
         NX.img_dy = 0
         NX.gimbal_plag = False
-        print("human")
 
     @staticmethod
     def set_video_source(source):
@@ -223,6 +222,7 @@ class NX(BaseCamera):
             else:
                 time.sleep(0.05)
 
+    # 1hz because of gcs -> update_gps 
     def connectGCS(self):
         time.sleep(10)
         while True:
@@ -230,20 +230,19 @@ class NX(BaseCamera):
                 sendingMsg = self.q.pop(-1)  # sendingmsg = 'mode \n lat_drone \n lon_drone \n gps_time \n lat_person \n lon_person \n altitude \n detection'
                 gcs = self.client_socket.recv(1024).decode().split('\n')
                 print(gcs)
-                plag = gcs[0]
-                if plag == '1' and self.plag_1 == False:
+                if gcs[0] == '1' and self.plag_1 == False:
                     self.mode = 1  # 임무 장소 이동 , 30M 고도 유지
                     self.plag_1 = True
                     self.MISSION_LAT = int(gcs[1])
                     self.MISSION_LON = int(gcs[2])
                     self.plag_MISSION = True
-                elif plag == '6' and self.plag_6 == False:
+                elif gcs[0] == '6' and self.plag_6 == False:
                     self.mode = 6  # RTH = 착륙
                     self.plag_6 = True
                     self.RTH_LAT = int(gcs[1])
                     self.RTH_LAT = int(gcs[2])
                     self.plag_RTH = True
-                elif plag == '9' and self.plag_9 == False:
+                elif gcs[0] == '9' and self.plag_9 == False:
                     self.mode = 9  # 비상 모터 정지
                     self.plag_9 = True
                 print("mode : " ,self.mode)  # 현재 모드 확인용
@@ -253,7 +252,7 @@ class NX(BaseCamera):
                 print("connection error")
                 self.client_socket.close()
                 self.client_socket, self.addr = self.server_socket.accept()
-
+    # 10hz time.sleep(0.1)
     def connectLIDAR(self):
         while True:
             count = self.serLIDAR.in_waiting 
@@ -263,10 +262,12 @@ class NX(BaseCamera):
                 if recv[0] == 0x59 and recv[1] == 0x59:  # python3
                     self.lidar_distance_1 = recv[2] # np.int16(recv[2] + np.int16(recv[3] << 8))
                     self.lidar_distance_2 = recv[3]
-                    time.sleep(0.2)
+                    time.sleep(0.1)
                     print("LIDAR  : ",self.lidar_distance_1)
                     self.serLIDAR.reset_input_buffer()
 
+    # 5hz because STM transmit is 5hz
+    # next gps will be calculated when data from stm is received 
     def connectSTM(self):
         header_1 = 0x88
         header_2 = 0x18
@@ -293,19 +294,21 @@ class NX(BaseCamera):
                         lon_drone+1) + '\n' + str(altitude)
                     self.serSTM.reset_input_buffer()
                 # 특정 범위에 드론이 들어가면 , AVOID 모드 AVOID on ,off 이므로 확실히 구분 된 조건문
-                if lat_drone == self.AVOID_LAT or lon_drone == self.AVOID_LON:
+                # 20m 
+                if abs(lat_drone - self.AVOID_LAT) <= 0.0001851  or abs(lon_drone - self.AVOID_LON) <= 0.0001851:
                     self.AVOID = True
                 # 벗어나면 , 일반 추적
                 else:
                     self.AVOID = False 
 
                 # 미션 좌표에 도착하면 모드를 2로 변경 ( 그전까지는 1임 )
-                if self.plag_2 == False and  lat_drone == self.MISSION_LAT and lon_drone == self.MISSION_LON:
+                # 0.0000462 -> 2m
+                if self.plag_2 == False and  (lat_drone - self.MISSION_LAT) <= 0.0000185 and (lon_drone - self.MISSION_LON) <= 0.0000185:
                     self.mode = 2  # yaw를 회전하며 탐색 모드
                     self.plag_2 = True
                     self.plag_MISSION = False
 
-                # 2번 임무 , 사람이 detect 되지 않았으면 임의의 값을 통해 회전 
+                # 2번 임무 , 사람이 detect 되지 않았으면 임의의 angle을 통해 회전 
                 if self.mode == 2 and NX.human_detect == False:
                     new_gps_lat = lat_drone
                     new_gps_lon = lon_drone
@@ -365,14 +368,14 @@ class NX(BaseCamera):
                
                 lat_person = lat_drone + 1  
                 lon_person = lon_drone + 1         
-                read = str(self.mode) + '\n' + str(lat_drone) + '\n' + str(lon_drone) + '\n' + str(gps_time) +'\n' +  str(lat_person) + '\n' + str(
-                    lon_person) + '\n' + str(altitude)
                 print(NX.human_detect)
+                print(" calculate next gps ")
+
                 self.q.append(read)
                 # 연산 후 바로 next_gps 전달
-                self.serSTM.write(
-                    [header_1,header_2,self.mode,\
-                    new_lat_first,new_lat_second,new_lat_third,new_lat_fourth,\
-                    new_lon_first,new_lon_second,new_lon_third,new_lon_fourth,\
-                    yaw_error , self.lidar_distance_1 , self.lidar_distance_2]
-                )
+            self.serSTM.write(
+                [header_1,header_2,self.mode,\
+                new_lat_first,new_lat_second,new_lat_third,new_lat_fourth,\
+                new_lon_first,new_lon_second,new_lon_third,new_lon_fourth,\
+                yaw_error , self.lidar_distance_1 , self.lidar_distance_2]
+            )
