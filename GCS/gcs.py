@@ -67,7 +67,7 @@ class window(QtWidgets.QMainWindow):
         self.HOST = '223.171.80.232'
         #self.HOST = '127.0.0.1'
         self.port = 9998
-        self.lat_drone = [] ;self.lon_drone = [] ; self.GPStime = [] ; self.lat_person = [] ;self.lon_person = [] ;self.altitude = []
+        self.lat_drone_li = [] ;self.lon_drone_li = [] ; self.GPStime = [] ; self.lat_person = [] ;self.lon_person = [] ;self.altitude = []
         self.server_socket = 0 ; self.client_socket = 0 ; self.addr = 0;
         self.NX_data = b'0'
         self.btnSerial.clicked.connect(self.connectSerial) ; self.btnSocket.clicked.connect(self.connectSocket)
@@ -81,6 +81,8 @@ class window(QtWidgets.QMainWindow):
 
         self.MISSION_LAT = 0
         self.MISSION_LON = 0
+        self.lat_drone = 0
+        self.lon_drone = 0
         self.automatic = 1
         self.mode_li = []
         self.automatic_li = []
@@ -96,12 +98,12 @@ class window(QtWidgets.QMainWindow):
         print(self.MISSION_LON)
         
     def RTHlatFunction(self):
-        self.RTH_LAT = int(float(self.RTH_lat.text())*10**7)
-        print(self.RTH_LAT)
+        self.RTH_LAT = int(self.lat_drone)
+        print(self.RTH_lat)
 
     def RTHlonFunction(self):
-        self.RTH_LON = int(float(self.RTH_lon.text())*10**7)
-        print(self.RTH_LON)
+        self.RTH_LON = int(self.lon_drone)
+        print(self.RTH_lat)
 
     # GCS - STM32 serial ( telemetry maybe)
     def connectSerial(self):
@@ -126,18 +128,18 @@ class window(QtWidgets.QMainWindow):
         self.client_socket.sendall(self.NX_data)
         self.NX_data = self.client_socket.recv(1024)
         print(self.NX_data) # 값 들어오는거 확인용 
-        mode , lat_drone , lon_drone , gps_time , lat_person , lon_person , altitude  = self.NX_data.decode().split('\n')
+        mode , self.lat_drone , self.lon_drone , gps_time , lat_person , lon_person , altitude  = self.NX_data.decode().split('\n')
         print(self.rad) # 역시 확인용
         self.automatic_li.append(self.automatic)
         self.mode_li.append(mode)  
-        self.lat_drone.append(lat_drone) ; self.lon_drone.append(lon_drone) ; self.GPStime.append(gps_time)
+        self.lat_drone_li.append(self.lat_drone) ; self.lon_drone_li.append(self.lon_drone) ; self.GPStime.append(gps_time)
         self.lat_person.append(lat_person) ; self.lon_person.append(lon_person) 
         self.altitude.append(altitude) # 비행 데이터 제출용
 
         # 마킹코드
         if self.rad % 3 == 0 :
             self.m = folium.Map(location=[37.5872530,127.0307692],  tiles='cartodbpositron', zoom_start=13)
-            folium.CircleMarker(color = 'red' , fill_color = 'red' ,location=[float(lat_drone),float(lon_drone)],radius=5 , popup="célula",).add_to(self.m)
+            folium.CircleMarker(color = 'red' , fill_color = 'red' ,location=[float(self.lat_drone),float(self.lon_drone)],radius=5 , popup="célula",).add_to(self.m)
             folium.CircleMarker(color = 'blue' , fill_color = 'blue' ,location=[float(lat_person),float(lon_person)],radius=5 , popup="célula",).add_to(self.m)
             self.data = io.BytesIO()
             self.m.save(self.data, close_file=False)
@@ -168,7 +170,7 @@ class window(QtWidgets.QMainWindow):
         df = pd.DataFrame()
         df['automatic'] = self.automatic_li ; df['point'] = self.mode_li 
         df['GPS Time'] = self.GPStime
-        df['lat_drone'] = self.lat_drone ; df['lon_drone'] = self.lon_drone 
+        df['lat_drone'] = self.lat_drone_li ; df['lon_drone'] = self.lon_drone_li 
         df['altitude'] = self.altitude
         now = time.localtime()
         timevar = time.strftime('%Y%m%d%H%M%S', now)
