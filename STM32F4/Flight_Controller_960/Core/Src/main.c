@@ -38,6 +38,7 @@
 #include "AT24C08.h"
 #include "lps22hh.h"
 #include "M8N.h"
+#include "M8P.h"
 #include "XAVIER.h"
 /* USER CODE END Includes */
 
@@ -73,6 +74,9 @@ extern uint8_t uart6_rx_data;
 
 extern uint8_t m8n_rx_buf[100];
 extern uint8_t m8n_rx_cplt_flag;
+
+extern uint8_t m8p_rx_buf[100];
+extern uint8_t m8p_rx_cplt_flag;
 
 extern uint8_t ibus_rx_buf[32];
 extern uint8_t ibus_rx_cplt_flag;

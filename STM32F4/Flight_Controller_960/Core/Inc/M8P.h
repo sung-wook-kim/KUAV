@@ -74,8 +74,8 @@ typedef struct _M8P_UBX_NAV_PVT
 
 }M8P_UBX_NAV_PVT;
 
-extern M8P_UBX_NAV_POSLLH posllh;
-extern M8P_UBX_NAV_PVT pvt;
+extern M8P_UBX_NAV_POSLLH M8P_posllh;
+extern M8P_UBX_NAV_PVT M8P_pvt;
 
 
 unsigned char M8P_UBX_CHKSUM_Check(unsigned char* data, unsigned char len);
