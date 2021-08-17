@@ -86,13 +86,53 @@ void M8P_UART4_Initialization(void)
 	  LL_USART_Enable(UART4);
 }
 
+void M8P_UART4_Baud_Change(void)
+{
+	  LL_USART_InitTypeDef USART_InitStruct = {0};
+
+	  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+	  /* Peripheral clock enable */
+	  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_UART4);
+
+	  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOC);
+	  /**UART4 GPIO Configuration
+	  PC10   ------> UART4_TX
+	  PC11   ------> UART4_RX
+	  */
+	  GPIO_InitStruct.Pin = LL_GPIO_PIN_10|LL_GPIO_PIN_11;
+	  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+	  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
+	  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+	  GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
+	  GPIO_InitStruct.Alternate = LL_GPIO_AF_8;
+	  LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+	  /* UART4 interrupt Init */
+	  NVIC_SetPriority(UART4_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
+	  NVIC_EnableIRQ(UART4_IRQn);
+
+	  /* USER CODE BEGIN UART4_Init 1 */
+
+	  /* USER CODE END UART4_Init 1 */
+	  USART_InitStruct.BaudRate = 57600;
+	  USART_InitStruct.DataWidth = LL_USART_DATAWIDTH_8B;
+	  USART_InitStruct.StopBits = LL_USART_STOPBITS_1;
+	  USART_InitStruct.Parity = LL_USART_PARITY_NONE;
+	  USART_InitStruct.TransferDirection = LL_USART_DIRECTION_TX_RX;
+	  USART_InitStruct.HardwareFlowControl = LL_USART_HWCONTROL_NONE;
+	  USART_InitStruct.OverSampling = LL_USART_OVERSAMPLING_16;
+	  LL_USART_Init(UART4, &USART_InitStruct);
+	  LL_USART_ConfigAsyncMode(UART4);
+	  LL_USART_Enable(UART4);
+}
+
 void M8P_Initialization(void)
 {
-	LL_USART_InitTypeDef USART_InitStruct = {0};
 	M8P_UART4_Initialization();
 	M8P_TransmitData(&M8P_UBX_CFG_PRT[0], sizeof(M8P_UBX_CFG_PRT));
 	HAL_Delay(100);
-	USART_InitStruct.BaudRate = 57600;
+	M8P_UART4_Baud_Change;
 	HAL_Delay(100);
 	M8P_TransmitData(&M8P_UBX_CFG_TMODE3[0], sizeof(M8P_UBX_CFG_TMODE3));
 	HAL_Delay(100);
