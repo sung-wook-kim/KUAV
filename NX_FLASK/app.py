@@ -6,7 +6,8 @@ from flask import Flask, render_template, Response
 if os.environ.get('CAMERA'):
     Camera = import_module('camera_' + os.environ['CAMERA']).Camera
 else:
-    from NX_camera import NX
+    #from NX_camera import NX
+    from gimbal_test import NX
 
 app = Flask(__name__)
 
@@ -33,4 +34,4 @@ def video_feed():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', threaded=True, port=5001)
+    app.run(host='192.168.0.196', threaded=True, port=5001)
