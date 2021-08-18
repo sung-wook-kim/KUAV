@@ -571,7 +571,7 @@ lon.in.kd = 0;
 
 		  flight_mode = 1;
 		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 2;
-		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1 ) flight_mode = 3;
+		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1) flight_mode = 3;
 
 
 		  if(flight_mode == 2) //Altitude Holding Mode
@@ -1081,7 +1081,10 @@ void BNO080_Calibration(void)
 			float quatReal = BNO080_getQuatReal();
 			unsigned char sensorAccuracy = BNO080_getQuatAccuracy();
 
-			printf("%f,%f,%f,", x, y, z);
+
+
+
+			("%f,%f,%f,", x, y, z);
 			if (accuracy == 0) printf("Unreliable\t");
 			else if (accuracy == 1) printf("Low\t");
 			else if (accuracy == 2) printf("Medium\t");
@@ -1132,7 +1135,8 @@ void BNO080_Calibration(void)
 			//for the ME Calibration Response Status byte to go to zero
 			if(BNO080_calibrationComplete() == 1)
 			{
-				printf("\nCalibration data successfully stored\n");
+
+("\nCalibration data successfully stored\n");
 				LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4);
 				TIM3->PSC = 2000;
 				HAL_Delay(300);

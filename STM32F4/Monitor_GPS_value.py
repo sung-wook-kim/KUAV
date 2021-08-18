@@ -31,7 +31,7 @@ while True:
         df['target_lon'] = target_lon_list
         df['pitch_adjust'] = pitch_adjust_list
         df['roll_adjust'] = roll_adjust_list
-        df.to_csv(f"{timevar}_gps_data.csv")
+        df.to_csv(f"data/{timevar}_gps_data.csv")
 
 
     a = int(ser.read(1).hex(), 16)
