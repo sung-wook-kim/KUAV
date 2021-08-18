@@ -829,11 +829,11 @@ lon.in.kd = 0;
 	  if(tim7_100ms_flag == 1)
 	  {
 		  tim7_100ms_flag = 0;
-		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
-		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
+//		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
+//		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
 //		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
-//		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
-//		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35
+		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
+		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35
 	  }
 
 	  if(tim7_200ms_flag == 1)

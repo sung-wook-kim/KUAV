@@ -39,7 +39,7 @@ def connect():
         if i%100 == 0:
             df = pd.DataFrame()
             df['alt'] = alt_li
-            df['target'] = target_lid
+            df['target'] = target_li
             df['error'] = error_li
             df['pid_result'] = value_li
             df['d_result'] = d_result_li

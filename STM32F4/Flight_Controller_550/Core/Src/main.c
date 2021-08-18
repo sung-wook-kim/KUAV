@@ -129,7 +129,7 @@ float lon_gps_add;
 unsigned char new_gps_data_available;
 float gps_roll_adjust;
 float gps_pitch_adjust;
-#define GPS_PD_MAX 6000
+#define GPS_PD_MAX 15000
 #define GPS_PD_MIN -GPS_PD_MAX
 
 // Return to home value
@@ -395,21 +395,21 @@ altitude.in.ki = 10;
 altitude.in.kd = 0;
 
 // GPS Hold PID Gain
-lat.out.kp = 0.3;
+lat.out.kp = 0.2;
 lat.out.ki = 0;
-lat.out.kd = 0.5;
+lat.out.kd = 0.3;
 
-lat.in.kp = 10;
+lat.in.kp = 40;
 lat.in.ki = 1;
-lat.in.kd = 0;
+lat.in.kd = 1;
 
-lon.out.kp = 0.3;
+lon.out.kp = 0.2;
 lon.out.ki = 0;
-lon.out.kd = 0.5;
+lon.out.kd = 0.3;
 
-lon.in.kp = 10;
+lon.in.kp = 40;
 lon.in.ki = 1;
-lon.in.kd = 0;
+lon.in.kd = 1;
 
 /*Receiver Detection*/
   while(Is_iBus_Received() == 0)
@@ -1687,7 +1687,7 @@ void return_to_home(void) {
 
 void Calculate_Takeoff_Throttle()
 {
-	takeoff_throttle = 84 * ( batVolt * (-21.765) + 1874.829 - 1000);
+	takeoff_throttle = 84 * ( batVolt * (-17.699) + 1851.59 - 1000);
 }
 /* USER CODE END 4 */
 
