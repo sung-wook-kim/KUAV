@@ -1,0 +1,166 @@
+[0.410s] DEBUG:colcon:Command line arguments: ['/usr/bin/colcon', 'list', '-p', '--base-paths', '/home/tmddn833/KUAV/NX_FLASK']
+[0.411s] DEBUG:colcon:Parsed command line arguments: Namespace(base_paths=['/home/tmddn833/KUAV/NX_FLASK'], build_base='build', ignore_user_meta=False, log_base=None, log_level=None, main=<bound method ListVerb.main of <colcon_package_information.verb.list.ListVerb object at 0x7fc3e698a630>>, metas=['./colcon.meta'], names_only=False, packages_above=None, packages_above_and_dependencies=None, packages_above_depth=None, packages_end=None, packages_ignore=None, packages_ignore_regex=None, packages_select=None, packages_select_build_failed=False, packages_select_by_dep=None, packages_select_regex=None, packages_select_test_failures=False, packages_skip=None, packages_skip_build_finished=False, packages_skip_by_dep=None, packages_skip_regex=None, packages_skip_test_passed=False, packages_skip_up_to=None, packages_start=None, packages_up_to=None, packages_up_to_regex=None, paths=None, paths_only=True, topological_graph=False, topological_graph_density=False, topological_graph_dot=False, topological_graph_dot_cluster=False, topological_graph_dot_include_skipped=False, topological_graph_legend=False, topological_order=False, verb_extension=<colcon_package_information.verb.list.ListVerb object at 0x7fc3e698a630>, verb_name='list', verb_parser=<colcon_defaults.argument_parser.defaults.DefaultArgumentsDecorator object at 0x7fc3e6998710>)
+[0.436s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) check parameters
+[0.436s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) check parameters
+[0.436s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) check parameters
+[0.436s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) check parameters
+[0.436s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) discover
+[0.437s] INFO:colcon.colcon_core.package_discovery:Crawling recursively for packages in '/home/tmddn833/KUAV/NX_FLASK'
+[0.437s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK) by extensions ['ignore', 'ignore_ament_install']
+[0.437s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK) by extension 'ignore'
+[0.437s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK) by extension 'ignore_ament_install'
+[0.437s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK) by extensions ['colcon_pkg']
+[0.437s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK) by extension 'colcon_pkg'
+[0.437s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK) by extensions ['colcon_meta']
+[0.437s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK) by extension 'colcon_meta'
+[0.437s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK) by extensions ['ros']
+[0.437s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK) by extension 'ros'
+[0.451s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK) by extensions ['cmake', 'python']
+[0.452s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK) by extension 'cmake'
+[0.452s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK) by extension 'python'
+[0.452s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK) by extensions ['python_setup_py']
+[0.452s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK) by extension 'python_setup_py'
+[0.452s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/__pycache__) by extensions ['ignore', 'ignore_ament_install']
+[0.452s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/__pycache__) by extension 'ignore'
+[0.452s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/__pycache__) by extension 'ignore_ament_install'
+[0.452s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/__pycache__) by extensions ['colcon_pkg']
+[0.452s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/__pycache__) by extension 'colcon_pkg'
+[0.452s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/__pycache__) by extensions ['colcon_meta']
+[0.452s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/__pycache__) by extension 'colcon_meta'
+[0.452s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/__pycache__) by extensions ['ros']
+[0.452s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/__pycache__) by extension 'ros'
+[0.453s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/__pycache__) by extensions ['cmake', 'python']
+[0.453s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/__pycache__) by extension 'cmake'
+[0.453s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/__pycache__) by extension 'python'
+[0.453s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/__pycache__) by extensions ['python_setup_py']
+[0.453s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/__pycache__) by extension 'python_setup_py'
+[0.453s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data) by extensions ['ignore', 'ignore_ament_install']
+[0.453s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data) by extension 'ignore'
+[0.453s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data) by extension 'ignore_ament_install'
+[0.453s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data) by extensions ['colcon_pkg']
+[0.453s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data) by extension 'colcon_pkg'
+[0.453s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data) by extensions ['colcon_meta']
+[0.453s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data) by extension 'colcon_meta'
+[0.453s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data) by extensions ['ros']
+[0.454s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data) by extension 'ros'
+[0.454s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data) by extensions ['cmake', 'python']
+[0.454s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data) by extension 'cmake'
+[0.454s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data) by extension 'python'
+[0.454s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data) by extensions ['python_setup_py']
+[0.454s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data) by extension 'python_setup_py'
+[0.454s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data/scripts) by extensions ['ignore', 'ignore_ament_install']
+[0.454s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data/scripts) by extension 'ignore'
+[0.454s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data/scripts) by extension 'ignore_ament_install'
+[0.454s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data/scripts) by extensions ['colcon_pkg']
+[0.454s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data/scripts) by extension 'colcon_pkg'
+[0.454s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data/scripts) by extensions ['colcon_meta']
+[0.455s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data/scripts) by extension 'colcon_meta'
+[0.455s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data/scripts) by extensions ['ros']
+[0.455s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data/scripts) by extension 'ros'
+[0.455s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data/scripts) by extensions ['cmake', 'python']
+[0.455s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data/scripts) by extension 'cmake'
+[0.455s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data/scripts) by extension 'python'
+[0.455s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data/scripts) by extensions ['python_setup_py']
+[0.455s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/data/scripts) by extension 'python_setup_py'
+[0.455s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference) by extensions ['ignore', 'ignore_ament_install']
+[0.455s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference) by extension 'ignore'
+[0.455s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference) by extension 'ignore_ament_install'
+[0.456s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference) by extensions ['colcon_pkg']
+[0.456s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference) by extension 'colcon_pkg'
+[0.456s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference) by extensions ['colcon_meta']
+[0.456s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference) by extension 'colcon_meta'
+[0.456s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference) by extensions ['ros']
+[0.456s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference) by extension 'ros'
+[0.456s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference) by extensions ['cmake', 'python']
+[0.456s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference) by extension 'cmake'
+[0.456s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference) by extension 'python'
+[0.456s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference) by extensions ['python_setup_py']
+[0.456s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference) by extension 'python_setup_py'
+[0.456s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference/images) by extensions ['ignore', 'ignore_ament_install']
+[0.457s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference/images) by extension 'ignore'
+[0.457s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference/images) by extension 'ignore_ament_install'
+[0.457s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference/images) by extensions ['colcon_pkg']
+[0.457s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference/images) by extension 'colcon_pkg'
+[0.457s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference/images) by extensions ['colcon_meta']
+[0.457s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference/images) by extension 'colcon_meta'
+[0.457s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference/images) by extensions ['ros']
+[0.457s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference/images) by extension 'ros'
+[0.457s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference/images) by extensions ['cmake', 'python']
+[0.457s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference/images) by extension 'cmake'
+[0.457s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference/images) by extension 'python'
+[0.457s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference/images) by extensions ['python_setup_py']
+[0.458s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/inference/images) by extension 'python_setup_py'
+[0.458s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/log) by extensions ['ignore', 'ignore_ament_install']
+[0.458s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/log) by extension 'ignore'
+[0.458s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/log) ignored
+[0.458s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models) by extensions ['ignore', 'ignore_ament_install']
+[0.459s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models) by extension 'ignore'
+[0.459s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models) by extension 'ignore_ament_install'
+[0.459s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models) by extensions ['colcon_pkg']
+[0.459s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models) by extension 'colcon_pkg'
+[0.459s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models) by extensions ['colcon_meta']
+[0.459s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models) by extension 'colcon_meta'
+[0.459s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models) by extensions ['ros']
+[0.459s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models) by extension 'ros'
+[0.459s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models) by extensions ['cmake', 'python']
+[0.459s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models) by extension 'cmake'
+[0.460s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models) by extension 'python'
+[0.460s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models) by extensions ['python_setup_py']
+[0.460s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models) by extension 'python_setup_py'
+[0.460s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models/hub) by extensions ['ignore', 'ignore_ament_install']
+[0.460s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models/hub) by extension 'ignore'
+[0.460s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models/hub) by extension 'ignore_ament_install'
+[0.461s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models/hub) by extensions ['colcon_pkg']
+[0.461s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models/hub) by extension 'colcon_pkg'
+[0.461s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models/hub) by extensions ['colcon_meta']
+[0.461s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models/hub) by extension 'colcon_meta'
+[0.461s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models/hub) by extensions ['ros']
+[0.461s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models/hub) by extension 'ros'
+[0.461s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models/hub) by extensions ['cmake', 'python']
+[0.461s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models/hub) by extension 'cmake'
+[0.462s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models/hub) by extension 'python'
+[0.462s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models/hub) by extensions ['python_setup_py']
+[0.462s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/models/hub) by extension 'python_setup_py'
+[0.462s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/templates) by extensions ['ignore', 'ignore_ament_install']
+[0.462s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/templates) by extension 'ignore'
+[0.462s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/templates) by extension 'ignore_ament_install'
+[0.463s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/templates) by extensions ['colcon_pkg']
+[0.463s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/templates) by extension 'colcon_pkg'
+[0.463s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/templates) by extensions ['colcon_meta']
+[0.463s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/templates) by extension 'colcon_meta'
+[0.463s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/templates) by extensions ['ros']
+[0.463s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/templates) by extension 'ros'
+[0.463s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/templates) by extensions ['cmake', 'python']
+[0.464s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/templates) by extension 'cmake'
+[0.464s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/templates) by extension 'python'
+[0.464s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/templates) by extensions ['python_setup_py']
+[0.464s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/templates) by extension 'python_setup_py'
+[0.464s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/utils) by extensions ['ignore', 'ignore_ament_install']
+[0.464s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/utils) by extension 'ignore'
+[0.465s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/utils) by extension 'ignore_ament_install'
+[0.465s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/utils) by extensions ['colcon_pkg']
+[0.465s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/utils) by extension 'colcon_pkg'
+[0.465s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/utils) by extensions ['colcon_meta']
+[0.465s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/utils) by extension 'colcon_meta'
+[0.465s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/utils) by extensions ['ros']
+[0.465s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/utils) by extension 'ros'
+[0.465s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/utils) by extensions ['cmake', 'python']
+[0.465s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/utils) by extension 'cmake'
+[0.466s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/utils) by extension 'python'
+[0.466s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/utils) by extensions ['python_setup_py']
+[0.466s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/utils) by extension 'python_setup_py'
+[0.466s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/weights) by extensions ['ignore', 'ignore_ament_install']
+[0.466s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/weights) by extension 'ignore'
+[0.466s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/weights) by extension 'ignore_ament_install'
+[0.466s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/weights) by extensions ['colcon_pkg']
+[0.466s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/weights) by extension 'colcon_pkg'
+[0.466s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/weights) by extensions ['colcon_meta']
+[0.467s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/weights) by extension 'colcon_meta'
+[0.467s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/weights) by extensions ['ros']
+[0.467s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/weights) by extension 'ros'
+[0.467s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/weights) by extensions ['cmake', 'python']
+[0.467s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/weights) by extension 'cmake'
+[0.467s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/weights) by extension 'python'
+[0.467s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/weights) by extensions ['python_setup_py']
+[0.467s] Level 1:colcon.colcon_core.package_identification:_identify(/home/tmddn833/KUAV/NX_FLASK/weights) by extension 'python_setup_py'
+[0.467s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) using defaults
