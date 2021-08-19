@@ -1567,8 +1567,8 @@ void Read_Gps(void)
 			  lon_gps_previous = lon_gps_actual;                                                               //Set the lon_gps_previous variable to the lon_gps_actual variable.
 		  }
 
-		  lat_gps_loop_add = (float)(lat_gps_actual - lat_gps_previous) / 10.0;                              //Divide the difference between the new and previous latitude by ten.
-		  lon_gps_loop_add = (float)(lon_gps_actual - lon_gps_previous) / 10.0;                              //Divide the difference between the new and previous longitude by ten.
+		  lat_gps_loop_add = (float)(lat_gps_actual - lat_gps_previous) / 20.0;                              //Divide the difference between the new and previous latitude by ten.
+		  lon_gps_loop_add = (float)(lon_gps_actual - lon_gps_previous) / 20.0;                              //Divide the difference between the new and previous longitude by ten.
 
 		  l_lat_gps = lat_gps_previous;                                                                      //Set the l_lat_gps variable to the previous latitude value.
 		  l_lon_gps = lon_gps_previous;                                                                      //Set the l_lon_gps variable to the previous longitude value.
@@ -1577,8 +1577,8 @@ void Read_Gps(void)
 		  lon_gps_previous = lon_gps_actual;                                                                 //Remember the new longitude value in the lat_gps_previous variable for the next loop.
 
 		  //The GPS is set to a 5Hz refresh rate. Between every 2 GPS measurments, 19 GPS values are simulated.
-		  gps_add_counter = 20;                                                                               //Set the gps_add_counter variable to 10 as a count down loop timer
-		  new_gps_data_counter = 9;                                                                          //Set the new_gps_data_counter to 19. This is the number of simulated values between 2 GPS measurements.
+		  gps_add_counter = 10;                                                                               //Set the gps_add_counter variable to 10 as a count down loop timer
+		  new_gps_data_counter = 19;                                                                          //Set the new_gps_data_counter to 19. This is the number of simulated values between 2 GPS measurements.
 		  lat_gps_add = 0;                                                                                   //Reset the lat_gps_add variable.
 		  lon_gps_add = 0;                                                                                   //Reset the lon_gps_add variable.
 		  new_gps_data_available = 1;
