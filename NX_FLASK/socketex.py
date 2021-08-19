@@ -4,6 +4,7 @@ pitch = 1600
 roll = 1600
 yaw = 1500
 
+crc = '3334'
 def dectohex(value):
     hexnum = hex(value)[2:]
     length = (len(hexnum))

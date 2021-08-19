@@ -34,8 +34,8 @@ PIDSingle yaw_rate;
 
 PIDDouble altitude;
 
-PDSingle_GPS lat;
-PDSingle_GPS lon;
+PIDDouble lat;
+PIDDouble lon;
 
 #define DT 0.001f
 #define OUTER_DERIV_FILT_ENABLE 1
@@ -170,61 +170,6 @@ void Reset_All_PID_Integrator(void)
 	Reset_GPS_Integrator(&lon);
 }
 
-void Single_Altitude_PID_Calculation(PIDSingle* axis, float set_point_altitude, float current_altitude)
-{
-#define I_RESULT_MAX 4000
-#define I_RESULT_MIN -I_RESULT_MAX
-
-	axis->reference = set_point_altitude;
-	axis->meas_value = current_altitude;
-
-	axis->error = axis->reference - axis->meas_value;
-	axis->error_sum = axis->error_sum + axis->error * DT;
-	axis->error_deriv = -(axis->meas_value - axis->meas_value_prev) / DT;
-	axis->meas_value_prev  = axis->meas_value;
-	/*
-	axis->kp = 0;
-	if(axis->error > 0.05 || axis->error < -0.05)
-	{
-		if(axis->error > 0) axis->kp = (axis->error - 0.05) * 3000;
-		else axis->kp = (-(axis->error) - 0.05) * 3000;
-
-		if(axis->kp > 5000) axis->kp = 5000;
-	}*/
-	axis->p_result = axis->kp * axis->error;
-	axis->i_result = axis->ki * axis->error_sum;
-	axis->d_result = axis->kd * axis->error_deriv;
-
-	if(axis->i_result > I_RESULT_MAX) axis->i_result = I_RESULT_MAX;
-	else if(axis->i_result < I_RESULT_MIN ) axis->i_result = I_RESULT_MIN;
-
-	axis->pid_result = axis->p_result + axis->i_result + axis->d_result;
-	if(axis->pid_result < -3000) axis->pid_result = -3000;
-	else if(axis->pid_result > 10000) axis->pid_result = 10000;
-
-}
-
-void Single_Altitude_Rate_PID_Calculation(PIDSingle* axis, float set_point_rate, float current_altitude)
-{
-	axis->reference = set_point_rate;
-	axis->meas_value = current_altitude;
-
-	axis->meas_rate = -(axis->meas_value - axis->meas_value_prev) / DT;
-	axis->meas_value_prev = axis->meas_value;
-
-	axis->error = axis->reference - axis->meas_rate;
-	axis->p_result = axis->kp * axis->error;
-
-	axis->error_sum = axis->error_sum + axis->error * DT;
-	axis->i_result = axis->ki * axis->error_sum;
-
-	axis->error_deriv = -(axis->meas_rate - axis->meas_rate_prev) / DT;
-	axis->meas_rate_prev = axis->meas_rate_prev;
-	axis->d_result = axis->kd * axis->error_deriv;
-
-	axis->pid_result = axis->p_result + axis->i_result + axis->d_result;
-}
-
 void Double_Altitude_PID_Calculation(PIDDouble* axis, float set_point_altitude, float current_altitude)
 {
 #define ALT_ERR_SUM_MAX 2000
@@ -316,9 +261,9 @@ void Double_GPS_PID_Calculation(PIDDouble* axis, float set_point_gps, float gps)
 
    axis->out.error_sum = axis->out.error_sum + axis->out.error * DT;   //Define summation of outer loop
 #define OUT_ERR_SUM_MAX 500
-#define OUT_I_ERR_MIN -OUT_ERR_SUM_MAX
+#define OUT_ERR_SUM_MIN -OUT_ERR_SUM_MAX
    if(axis->out.error_sum > OUT_ERR_SUM_MAX) axis->out.error_sum = OUT_ERR_SUM_MAX;
-   else if(axis->out.error_sum < OUT_I_ERR_MIN) axis->out.error_sum = OUT_I_ERR_MIN;
+   else if(axis->out.error_sum < OUT_ERR_SUM_MIN) axis->out.error_sum = OUT_ERR_SUM_MIN;
    axis->out.i_result = axis->out.error_sum * axis->out.ki;         //Calculate I result of outer loop
 
    axis->out.error_deriv = -(axis->out.meas_value - axis->out.meas_value_prev)/DT;//Define derivative of outer loop
@@ -327,7 +272,7 @@ void Double_GPS_PID_Calculation(PIDDouble* axis, float set_point_gps, float gps)
 #if !OUTER_DERIV_FILT_ENABLE
    axis->out.d_result = axis->out.error_deriv * axis->out.kd;         //Calculate D result of outer loop
 #else
-   axis->out.error_deriv_filt = axis->out.error_deriv_filt * 0.4f + axis->out.error_deriv * 0.6f;   //filter for derivative
+   axis->out.error_deriv_filt = axis->out.error_deriv_filt * 0.6f + axis->out.error_deriv * 0.4f;   //filter for derivative
    axis->out.d_result = axis->out.error_deriv_filt * axis->out.kd;                           //Calculate D result of inner loop
 #endif
 
@@ -343,9 +288,9 @@ void Double_GPS_PID_Calculation(PIDDouble* axis, float set_point_gps, float gps)
 
    axis->in.error_sum = axis->in.error_sum + axis->in.error * DT;   //Define summation of inner loop
 #define IN_ERR_SUM_MAX 500
-#define IN_I_ERR_MIN -IN_ERR_SUM_MAX
+#define IN_ERR_SUM_MIN -IN_ERR_SUM_MAX
    if(axis->in.error_sum > IN_ERR_SUM_MAX) axis->in.error_sum = IN_ERR_SUM_MAX;
-   else if(axis->in.error_sum < IN_I_ERR_MIN) axis->in.error_sum = IN_I_ERR_MIN;
+   else if(axis->in.error_sum < IN_ERR_SUM_MIN) axis->in.error_sum = IN_ERR_SUM_MIN;
    axis->in.i_result = axis->in.error_sum * axis->in.ki;                     //Calculate I result of inner loop
 
    axis->in.error_deriv = -(axis->in.meas_value - axis->in.meas_value_prev) / DT;   //Define derivative of inner loop

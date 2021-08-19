@@ -129,7 +129,7 @@ float lon_gps_add;
 unsigned char new_gps_data_available;
 float gps_roll_adjust;
 float gps_pitch_adjust;
-#define GPS_PD_MAX 6000
+#define GPS_PD_MAX 15000
 #define GPS_PD_MIN -GPS_PD_MAX
 
 // Return to home value
@@ -187,17 +187,15 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 #define MOTOR_FREQ_ADJUST 0.9f
-#define BNO080_PITCH_OFFSET 2.55f
-#define BNO080_ROLL_OFFSET -0.1f
+#define BNO080_PITCH_OFFSET 2.38f
+#define BNO080_ROLL_OFFSET -1.8f
 
 float q[4];
 float quatRadianAccuracy;
 unsigned short iBus_SwA_Prev = 0;
 unsigned char iBus_rx_cnt = 0;
-unsigned char iBus_VrB_flag = 0;
-unsigned char iBus_VrB_Prev_flag = 0;
-unsigned char iBus_VrA_Prev_flag = 0;
-unsigned char iBus_VrA_flag = 0;
+unsigned char iBus_VrB_flag = 1; //0 : 1000~1100, 1 : 1100 ~ 1900, 2 : 1900 ~ 2000
+unsigned char iBus_VrB_Prev_flag = 1;
 
 float yaw_heading_reference;
 
@@ -397,21 +395,21 @@ altitude.in.ki = 10;
 altitude.in.kd = 0;
 
 // GPS Hold PID Gain
-lat.out.kp = 0.3;
+lat.out.kp = 0.2;
 lat.out.ki = 0;
-lat.out.kd = 0.5;
+lat.out.kd = 0.3;
 
-lat.in.kp = 10;
+lat.in.kp = 40;
 lat.in.ki = 1;
-lat.in.kd = 0;
+lat.in.kd = 1;
 
-lon.out.kp = 0.3;
+lon.out.kp = 0.2;
 lon.out.ki = 0;
-lon.out.kd = 0.5;
+lon.out.kd = 0.3;
 
-lon.in.kp = 10;
+lon.in.kp = 40;
 lon.in.ki = 1;
-lon.in.kd = 0;
+lon.in.kd = 1;
 
 /*Receiver Detection*/
   while(Is_iBus_Received() == 0)
@@ -545,7 +543,6 @@ lon.in.kd = 0;
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
 	  /********************* NX Message Parsing ************************/
 //	  if(nx_rx_cplt_flag==1)
 //	  {
@@ -574,22 +571,19 @@ lon.in.kd = 0;
 
 		  flight_mode = 1;
 		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 2;
-		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1 ) flight_mode = 3;
+		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1) flight_mode = 3;
 
 
 		  if(flight_mode == 2) //Altitude Holding Mode
 		  {
-			  if(iBus.VrB < 1100) iBus_VrB_flag = 0; // Change Altitude Setpoint
-			  else if(iBus.VrB > 1200) iBus_VrB_flag = 1;
+			  if(iBus.VrB < 1100) iBus_VrB_flag = 0;
+			  else if(iBus.VrB > 1900) iBus_VrB_flag = 2;
+			  else iBus_VrB_flag = 1;
 
-			  if(iBus_VrB_flag==1 && iBus_VrB_Prev_flag==0) altitude_setpoint += 0.5f;
+			  if(iBus_VrB_flag==0 && iBus_VrB_Prev_flag==1) altitude_setpoint -= 0.5f;
+			  else if(iBus_VrB_flag==2 && iBus_VrB_Prev_flag==1) altitude_setpoint += 0.5f;
+
 			  iBus_VrB_Prev_flag = iBus_VrB_flag;
-
-			  if(iBus.VrA > 1900)iBus_VrA_flag = 0;
-			  else if(iBus.VrA < 1800)iBus_VrA_flag = 1;
-
-			  if(iBus_VrA_flag == 1 && iBus_VrA_Prev_flag == 0) altitude_setpoint -= 0.5f;
-			  iBus_VrA_Prev_flag = iBus_VrA_flag;
 
 			  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, actual_pressure_fast);
 
@@ -1087,7 +1081,10 @@ void BNO080_Calibration(void)
 			float quatReal = BNO080_getQuatReal();
 			unsigned char sensorAccuracy = BNO080_getQuatAccuracy();
 
-			printf("%f,%f,%f,", x, y, z);
+
+
+
+			("%f,%f,%f,", x, y, z);
 			if (accuracy == 0) printf("Unreliable\t");
 			else if (accuracy == 1) printf("Low\t");
 			else if (accuracy == 2) printf("Medium\t");
@@ -1138,7 +1135,8 @@ void BNO080_Calibration(void)
 			//for the ME Calibration Response Status byte to go to zero
 			if(BNO080_calibrationComplete() == 1)
 			{
-				printf("\nCalibration data successfully stored\n");
+
+("\nCalibration data successfully stored\n");
 				LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4);
 				TIM3->PSC = 2000;
 				HAL_Delay(300);
@@ -1689,7 +1687,7 @@ void return_to_home(void) {
 
 void Calculate_Takeoff_Throttle()
 {
-	takeoff_throttle = 84 * ( batVolt * (-21.765) + 1874.829 - 1000);
+	takeoff_throttle = 84 * ( batVolt * (-17.699) + 1851.59 - 1000);
 }
 /* USER CODE END 4 */
 
