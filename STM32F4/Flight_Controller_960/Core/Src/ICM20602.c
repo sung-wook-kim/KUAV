@@ -23,7 +23,7 @@
 #include "ICM20602.h"
 
 Struct_ICM20602 ICM20602;
-int32_t gyro_x_offset, gyro_y_offset, gyro_z_offset; // To remove offset
+short gyro_x_offset, gyro_y_offset, gyro_z_offset; // To remove offset
 
 
 void ICM20602_GPIO_SPI_Initialization(void)

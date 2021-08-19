@@ -164,7 +164,7 @@ typedef struct _ICM20602{
  */
 
 extern Struct_ICM20602 ICM20602;
-extern int32_t gyro_x_offset, gyro_y_offset, gyro_z_offset;
+extern short gyro_x_offset, gyro_y_offset, gyro_z_offset;
 
 /**
  * @brief ICM20602 function prototype definition.

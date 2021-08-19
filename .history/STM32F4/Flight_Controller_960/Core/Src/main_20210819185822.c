@@ -1552,33 +1552,33 @@ void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[9] = (int)BNO080_Yaw >> 8;
 	telemetry_tx_buf[10] = (int)BNO080_Yaw;
 
-	telemetry_tx_buf[11] = l_lat_gps >> 24;
-	telemetry_tx_buf[12] = l_lat_gps >> 16;
-	telemetry_tx_buf[13] = l_lat_gps >> 8;
-	telemetry_tx_buf[14] = l_lat_gps;
+	telemetry_tx_buf[11] = (int)(BNO080_Roll *  100) >> 24;
+	telemetry_tx_buf[12] = (int)(BNO080_Roll *  100) >> 16;
+	telemetry_tx_buf[13] = (int)(BNO080_Roll *  100) >> 8;
+	telemetry_tx_buf[14] = (int)(BNO080_Roll *  100);
 
-	telemetry_tx_buf[15] = l_lon_gps >> 24;
-	telemetry_tx_buf[16] = l_lon_gps >> 16;
-	telemetry_tx_buf[17] = l_lon_gps >> 8;
-	telemetry_tx_buf[18] = l_lon_gps;
+	telemetry_tx_buf[15] = (int)(BNO080_Pitch *  100) >> 24;
+	telemetry_tx_buf[16] = (int)(BNO080_Pitch *  100) >> 16;
+	telemetry_tx_buf[17] = (int)(BNO080_Pitch *  100) >> 8;
+	telemetry_tx_buf[18] = (int)(BNO080_Pitch *  100);
 
-	telemetry_tx_buf[19] = l_lat_waypoint >> 24;
-	telemetry_tx_buf[20] = l_lat_waypoint >> 16;
-	telemetry_tx_buf[21] = l_lat_waypoint >> 8;
-	telemetry_tx_buf[22] = l_lat_waypoint;
+	telemetry_tx_buf[19] = (int)(ICM20602.gyro_x * 100) >> 24;
+	telemetry_tx_buf[20] = (int)(ICM20602.gyro_x * 100) >> 16;
+	telemetry_tx_buf[21] = (int)(ICM20602.gyro_x * 100) >> 8;
+	telemetry_tx_buf[22] = (int)(ICM20602.gyro_x * 100);
 
-	telemetry_tx_buf[23] = l_lon_waypoint >> 24;
-	telemetry_tx_buf[24] = l_lon_waypoint >> 16;
-	telemetry_tx_buf[25] = l_lon_waypoint >> 8;
-	telemetry_tx_buf[26] = l_lon_waypoint;
+	telemetry_tx_buf[23] = (int)(ICM20602.gyro_y * 100) >> 24;
+	telemetry_tx_buf[24] = (int)(ICM20602.gyro_y * 100) >> 16;
+	telemetry_tx_buf[25] = (int)(ICM20602.gyro_y * 100) >> 8;
+	telemetry_tx_buf[26] = (int)(ICM20602.gyro_y * 100);
 
-	telemetry_tx_buf[27] = (int)gps_pitch_adjust >> 24;
-	telemetry_tx_buf[28] = (int)gps_pitch_adjust >> 16;
-	telemetry_tx_buf[29] = (int)gps_pitch_adjust >> 8;
-	telemetry_tx_buf[30] = (int)gps_pitch_adjust;
+	telemetry_tx_buf[27] = (int)(ICM20602.gyro_z * 100) >> 24;
+	telemetry_tx_buf[28] = (int)(ICM20602.gyro_z * 100) >> 16;
+	telemetry_tx_buf[29] = (int)(ICM20602.gyro_z * 100) >> 8;
+	telemetry_tx_buf[30] = (int)(ICM20602.gyro_z * 100);
 
-	telemetry_tx_buf[31] = (int)gps_roll_adjust >> 24;
-	telemetry_tx_buf[32] = (int)gps_roll_adjust >> 16;
+	telemetry_tx_buf[31] = (int)iBus.LV >> 8;
+	telemetry_tx_buf[32] = (int)iBus.LV;
 	telemetry_tx_buf[33] = (int)gps_roll_adjust >> 8;
 	telemetry_tx_buf[34] = (int)gps_roll_adjust;
 }
