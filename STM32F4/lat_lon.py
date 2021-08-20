@@ -156,7 +156,7 @@ line, = ax.plot(np.arange(max_points),
                 np.ones(max_points, dtype=np.float)*np.nan, lw=2)
 
 line_2, = ax_2.plot(np.arange(max_points), 
-                np.ones(max_points, dtype=np.float)*np.nan, lw=1,ms=1)
+                np.ones(max_points, dtype=np.float)*np. 7, lw=1,ms=1)
 
 line_3, = ax_2.plot(np.arange(max_points),
                 np.ones(max_points, dtype=np.float)*np.nan, lw=1,ms=1)
