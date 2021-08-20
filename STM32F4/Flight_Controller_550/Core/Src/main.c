@@ -395,21 +395,21 @@ altitude.in.ki = 10;
 altitude.in.kd = 0;
 
 // GPS Hold PID Gain
-lat.out.kp = 0.2;
+lat.out.kp = 2;
 lat.out.ki = 0;
-lat.out.kd = 0.3;
+lat.out.kd = 0;
 
-lat.in.kp = 40;
-lat.in.ki = 1;
-lat.in.kd = 1;
+lat.in.kp = 6;
+lat.in.ki = 0.5;
+lat.in.kd = 2;
 
-lon.out.kp = 0.2;
+lon.out.kp = 2;
 lon.out.ki = 0;
-lon.out.kd = 0.3;
+lon.out.kd = 0;
 
-lon.in.kp = 40;
-lon.in.ki = 1;
-lon.in.kd = 1;
+lon.in.kp = 6;
+lon.in.ki = 0.5;
+lon.in.kd = 2;
 
 /*Receiver Detection*/
   while(Is_iBus_Received() == 0)

@@ -6,6 +6,8 @@ import threading
 import random
 import time
 import pandas as pd
+from collections import deque
+import math
 
 # 네가지 값 프린트 , 전체변경으로 value 값을 원하는 변수로 변경 하세요
 # alt , target , error global declaration + value
@@ -20,6 +22,20 @@ yaw = 0
 
 ser = serial.Serial('COM7', 115200)
 ser.flush()
+
+def get_metres_location(original_location, other_location):
+    """Convert distance from degrees longitude-latitude to meters.
+        Takes the two points described by (Lat,Lon) in degrees
+        and converts it into distances *dx(north distance)* and *dy(east distance)* in meters.
+        returns (float, float)
+    """
+    earth_radius = 6378137.0  # Radius of "spherical" earth
+    # Coordinate offsets in radians
+    dLatLon = [other_location[0] - original_location[0], other_location[1] - original_location[1]]
+    dx = dLatLon[0] * earth_radius * math.pi / 180
+    dy = dLatLon[1] * (earth_radius * math.cos(math.pi * original_location[0] / 180)) * math.pi / 180
+
+    return [dx, dy]
 
 # you have to receive 18bytes
 def connect():
@@ -97,7 +113,7 @@ def connect():
                 pitch_sign = pitch_adjust_1 >> 7
                 roll_sign = roll_adjust_1 >> 7
                 yaw_sign = yaw_1 >> 7                
-                volt = volt_1 << 24 | volt_2 << 16 | volt_3 << 8 | volt_4
+                voltage = volt_1 << 24 | volt_2 << 16 | volt_3 << 8 | volt_4
                 yaw = yaw_1 << 24 | yaw_2 << 16 | yaw_3 << 8 | yaw_4
                 lat = lat_1 << 24 | lat_2 << 16 | lat_3 << 8 | lat_4
                 lon = lon_1 << 24 | lon_2 << 16 | lon_3 << 8 | lon_4
@@ -109,24 +125,24 @@ def connect():
                 if pitch_sign == 1: pitch = (pitch & 0x7fffffff) - 2 ** 31
                 if roll_sign == 1 : roll = (roll & 0x7fffffff) - 2 ** 31
                 if yaw_sign == 1: yaw = (yaw & 0x7fffffff) - 2 ** 31
-                print(f'yaw : {yaw} , voltage : {voltage / 100}')
+                print(f'lat : {lat} , lon : {lon} , yaw : {yaw} , voltage : {voltage / 100}')
                 alt_li.append(lat)
                 target_li.append(lon)
                 error_li.append(target_lat)
                 value_li.append(target_lon)
                 pitch_li.append(pitch)
                 roll_li.append(roll)
-fig = plt.figure()
+fig = plt.figure(1)
 # h , w 간격 조절
 fig.subplots_adjust(hspace=0.4, wspace=0.2)
 
-ax = plt.subplot(231, xlim=(0, 50), ylim=(-500, 500))
+ax = plt.subplot(231, xlim=(0, 50), ylim=(37.51, 37.52))
 ax.set_title("lat")
-ax_2 = plt.subplot(232, xlim=(0, 50), ylim=(-500, 500))
+ax_2 = plt.subplot(232, xlim=(0, 50), ylim=(37.517, 37.52))
 ax_2.set_title("target_lat")
-ax_3 = plt.subplot(233, xlim=(0, 50), ylim=(-500, 500))
-ax_3.set_title("lon")
-ax_4 = plt.subplot(234, xlim=(0, 50), ylim=(-2000, 5000))
+ax_3 = plt.subplot(233, xlim=(37.51, 37.52), ylim=(126., 126.8000))
+ax_3.set_title("lat_lon")
+ax_4 = plt.subplot(234, xlim=(0, 50), ylim=(126.87, 5000))
 ax_4.set_title("target_lon")
 ax_5 = plt.subplot(235, xlim=(0, 50), ylim=(-2000, 5000))
 ax_5.set_title("pitch_adjust")
@@ -142,7 +158,7 @@ line, = ax.plot(np.arange(max_points),
 line_2, = ax_2.plot(np.arange(max_points), 
                 np.ones(max_points, dtype=np.float)*np.nan, lw=1,ms=1)
 
-line_3, = ax_3.plot(np.arange(max_points), 
+line_3, = ax_2.plot(np.arange(max_points),
                 np.ones(max_points, dtype=np.float)*np.nan, lw=1,ms=1)
 
 line_4, = ax_4.plot(np.arange(max_points), 
@@ -174,14 +190,14 @@ def init_6():
 def animate(i):
     global lat 
     old_y = line.get_ydata()
-    new_y = np.r_[old_y[1:], lat]
+    new_y = np.r_[old_y[1:], lat / 10**7]
     line.set_ydata(new_y)
     return line,
 
 def animate_2(i):
     global target_lat
     old_y_2 = line_2.get_ydata()
-    new_y_2 = np.r_[old_y_2[1:], target_lat]
+    new_y_2 = np.r_[old_y_2[1:], target_lat / 10**7]
     line_2.set_ydata(new_y_2)
 
     return line_2
@@ -218,6 +234,23 @@ def animate_6(i):
 thread1 = threading.Thread(target = connect)
 thread1.start()
 
+def gps_thread(figure):
+    global lat, lon
+    original = [lon,lat]
+    dy_list = deque(maxlen = 50)
+    dx_list = deque(maxlen = 50)
+
+    while True:
+        dx,dy = get_metres_location(original, (lat,lon))
+        dx_list.append(dx)
+        dy_list.append(dy)
+        plt.scatter(dy_list,dx_list)
+        plt.xlabel('East')
+        plt.ylabel('North')
+        figure.canvas.draw()
+        figure.canvas.flush_events()
+        plt.pause(0.1)
+        plt.clf()
 
 # frame -> 반복문에 들어가는 i의 값 , 의미없음 / interval = 실행단위 100ms
 anim = animation.FuncAnimation(fig, animate, init_func=init, frames=200, interval=100, blit=False)
@@ -227,3 +260,5 @@ anim_4 = animation.FuncAnimation(fig, animate_4  , init_func= init_4 ,frames=200
 anim_5 = animation.FuncAnimation(fig, animate_5  , init_func= init_5 ,frames=200, interval=100, blit=False)
 anim_6 = animation.FuncAnimation(fig, animate_6  , init_func= init_6 ,frames=200, interval=100, blit=False)
 plt.show()
+fig2 = plt.figure(1)
+GPSthread = threading.Thread(target = gps_thread, daemon= True)

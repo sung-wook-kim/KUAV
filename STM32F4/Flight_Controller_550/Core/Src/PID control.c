@@ -307,8 +307,8 @@ void Single_GPS_PD_Calculation(PDSingle_GPS* axis, signed int set_point_gps, sig
 void Double_GPS_PID_Calculation(PIDDouble* axis, float set_point_gps, float gps)
 {
    /*********** Double PID Outer Begin (Roll and Pitch Angular Position Control) *************/
-#define GPS_OUTER_DERIV_FILT_ENABLE 0
-#define GPS_INNER_DERIV_FILT_ENABLE 0
+#define GPS_OUTER_DERIV_FILT_ENABLE 1
+#define GPS_INNER_DERIV_FILT_ENABLE 1
    axis->out.reference = set_point_gps;   //Set point of outer PID control
    axis->out.meas_value = gps;
 
@@ -328,7 +328,7 @@ void Double_GPS_PID_Calculation(PIDDouble* axis, float set_point_gps, float gps)
 #if !GPS_OUTER_DERIV_FILT_ENABLE
    axis->out.d_result = axis->out.error_deriv * axis->out.kd;         //Calculate D result of outer loop
 #else
-   axis->out.error_deriv_filt = axis->out.error_deriv_filt * 0.6f + axis->out.error_deriv * 0.4f;   //filter for derivative
+   axis->out.error_deriv_filt = axis->out.error_deriv_filt * 0.1f + axis->out.error_deriv * 0.9f;   //filter for derivative
    axis->out.d_result = axis->out.error_deriv_filt * axis->out.kd;                           //Calculate D result of inner loop
 #endif
 
@@ -355,7 +355,7 @@ void Double_GPS_PID_Calculation(PIDDouble* axis, float set_point_gps, float gps)
 #if !GPS_INNER_DERIV_FILT_ENABLE
    axis->in.d_result = axis->in.error_deriv * axis->in.kd;            //Calculate D result of inner loop
 #else
-   axis->in.error_deriv_filt = axis->in.error_deriv_filt * 0.5f + axis->in.error_deriv * 0.5f;   //filter for derivative
+   axis->in.error_deriv_filt = axis->in.error_deriv_filt * 0.1f + axis->in.error_deriv * 0.9f;   //filter for derivative
    axis->in.d_result = axis->in.error_deriv_filt * axis->in.kd;                        //Calculate D result of inner loop
 #endif
 
