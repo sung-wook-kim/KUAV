@@ -111,3 +111,4 @@ while True:
             target_lon_list.append(target_lon)
             pitch_adjust_list.append(pitch_adjust)
             roll_adjust_list.append(roll_adjust)
+            ser.reset_input_buffer()

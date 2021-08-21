@@ -557,6 +557,8 @@ lon.in.kd = 2;
 	  if(tim7_1ms_flag==1)
 	  {
 		  tim7_1ms_flag = 0;
+		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
+		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35
 
 		  Double_Roll_Pitch_PID_Calculation(&pitch, (iBus.RV - 1500)*0.07f, BNO080_Pitch, ICM20602.gyro_x);
 		  Double_Roll_Pitch_PID_Calculation(&roll, (iBus.RH - 1500)*0.07f, BNO080_Roll, ICM20602.gyro_y);
@@ -812,8 +814,6 @@ lon.in.kd = 2;
 //		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
 //		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
-		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
-		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35
 	  }
 
 	  if (gps_add_counter >= 0)gps_add_counter --;
@@ -1496,10 +1496,10 @@ void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
 
 	telemetry_tx_buf[6] = pvt.numSV;
 
-	telemetry_tx_buf[7] = (int)BNO080_Yaw >> 24;
-	telemetry_tx_buf[8] = (int)BNO080_Yaw >> 16;
-	telemetry_tx_buf[9] = (int)BNO080_Yaw >> 8;
-	telemetry_tx_buf[10] = (int)BNO080_Yaw;
+	telemetry_tx_buf[7] = (int)(lat.out.error_deriv * 1000) >> 24;
+	telemetry_tx_buf[8] = (int)(lat.out.error_deriv * 1000) >> 16;
+	telemetry_tx_buf[9] = (int)(lat.out.error_deriv * 1000) >> 8;
+	telemetry_tx_buf[10] = (int)(lat.out.error_deriv * 1000);
 
 	telemetry_tx_buf[11] = l_lat_gps >> 24;
 	telemetry_tx_buf[12] = l_lat_gps >> 16;
@@ -1521,15 +1521,15 @@ void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[25] = l_lon_waypoint >> 8;
 	telemetry_tx_buf[26] = l_lon_waypoint;
 
-	telemetry_tx_buf[27] = (int)gps_pitch_adjust >> 24;
-	telemetry_tx_buf[28] = (int)gps_pitch_adjust >> 16;
-	telemetry_tx_buf[29] = (int)gps_pitch_adjust >> 8;
-	telemetry_tx_buf[30] = (int)gps_pitch_adjust;
+	telemetry_tx_buf[27] = (int)lat.out.meas_value >> 24;
+	telemetry_tx_buf[28] = (int)lat.out.meas_value >> 16;
+	telemetry_tx_buf[29] = (int)lat.out.meas_value >> 8;
+	telemetry_tx_buf[30] = (int)lat.out.meas_value;
 
-	telemetry_tx_buf[31] = (int)gps_roll_adjust >> 24;
-	telemetry_tx_buf[32] = (int)gps_roll_adjust >> 16;
-	telemetry_tx_buf[33] = (int)gps_roll_adjust >> 8;
-	telemetry_tx_buf[34] = (int)gps_roll_adjust;
+	telemetry_tx_buf[31] = (int)lat.out.meas_value_prev >> 24;
+	telemetry_tx_buf[32] = (int)lat.out.meas_value_prev >> 16;
+	telemetry_tx_buf[33] = (int)lat.out.meas_value_prev >> 8;
+	telemetry_tx_buf[34] = (int)lat.out.meas_value_prev;
 }
 
 void Read_Gps(void)
