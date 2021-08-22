@@ -78,7 +78,7 @@ extern uint8_t ibus_rx_buf[32];
 extern uint8_t ibus_rx_cplt_flag;
 
 extern uint8_t uart1_rx_data;
-uint8_t telemetry_tx_buf[40];
+uint8_t telemetry_tx_buf[90];
 uint8_t telemetry_rx_buf[20];
 uint8_t telemetry_rx_cplt_flag;
 
@@ -87,6 +87,7 @@ extern uint8_t nx_rx_buf;
 
 // Timer variables
 extern uint8_t tim7_1ms_flag;
+extern uint8_t tim7_10ms_flag;
 extern uint8_t tim7_20ms_flag;
 extern uint8_t tim7_100ms_flag;
 extern uint8_t tim7_1000ms_flag;
@@ -110,23 +111,16 @@ float actual_pressure_fast = 0, actual_pressure_slow = 0;
 float actual_pressure;
 
 // Gps Value
-signed int lat_prev = 0;
-signed int lon_prev = 0;
-unsigned char gps_add_counter;
-unsigned char new_gps_data_counter;
-signed int l_lat_waypoint;
-signed int l_lon_waypoint;
-signed int l_lat_gps;
-signed int l_lon_gps;
-signed int lat_gps_previous;
-signed int lon_gps_previous;
-signed int lat_gps_actual;
-signed int lon_gps_actual;
-float lat_gps_loop_add;
-float lon_gps_loop_add;
-float lat_gps_add;
-float lon_gps_add;
-unsigned char new_gps_data_available;
+double lat_gps_previous;
+double lon_gps_previous;
+double lat_gps_actual;
+double lon_gps_actual;
+double lat_add;
+double lon_add;
+double lat_gps;
+double lon_gps;
+float lat_waypoint;
+float lon_waypoint;
 float gps_roll_adjust;
 float gps_pitch_adjust;
 #define GPS_PD_MAX 15000
@@ -163,7 +157,6 @@ void ESC_Calibration(void);
 int Is_iBus_Received(void);
 void Receive_Pid_Gain(void);
 void BNO080_Calibration(void);
-void Read_Gps(void);
 void return_to_home(void);
 void Calculate_Takeoff_Throttle(void);
 
@@ -394,21 +387,21 @@ altitude.in.ki = 10;
 altitude.in.kd = 0;
 
 // GPS Hold PID Gain
-lat.out.kp = 0;
-lat.out.ki = 0;
-lat.out.kd = 0;
+lat.out.kp = 100;
+lat.out.ki = 1;
+lat.out.kd = 1;
 
-lat.in.kp = 600;
-lat.in.ki = 2;
-lat.in.kd = 2;
+lat.in.kp = 0;
+lat.in.ki = 0;
+lat.in.kd = 0;
 
-lon.out.kp = 0;
-lon.out.ki = 0;
-lon.out.kd = 0;
+lon.out.kp = 100;
+lon.out.ki = 1;
+lon.out.kd = 1;
 
-lon.in.kp = 600;
-lon.in.ki = 2;
-lon.in.kd = 2;
+lon.in.kp = 0;
+lon.in.ki = 0;
+lon.in.kd = 0;
 
 /*Receiver Detection*/
   while(Is_iBus_Received() == 0)
@@ -504,17 +497,6 @@ lon.in.kd = 2;
   }
   baro_offset = baro_offset / baro_cnt;
 
-  // Read Initial GPS
-//  while(lat_gps_home == 0 && lon_gps_home == 0)
-//  {
-//	  HAL_Delay(1);
-//	  Read_Gps();
-//
-//	  lat_gps_home = l_lat_gps;
-//	  lat_gps_home = l_lon_gps;
-//  }
-
-  // Read Battery Voltage
   batVolt = adcVal * 0.00699563f;
 
   /********************* FC Ready to Fly ************************/
@@ -558,6 +540,9 @@ lon.in.kd = 2;
 	  {
 		  tim7_1ms_flag = 0;
 
+		  lat_gps += lat_add;
+		  lon_gps += lon_add;
+
 		  Double_Roll_Pitch_PID_Calculation(&pitch, (iBus.RV - 1500)*0.07f, BNO080_Pitch, ICM20602.gyro_x);
 		  Double_Roll_Pitch_PID_Calculation(&roll, (iBus.RH - 1500)*0.07f, BNO080_Roll, ICM20602.gyro_y);
 
@@ -570,7 +555,7 @@ lon.in.kd = 2;
 
 		  flight_mode = 1;
 		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 2;
-		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1) flight_mode = 3;
+		  else if(iBus.SwA == 2000 && iBus.SwB == 2000) flight_mode = 3;
 
 
 		  if(flight_mode == 2) //Altitude Holding Mode
@@ -610,14 +595,14 @@ lon.in.kd = 2;
 		  {
 			  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, actual_pressure_fast);
 
-			  Double_GPS_PID_Calculation(&lat, l_lat_waypoint, l_lat_gps);
-			  Double_GPS_PID_Calculation(&lon, l_lon_waypoint, l_lon_gps);
+			  Double_GPS_PID_Calculation(&lat, lat_waypoint, lat_gps);
+			  Double_GPS_PID_Calculation(&lon, lon_waypoint, lon_gps);
 
 			  //Because the correction is calculated as if the nose was facing north, we need to convert it for the current heading.
 			  gps_roll_adjust = ((float)lon.in.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) + ((float)lat.in.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
 			  gps_pitch_adjust = ((float)lat.in.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) - ((float)lon.in.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
 
-			  //Limit the maximum correction to 300. This way we still have full controll with the pitch and roll stick on the transmitter.
+			  //Limit the maximum correction to 300. This way we still have full control with the pitch and roll stick on the transmitter.
 			  if (gps_roll_adjust > GPS_PD_MAX) gps_roll_adjust = GPS_PD_MAX;
 			  if (gps_roll_adjust < GPS_PD_MIN) gps_roll_adjust = GPS_PD_MIN;
 			  if (gps_pitch_adjust > GPS_PD_MAX) gps_pitch_adjust = GPS_PD_MAX;
@@ -647,32 +632,26 @@ lon.in.kd = 2;
 		  {
 			  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, actual_pressure_fast);
 
-			  if (gps_add_counter >= 0)gps_add_counter --;
-			  Read_Gps();
-
-			  if(l_lat_waypoint == 0) l_lat_waypoint = l_lat_gps;
-			  else if(l_lon_waypoint == 0) l_lon_waypoint = l_lon_gps;
-
 			  if (l_lat_gps_float_adjust > 1) {
-				  l_lat_waypoint ++;
+				  lat_waypoint ++;
 				  l_lat_gps_float_adjust --;
 			  }
 			  if (l_lat_gps_float_adjust < -1) {
-				  l_lat_waypoint --;
+				  lat_waypoint --;
 				  l_lat_gps_float_adjust ++;
 			  }
 
 			  if (l_lon_gps_float_adjust > 1) {
-				  l_lon_waypoint ++;
+				  lon_waypoint ++;
 				  l_lon_gps_float_adjust --;
 			  }
 			  if (l_lon_gps_float_adjust < -1) {
-				  l_lon_waypoint --;
+				  lon_waypoint --;
 				  l_lon_gps_float_adjust ++;
 			  }
 
-			  Double_GPS_PID_Calculation(&lat, l_lat_waypoint, l_lat_gps);
-			  Double_GPS_PID_Calculation(&lon, l_lon_waypoint, l_lon_gps);
+			  Double_GPS_PID_Calculation(&lat, lat_waypoint, lat_gps);
+			  Double_GPS_PID_Calculation(&lon, lon_waypoint, lon_gps);
 
 			  //Because the correction is calculated as if the nose was facing north, we need to convert it for the current heading.
 			  gps_roll_adjust = ((float)lon.in.pid_result * cos(BNO080_Yaw * 0.017453)) + ((float)lat.in.pid_result * cos((BNO080_Yaw - 90) * 0.017453));
@@ -717,8 +696,8 @@ lon.in.kd = 2;
 			  Reset_PID_Integrator(&altitude.out);
 			  Reset_PID_Integrator(&altitude.in);
 
-			  l_lat_waypoint = l_lat_gps;
-			  l_lon_waypoint = l_lon_gps;
+			  lat_waypoint = lat_gps;
+			  lon_waypoint = lon_gps;
 			  Reset_PID_Integrator(&lat.out);
 			  Reset_PID_Integrator(&lat.in);
 			  Reset_PID_Integrator(&lon.out);
@@ -798,13 +777,20 @@ lon.in.kd = 2;
 
 
 	  /********************* Telemetry Communication ************************/
+	  if(tim7_10ms_flag == 1)
+	  {
+		  tim7_10ms_flag = 0;
+
+		  Encode_Msg_PID(&telemetry_tx_buf[0]);
+		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 90); // altitude : 26, gps : 35, pid : 75
+	  }
+
 	  if(tim7_20ms_flag == 1 && tim7_100ms_flag == 0)
 	  {
 		  tim7_20ms_flag = 0;
 //		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 20);
 	  }
-
 	  else if(tim7_20ms_flag == 1 && tim7_100ms_flag == 1)
 	  {
 		  tim7_20ms_flag = 0;
@@ -812,12 +798,9 @@ lon.in.kd = 2;
 //		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
 //		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
-		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
-		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35
+//		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
+//		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35, pid : 75
 	  }
-
-	  if (gps_add_counter >= 0)gps_add_counter --;
-	  Read_Gps();
 
 	  /***********************************************************************************************
 	----------------------------Check BNO080 Sensor Value(current Angle Data)-----------------------
@@ -882,6 +865,41 @@ lon.in.kd = 2;
 		   actual_pressure = actual_pressure_slow; */
 	  }
 
+	  if(m8n_rx_cplt_flag == 1) // GPS receive checking
+	  {
+		  m8n_rx_cplt_flag = 0;
+
+		  if(M8N_UBX_CHKSUM_Check(&m8n_rx_buf[0], 100) == 1)
+		  {
+			  M8N_UBX_NAV_PVT_Parsing(&m8n_rx_buf[0], &pvt);
+
+			  if(lat_gps_previous == 0 || lon_gps_previous == 0)
+			  {
+				  lat_gps_previous = (double)pvt.lat;
+				  lon_gps_previous = (double)pvt.lon;
+			  }
+			  else
+			  {
+				  lat_gps_previous = lat_gps_actual;
+				  lon_gps_previous = lon_gps_actual;
+			  }
+
+			  lat_gps_actual = (double)pvt.lat;
+			  lon_gps_actual = (double)pvt.lon;
+
+		  }
+		  else
+		  {
+			  lat_gps_actual = lat_gps_previous;
+			  lon_gps_actual = lat_gps_previous;
+		  }
+
+		  lat_add = (lat_gps_actual - lat_gps_previous) / 200.00;
+		  lon_add = (lon_gps_actual - lon_gps_previous) / 200.00;
+
+		  lat_gps = lat_gps_previous;
+		  lon_gps = lon_gps_previous;
+	  }
 
 
 	  /***********************************************************************************************
@@ -1501,25 +1519,25 @@ void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[9] = (int)BNO080_Yaw >> 8;
 	telemetry_tx_buf[10] = (int)BNO080_Yaw;
 
-	telemetry_tx_buf[11] = l_lat_gps >> 24;
-	telemetry_tx_buf[12] = l_lat_gps >> 16;
-	telemetry_tx_buf[13] = l_lat_gps >> 8;
-	telemetry_tx_buf[14] = l_lat_gps;
+	telemetry_tx_buf[11] = (int)lat_gps >> 24;
+	telemetry_tx_buf[12] = (int)lat_gps >> 16;
+	telemetry_tx_buf[13] = (int)lat_gps >> 8;
+	telemetry_tx_buf[14] = (int)lat_gps;
 
-	telemetry_tx_buf[15] = l_lon_gps >> 24;
-	telemetry_tx_buf[16] = l_lon_gps >> 16;
-	telemetry_tx_buf[17] = l_lon_gps >> 8;
-	telemetry_tx_buf[18] = l_lon_gps;
+	telemetry_tx_buf[15] = (int)lon_gps >> 24;
+	telemetry_tx_buf[16] = (int)lon_gps >> 16;
+	telemetry_tx_buf[17] = (int)lon_gps >> 8;
+	telemetry_tx_buf[18] = (int)lon_gps;
 
-	telemetry_tx_buf[19] = l_lat_waypoint >> 24;
-	telemetry_tx_buf[20] = l_lat_waypoint >> 16;
-	telemetry_tx_buf[21] = l_lat_waypoint >> 8;
-	telemetry_tx_buf[22] = l_lat_waypoint;
+	telemetry_tx_buf[19] = (int)lat_waypoint >> 24;
+	telemetry_tx_buf[20] = (int)lat_waypoint >> 16;
+	telemetry_tx_buf[21] = (int)lat_waypoint >> 8;
+	telemetry_tx_buf[22] = (int)lat_waypoint;
 
-	telemetry_tx_buf[23] = l_lon_waypoint >> 24;
-	telemetry_tx_buf[24] = l_lon_waypoint >> 16;
-	telemetry_tx_buf[25] = l_lon_waypoint >> 8;
-	telemetry_tx_buf[26] = l_lon_waypoint;
+	telemetry_tx_buf[23] = (int)lon_waypoint >> 24;
+	telemetry_tx_buf[24] = (int)lon_waypoint >> 16;
+	telemetry_tx_buf[25] = (int)lon_waypoint >> 8;
+	telemetry_tx_buf[26] = (int)lon_waypoint;
 
 	telemetry_tx_buf[27] = (int)gps_pitch_adjust >> 24;
 	telemetry_tx_buf[28] = (int)gps_pitch_adjust >> 16;
@@ -1532,76 +1550,120 @@ void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[34] = (int)gps_roll_adjust;
 }
 
-void Read_Gps(void)
+void Encode_Msg_PID(unsigned char* telemery_tx_buf)
 {
-	  /********************* GPS Data Parsing ************************/
-	  if(m8n_rx_cplt_flag == 1) // GPS receive checking
-	  {
-		  m8n_rx_cplt_flag = 0;
+	telemetry_tx_buf[0] = 0x11;
+	telemetry_tx_buf[1] = 0x03;
 
-		  if(M8N_UBX_CHKSUM_Check(&m8n_rx_buf[0], 100) == 1)
-		  {
-			  LL_GPIO_TogglePin(GPIOC, LL_GPIO_PIN_2);
-			  M8N_UBX_NAV_PVT_Parsing(&m8n_rx_buf[0], &pvt);
-//	 		  M8N_UBX_NAV_POSLLH_Parsing(&m8n_rx_buf[0], &posllh);
+	telemetry_tx_buf[2] = (int)lat.out.reference >> 24;
+	telemetry_tx_buf[3] = (int)lat.out.reference >> 16;
+	telemetry_tx_buf[4] = (int)lat.out.reference >> 8;
+	telemetry_tx_buf[5] = (int)lat.out.reference;
 
-//			  if((pvt.lat - pvt.lat_prev > 500) || (pvt.lat - pvt.lat_prev < -500)) pvt.lat = lat_prev;
-//			  if((pvt.lon - pvt.lon_prev > 500) || (pvt.lon - pvt.lon_prev < -500)) pvt.lon = lon_prev;
-//			  lat_prev = pvt.lat;
-//			  lon_prev = pvt.lon;
+	telemetry_tx_buf[6] = (int)lat.out.meas_value >> 24;
+	telemetry_tx_buf[7] = (int)lat.out.meas_value >> 16;
+	telemetry_tx_buf[8] = (int)lat.out.meas_value >> 8;
+	telemetry_tx_buf[9] = (int)lat.out.meas_value;
 
-			  lat_gps_actual = pvt.lat;
-			  lon_gps_actual = pvt.lon;
-		  }
-		  else
-		  {
-			  l_lat_gps = 0;
-			  l_lon_gps = 0;
-			  lat_gps_previous = 0;
-			  lon_gps_previous = 0;
-		  }
+	telemetry_tx_buf[10] = (int)lat.out.error >> 24;
+	telemetry_tx_buf[11] = (int)lat.out.error >> 16;
+	telemetry_tx_buf[12] = (int)lat.out.error >> 8;
+	telemetry_tx_buf[13] = (int)lat.out.error;
 
-		  if (lat_gps_previous == 0 && lon_gps_previous == 0) {                                              //If this is the first time the GPS code is used.
-			  lat_gps_previous = lat_gps_actual;                                                               //Set the lat_gps_previous variable to the lat_gps_actual variable.
-			  lon_gps_previous = lon_gps_actual;                                                               //Set the lon_gps_previous variable to the lon_gps_actual variable.
-		  }
+	telemetry_tx_buf[14] = (int)lat.out.error_deriv >> 24;
+	telemetry_tx_buf[15] = (int)lat.out.error_deriv >> 16;
+	telemetry_tx_buf[16] = (int)lat.out.error_deriv >> 8;
+	telemetry_tx_buf[17] = (int)lat.out.error_deriv;
 
-		  lat_gps_loop_add = (float)(lat_gps_actual - lat_gps_previous) / 20.0;                              //Divide the difference between the new and previous latitude by ten.
-		  lon_gps_loop_add = (float)(lon_gps_actual - lon_gps_previous) / 20.0;                              //Divide the difference between the new and previous longitude by ten.
+	telemetry_tx_buf[18] = (int)lat.out.error_sum >> 24;
+	telemetry_tx_buf[19] = (int)lat.out.error_sum >> 16;
+	telemetry_tx_buf[20] = (int)lat.out.error_sum >> 8;
+	telemetry_tx_buf[21] = (int)lat.out.error_sum;
 
-		  l_lat_gps = lat_gps_previous;                                                                      //Set the l_lat_gps variable to the previous latitude value.
-		  l_lon_gps = lon_gps_previous;                                                                      //Set the l_lon_gps variable to the previous longitude value.
+	telemetry_tx_buf[22] = (int)lat.out.p_result >> 24;
+	telemetry_tx_buf[23] = (int)lat.out.p_result >> 16;
+	telemetry_tx_buf[24] = (int)lat.out.p_result >> 8;
+	telemetry_tx_buf[25] = (int)lat.out.p_result;
 
-		  lat_gps_previous = lat_gps_actual;                                                                 //Remember the new latitude value in the lat_gps_previous variable for the next loop.
-		  lon_gps_previous = lon_gps_actual;                                                                 //Remember the new longitude value in the lat_gps_previous variable for the next loop.
+	telemetry_tx_buf[26] = (int)lat.out.i_result >> 24;
+	telemetry_tx_buf[27] = (int)lat.out.i_result >> 16;
+	telemetry_tx_buf[28] = (int)lat.out.i_result >> 8;
+	telemetry_tx_buf[29] = (int)lat.out.i_result;
 
-		  //The GPS is set to a 5Hz refresh rate. Between every 2 GPS measurments, 19 GPS values are simulated.
-		  gps_add_counter = 10;                                                                               //Set the gps_add_counter variable to 10 as a count down loop timer
-		  new_gps_data_counter = 19;                                                                          //Set the new_gps_data_counter to 19. This is the number of simulated values between 2 GPS measurements.
-		  lat_gps_add = 0;                                                                                   //Reset the lat_gps_add variable.
-		  lon_gps_add = 0;                                                                                   //Reset the lon_gps_add variable.
-		  new_gps_data_available = 1;
-	  }
+	telemetry_tx_buf[30] = (int)lat.out.d_result >> 24;
+	telemetry_tx_buf[31] = (int)lat.out.d_result >> 16;
+	telemetry_tx_buf[32] = (int)lat.out.d_result >> 8;
+	telemetry_tx_buf[33] = (int)lat.out.d_result;
 
-	  //After 10 program loops 10 x 1ms = 10ms the gps_add_counter is 0.
-	  if (gps_add_counter == 0 && new_gps_data_counter > 0) {                                                 //If gps_add_counter is 0 and there are new GPS simulations needed.
-	    new_gps_data_available = 1;                                                                           //Set the new_gps_data_available to indicate that there is new data available.
-	    new_gps_data_counter --;                                                                              //Decrement the new_gps_data_counter so there will only be 9 simulations
-	    gps_add_counter = 10;                                                                                  //Set the gps_add_counter variable to 5 as a count down loop timer
+	telemetry_tx_buf[34] = (int)lat.out.pid_result >> 24;
+	telemetry_tx_buf[35] = (int)lat.out.pid_result >> 16;
+	telemetry_tx_buf[36] = (int)lat.out.pid_result >> 8;
+	telemetry_tx_buf[37] = (int)lat.out.pid_result;
 
-	    lat_gps_add += lat_gps_loop_add;                                                                      //Add the simulated part to a buffer float variable because the l_lat_gps can only hold integers.
-	    if ((lat_gps_add >= 10) || (lat_gps_add <= -10)) {                                                                          //If the absolute value of lat_gps_add is larger then 1.
-	      l_lat_gps += (int)lat_gps_add;                                                                      //Increment the lat_gps_add value with the lat_gps_add value as an integer. So no decimal part.
-	      lat_gps_add -= (int)lat_gps_add;                                                                    //Subtract the lat_gps_add value as an integer so the decimal value remains.
-	    }
+	telemetry_tx_buf[38] = (int)lat.in.reference >> 24;
+	telemetry_tx_buf[39] = (int)lat.in.reference >> 16;
+	telemetry_tx_buf[40] = (int)lat.in.reference >> 8;
+	telemetry_tx_buf[41] = (int)lat.in.reference;
 
-	    lon_gps_add += lon_gps_loop_add;                                                                      //Add the simulated part to a buffer float variable because the l_lat_gps can only hold integers.
-	    if ((lon_gps_add >= 10) || (lon_gps_add <= -10)) {                                                                          //If the absolute value of lat_gps_add is larger then 1.
-	      l_lon_gps += (int)lon_gps_add;                                                                      //Increment the lat_gps_add value with the lat_gps_add value as an integer. So no decimal part.
-	      lon_gps_add -= (int)lon_gps_add;                                                                    //Subtract the lat_gps_add value as an integer so the decimal value remains.
-	    }
-	  }
+	telemetry_tx_buf[42] = (int)lat.in.meas_value >> 24;
+	telemetry_tx_buf[43] = (int)lat.in.meas_value >> 16;
+	telemetry_tx_buf[44] = (int)lat.in.meas_value >> 8;
+	telemetry_tx_buf[45] = (int)lat.in.meas_value;
+
+	telemetry_tx_buf[46] = (int)lat.in.error >> 24;
+	telemetry_tx_buf[47] = (int)lat.in.error >> 16;
+	telemetry_tx_buf[48] = (int)lat.in.error >> 8;
+	telemetry_tx_buf[49] = (int)lat.in.error;
+
+	telemetry_tx_buf[50] = (int)lat.in.error_deriv >> 24;
+	telemetry_tx_buf[51] = (int)lat.in.error_deriv >> 16;
+	telemetry_tx_buf[52] = (int)lat.in.error_deriv >> 8;
+	telemetry_tx_buf[53] = (int)lat.in.error_deriv;
+
+	telemetry_tx_buf[54] = (int)lat.in.error_sum >> 24;
+	telemetry_tx_buf[55] = (int)lat.in.error_sum >> 16;
+	telemetry_tx_buf[56] = (int)lat.in.error_sum >> 8;
+	telemetry_tx_buf[57] = (int)lat.in.error_sum;
+
+	telemetry_tx_buf[58] = (int)lat.in.p_result >> 24;
+	telemetry_tx_buf[59] = (int)lat.in.p_result >> 16;
+	telemetry_tx_buf[60] = (int)lat.in.p_result >> 8;
+	telemetry_tx_buf[61] = (int)lat.in.p_result;
+
+	telemetry_tx_buf[62] = (int)lat.in.i_result >> 24;
+	telemetry_tx_buf[63] = (int)lat.in.i_result >> 16;
+	telemetry_tx_buf[64] = (int)lat.in.i_result >> 8;
+	telemetry_tx_buf[65] = (int)lat.in.i_result;
+
+	telemetry_tx_buf[66] = (int)lat.in.d_result >> 24;
+	telemetry_tx_buf[67] = (int)lat.in.d_result >> 16;
+	telemetry_tx_buf[68] = (int)lat.in.d_result >> 8;
+	telemetry_tx_buf[69] = (int)lat.in.d_result;
+
+	telemetry_tx_buf[70] = (int)lat.in.pid_result >> 24;
+	telemetry_tx_buf[71] = (int)lat.in.pid_result >> 16;
+	telemetry_tx_buf[72] = (int)lat.in.pid_result >> 8;
+	telemetry_tx_buf[73] = (int)lat.in.pid_result;
+
+	telemetry_tx_buf[74] = (long)lat_gps >> 56;
+	telemetry_tx_buf[75] = (long)lat_gps >> 48;
+	telemetry_tx_buf[76] = (long)lat_gps >> 40;
+	telemetry_tx_buf[77] = (long)lat_gps >> 32;
+	telemetry_tx_buf[78] = (long)lat_gps >> 24;
+	telemetry_tx_buf[79] = (long)lat_gps >> 16;
+	telemetry_tx_buf[80] = (long)lat_gps >> 8;
+	telemetry_tx_buf[81] = (long)lat_gps;
+
+	telemetry_tx_buf[82] = (long)pvt.lat >> 56;
+	telemetry_tx_buf[83] = (long)pvt.lat >> 48;
+	telemetry_tx_buf[84] = (long)pvt.lat >> 40;
+	telemetry_tx_buf[85] = (long)pvt.lat >> 32;
+	telemetry_tx_buf[86] = (long)pvt.lat >> 24;
+	telemetry_tx_buf[87] = (long)pvt.lat >> 16;
+	telemetry_tx_buf[88] = (long)pvt.lat >> 8;
+	telemetry_tx_buf[89] = (long)pvt.lat;
 }
+
 
 void return_to_home(void) {
 
@@ -1611,21 +1673,21 @@ void return_to_home(void) {
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////
 		if (return_to_home_step == 0) {
 			//Is the quadcopter nearby? Then land without returning to home.
-			if( l_lat_waypoint - lat_gps_home < 100 && l_lat_waypoint - lat_gps_home > -100 ) is_lat_nearby = 1;
-			if( l_lon_waypoint - lon_gps_home < 100 && l_lon_waypoint - lon_gps_home > -100 ) is_lon_nearby = 1;
+			if( lat_waypoint - lat_gps_home < 100 && lat_waypoint - lat_gps_home > -100 ) is_lat_nearby = 1;
+			if( lon_waypoint - lon_gps_home < 100 && lon_waypoint - lon_gps_home > -100 ) is_lon_nearby = 1;
 
 			if (is_lat_nearby == 1 && is_lon_nearby == 1)return_to_home_step = 3;
 			else {
 				return_to_home_move_factor = 0.0;
 				if (return_to_home_lat_factor == 1 || return_to_home_lon_factor == 1)return_to_home_step = 1;
 				//cos(((float)l_lat_gps / 1000000.0)
-				if (abs_int(lat_gps_home, l_lat_waypoint) >= abs_int(lon_gps_home, l_lon_waypoint)) {
-					return_to_home_lon_factor = (float)abs_int(lon_gps_home, l_lon_waypoint) / (float)abs_int(lat_gps_home, l_lat_waypoint);
+				if (abs_int(lat_gps_home, lat_waypoint) >= abs_int(lon_gps_home, lon_waypoint)) {
+					return_to_home_lon_factor = (float)abs_int(lon_gps_home, lon_waypoint) / (float)abs_int(lat_gps_home, lat_waypoint);
 					return_to_home_lat_factor = 1;
 				}
 				else {
 					return_to_home_lon_factor = 1;
-					return_to_home_lat_factor = (float)abs_int(lat_gps_home, l_lat_waypoint) / (float)abs_int(lon_gps_home, l_lon_waypoint);
+					return_to_home_lat_factor = (float)abs_int(lat_gps_home, lat_waypoint) / (float)abs_int(lon_gps_home, lon_waypoint);
 				}
 
 				if (actual_pressure_fast < 20)return_to_home_decrease = 20 - actual_pressure_fast;
@@ -1646,17 +1708,17 @@ void return_to_home(void) {
 		//Step 2 - Return to the home position
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////
 		if (return_to_home_step == 2) {
-			if (lat_gps_home == l_lat_waypoint && lon_gps_home == l_lon_waypoint)return_to_home_step = 3;
-			if (abs_int(lat_gps_home, l_lat_waypoint) < 160 && abs_int(lon_gps_home, l_lon_waypoint) < 160 && return_to_home_move_factor > 0.05)return_to_home_move_factor -= 0.00015;
+			if (lat_gps_home == lat_waypoint && lon_gps_home == lon_waypoint)return_to_home_step = 3;
+			if (abs_int(lat_gps_home, lat_waypoint) < 160 && abs_int(lon_gps_home, lon_waypoint) < 160 && return_to_home_move_factor > 0.05)return_to_home_move_factor -= 0.00015;
 			else if (return_to_home_move_factor < 0.20)return_to_home_move_factor += 0.0001;
 
-			if (lat_gps_home != l_lat_waypoint) {
-				if (lat_gps_home > l_lat_waypoint) l_lat_gps_float_adjust += return_to_home_move_factor * return_to_home_lat_factor;
-				if (lat_gps_home < l_lat_waypoint) l_lat_gps_float_adjust -= return_to_home_move_factor * return_to_home_lat_factor;
+			if (lat_gps_home != lat_waypoint) {
+				if (lat_gps_home > lat_waypoint) l_lat_gps_float_adjust += return_to_home_move_factor * return_to_home_lat_factor;
+				if (lat_gps_home < lat_waypoint) l_lat_gps_float_adjust -= return_to_home_move_factor * return_to_home_lat_factor;
 			}
-			if (lon_gps_home != l_lon_waypoint) {
-				if (lon_gps_home > l_lon_waypoint) l_lon_gps_float_adjust += return_to_home_move_factor * return_to_home_lon_factor;
-				if (lon_gps_home < l_lon_waypoint) l_lon_gps_float_adjust -= return_to_home_move_factor * return_to_home_lon_factor;
+			if (lon_gps_home != lon_waypoint) {
+				if (lon_gps_home > lon_waypoint) l_lon_gps_float_adjust += return_to_home_move_factor * return_to_home_lon_factor;
+				if (lon_gps_home < lon_waypoint) l_lon_gps_float_adjust -= return_to_home_move_factor * return_to_home_lon_factor;
 			}
 		}
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////

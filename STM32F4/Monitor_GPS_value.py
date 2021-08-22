@@ -34,7 +34,7 @@ while True:
         df.to_csv(f"data/{timevar}_gps_data.csv")
 
 
-    a = int(ser.read(1).hex(), 16)
+    a = int(ser.read(1).hex(), 16) #int(ser.read(1).hex(), 16)
     if a == 0x77:
         b = int(ser.read(1).hex(), 16)
         if b == 0x17:
@@ -102,7 +102,7 @@ while True:
             if pitch_sign == 1: pitch_adjust = (pitch_adjust & 0x7fffffff) - 2 ** 31
             if roll_sign == 1: roll_adjust = (roll_adjust & 0x7fffffff) - 2 ** 31
 
-            print(f' {i} // bno080_yaw : {bno080_yaw} , lat_error : {target_lat - pvt_lat} , lon_error : {target_lon - pvt_lon} \
+            print(f' {i} // num_sv : {num_sv}, bno080_yaw : {bno080_yaw} , lat_error : {target_lat - pvt_lat} , lon_error : {target_lon - pvt_lon} \
             , target_lat : {target_lat} , target_lon : {target_lon} , pitch_adjust : {pitch_adjust} , roll_adjust : {roll_adjust}, voltage : {voltage/100}')
             yaw_list.append(bno080_yaw)
             lat_list.append(pvt_lat)

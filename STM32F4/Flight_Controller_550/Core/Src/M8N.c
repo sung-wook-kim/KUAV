@@ -167,6 +167,4 @@ void M8N_UBX_NAV_PVT_Parsing(unsigned char* data, M8N_UBX_NAV_PVT* pvt)
 	pvt->headVeh = data[90] | data[91]<<8 | data[92]<<16 | data[93]<<24 ;
 	pvt->magDec = data[94] | data[95]<<8 ;
 	pvt->magAcc = data[96] | data[97]<<8 ;
-	//	pvt->lon_f64 = posllh->lon/ 10000000.;
-	//	pvt->lat_f64 = posllh->lat/ 10000000.;
 }

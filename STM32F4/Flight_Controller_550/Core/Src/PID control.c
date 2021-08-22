@@ -304,7 +304,7 @@ void Single_GPS_PD_Calculation(PDSingle_GPS* axis, signed int set_point_gps, sig
 	axis->pd_result = axis->p_result + axis->d_result;
 }
 
-void Double_GPS_PID_Calculation(PIDDouble* axis, float set_point_gps, float gps)
+void Double_GPS_PID_Calculation(PIDDouble* axis, double set_point_gps,  gps)
 {
    /*********** Double PID Outer Begin (Roll and Pitch Angular Position Control) *************/
 #define GPS_OUTER_DERIV_FILT_ENABLE 1

@@ -60,6 +60,7 @@ uint8_t ibus_rx_cplt_flag = 0;
 uint8_t uart1_rx_data = 0;
 
 uint8_t tim7_1ms_flag = 0;
+uint8_t tim7_10ms_flag = 0;
 uint8_t tim7_20ms_flag = 0;
 uint8_t tim7_100ms_flag = 0;
 uint8_t tim7_1000ms_flag = 0;
@@ -350,6 +351,7 @@ void TIM7_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM7_IRQn 0 */
 	static unsigned char tim7_1ms_count = 0;
+	static unsigned char tim7_10ms_count = 0;
 	static unsigned char tim7_20ms_count = 0;
 	static unsigned char tim7_100ms_count = 0;
 	static unsigned short tim7_1000ms_count = 0;
@@ -362,6 +364,12 @@ void TIM7_IRQHandler(void)
 		{
 			tim7_1ms_count=0;
 			tim7_1ms_flag =1;
+		}
+		tim7_10ms_count++;;
+		if(tim7_10ms_count == 10)
+		{
+			tim7_10ms_count = 0;
+			tim7_10ms_flag = 1;
 		}
 		tim7_20ms_count++;
 		if(tim7_20ms_count ==20)
