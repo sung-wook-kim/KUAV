@@ -304,7 +304,7 @@ void Single_GPS_PD_Calculation(PDSingle_GPS* axis, signed int set_point_gps, sig
 	axis->pd_result = axis->p_result + axis->d_result;
 }
 
-void Double_GPS_PID_Calculation(PIDDouble* axis, double set_point_gps,  gps)
+void Double_GPS_PID_Calculation(PIDDouble* axis, double set_point_gps, double  gps)
 {
    /*********** Double PID Outer Begin (Roll and Pitch Angular Position Control) *************/
 #define GPS_OUTER_DERIV_FILT_ENABLE 1
@@ -337,7 +337,7 @@ void Double_GPS_PID_Calculation(PIDDouble* axis, double set_point_gps,  gps)
 
    /************ Double PID Inner Begin (Roll and Pitch Angular Rate Control) **************/
    axis->in.reference = axis->out.pid_result;   //Set point of inner PID control is the PID result of outer loop (for double PID control)
-   axis->in.meas_value = -(axis->out.error_deriv);
+   axis->in.meas_value = -(axis->out.error_deriv_filt);
 
    axis->in.error = axis->in.reference - axis->in.meas_value;   //Define error of inner loop
    axis->in.p_result = axis->in.error * axis->in.kp;         //Calculate P result of inner loop

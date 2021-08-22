@@ -1,13 +1,7 @@
 import serial
-import struct
+from time import time
 import time
 import pandas as pd
-import keyboard
-# from matplotlib import pyplot as plt
-# from matplotlib import animation
-# import numpy as np
-# import threading
-# import random
 
 ser = serial.Serial('COM7', 115200)
 ser.flush()
@@ -34,8 +28,11 @@ in_i_result_list = []
 in_d_result_list = []
 in_pid_result_list = []
 
-l_lat_gps_list = []
+lat_gps_list = []
 pvt_lat_list = []
+
+roll_adjust_list = []
+pitch_adjust_list = []
 
 def receive_data(byte, sign = True):
     temp = []
@@ -69,32 +66,37 @@ def receive_data(byte, sign = True):
 
 while True:
     i+=1
-    # if keyboard.read_key() == "s":
-    #     now = time.localtime()
-    #     timevar = time.strftime('%d%H%M%S', now)
-    #     df = pd.DataFrame()
-    #     df['out_reference'] = out_reference_list
-    #     df['out_meas_value'] = out_meas_value_list
-    #     df['out_error'] = out_error_list
-    #     df['out_error_deriv'] = out_error_deriv_list
-    #     df['out_error_sum'] = out_error_sum_list
-    #     df['out_p_result'] = out_p_result_list
-    #     df['out_i_reult'] = out_i_result_list
-    #     df['out_d_result'] = out_d_result_list
-    #     df['out_pid_result'] = out_pid_result_list
-    #
-    #     df['in_reference'] = in_reference_list
-    #     df['in_meas_value'] = in_meas_value_list
-    #     df['in_error'] = in_error_list
-    #     df['in_error_deriv'] = in_error_deriv_list
-    #     df['in_error_sum'] = in_error_sum_list
-    #     df['in_p_result'] = in_p_result_list
-    #     df['in_i_reult'] = in_i_result_list
-    #     df['in_d_result'] = in_d_result_list
-    #     df['in_pid_result'] = in_pid_result_list
-    #
-    #     df.to_csv(f"data/pid_data_{timevar}.csv")
-    #     print("Data is saved in data folder")
+    if i % 100 == 0:
+        now = time.localtime()
+        timevar = time.strftime('%d%H%M%S', now)
+        df = pd.DataFrame()
+        df['out_reference'] = out_reference_list
+        df['out_meas_value'] = out_meas_value_list
+        df['out_error'] = out_error_list
+        df['out_error_deriv'] = out_error_deriv_list
+        df['out_error_sum'] = out_error_sum_list
+        df['out_p_result'] = out_p_result_list
+        df['out_i_reult'] = out_i_result_list
+        df['out_d_result'] = out_d_result_list
+        df['out_pid_result'] = out_pid_result_list
+
+        df['in_reference'] = in_reference_list
+        df['in_meas_value'] = in_meas_value_list
+        df['in_error'] = in_error_list
+        df['in_error_deriv'] = in_error_deriv_list
+        df['in_error_sum'] = in_error_sum_list
+        df['in_p_result'] = in_p_result_list
+        df['in_i_reult'] = in_i_result_list
+        df['in_d_result'] = in_d_result_list
+        df['in_pid_result'] = in_pid_result_list
+
+        df['lat_gps'] = lat_gps_list
+        df['pvt_lat'] = pvt_lat_list
+
+        df['roll_adjust'] = roll_adjust_list
+        df['pitch_adjust'] = pitch_adjust_list
+        df.to_csv(f"data/pid_data_{timevar}.csv")
+        print("Data is saved in data folder")
 
     a = int(ser.read(1).hex(),16)
     if a == 0x11:
@@ -120,8 +122,11 @@ while True:
             in_d_result = receive_data(4)
             in_pid_result = receive_data(4)
 
-            l_lat_gps = receive_data(8)
+            lat_gps = receive_data(8)
             pvt_lat = receive_data(8)
+
+            roll_adjust = receive_data(4)
+            pitch_adjust = receive_data(4)
 
             ser.reset_input_buffer()
 
@@ -145,10 +150,13 @@ while True:
             in_d_result_list.append(in_d_result)
             in_pid_result_list.append(in_pid_result)
 
-            l_lat_gps_list.append(l_lat_gps)
+            lat_gps_list.append(lat_gps)
             pvt_lat_list.append(pvt_lat)
 
+            roll_adjust_list.append(roll_adjust)
+            pitch_adjust_list.append(pitch_adjust)
             # print(f'reference\tmeas_value\terror\terror_deriv\terror_sum\tp_result\ti_result\td_result\tpid_result\n')
             # print(f'-------------------------------------------------------------------------------------------------\n')
-            print(f'{pvt_lat} {l_lat_gps}\t{out_reference}\t{out_meas_value}\t{out_error}\t{out_error_deriv}\t{out_error_sum}\t{out_p_result}\t{out_i_result}\t{out_d_result}\t{out_pid_result}')
-            # print(f'{in_reference}\t{in_meas_value}\t{in_error}\t{in_error_deriv}\t{in_error_sum}\t{in_p_result}\t{in_i_result}\t{in_d_result}\t{in_pid_result}\n')
+            # print(f'{pvt_lat} {lat_gps}\t{out_reference}\t{out_meas_value}\t{out_error}\t{out_error_deriv}\t{out_error_sum}\t{out_p_result}\t{out_i_result}\t{out_d_result}\t{out_pid_result}')
+            # print(f'{in_reference}\t{in_meas_value}\t{in_error}\t{in_error_deriv}\t{in_error_sum}\t{in_p_result}\t{in_i_result}\t{in_d_result}\t{in_pid_result}')
+            # print(f'{in_reference}\t{in_meas_value}\t{in_error}\t{in_error_deriv}\t{in_error_sum}\t{in_p_result}\
