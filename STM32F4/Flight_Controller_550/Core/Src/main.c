@@ -78,7 +78,7 @@ extern uint8_t ibus_rx_buf[32];
 extern uint8_t ibus_rx_cplt_flag;
 
 extern uint8_t uart1_rx_data;
-uint8_t telemetry_tx_buf[90];
+uint8_t telemetry_tx_buf[100];
 uint8_t telemetry_rx_buf[20];
 uint8_t telemetry_rx_cplt_flag;
 
@@ -119,8 +119,8 @@ double lat_add;
 double lon_add;
 double lat_gps;
 double lon_gps;
-float lat_waypoint;
-float lon_waypoint;
+double lat_waypoint;
+double lon_waypoint;
 float gps_roll_adjust;
 float gps_pitch_adjust;
 #define GPS_PD_MAX 15000
@@ -387,20 +387,20 @@ altitude.in.ki = 10;
 altitude.in.kd = 0;
 
 // GPS Hold PID Gain
-lat.out.kp = 100;
-lat.out.ki = 1;
-lat.out.kd = 1;
+lat.out.kp = 0.01;
+lat.out.ki = 0.f;
+lat.out.kd = 0.001;
 
-lat.in.kp = 0;
-lat.in.ki = 0;
-lat.in.kd = 0;
+lat.in.kp = 25;
+lat.in.ki = 1;
+lat.in.kd = 0.f;
 
-lon.out.kp = 100;
-lon.out.ki = 1;
-lon.out.kd = 1;
+lon.out.kp = 0.01;
+lon.out.ki = 0.f;
+lon.out.kd = 0.001;
 
-lon.in.kp = 0;
-lon.in.ki = 0;
+lon.in.kp = 25;
+lon.in.ki = 1;
 lon.in.kd = 0;
 
 /*Receiver Detection*/
@@ -555,7 +555,7 @@ lon.in.kd = 0;
 
 		  flight_mode = 1;
 		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 2;
-		  else if(iBus.SwA == 2000 && iBus.SwB == 2000) flight_mode = 3;
+		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1) flight_mode = 3;
 
 
 		  if(flight_mode == 2) //Altitude Holding Mode
@@ -780,14 +780,13 @@ lon.in.kd = 0;
 	  if(tim7_10ms_flag == 1)
 	  {
 		  tim7_10ms_flag = 0;
-
-		  Encode_Msg_PID(&telemetry_tx_buf[0]);
-		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 90); // altitude : 26, gps : 35, pid : 75
 	  }
 
 	  if(tim7_20ms_flag == 1 && tim7_100ms_flag == 0)
 	  {
 		  tim7_20ms_flag = 0;
+		  Encode_Msg_PID(&telemetry_tx_buf[0]);
+		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 98); // altitude : 26, gps : 35, pid : 75
 //		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 20);
 	  }
@@ -1645,23 +1644,33 @@ void Encode_Msg_PID(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[72] = (int)lat.in.pid_result >> 8;
 	telemetry_tx_buf[73] = (int)lat.in.pid_result;
 
-	telemetry_tx_buf[74] = (long)lat_gps >> 56;
-	telemetry_tx_buf[75] = (long)lat_gps >> 48;
-	telemetry_tx_buf[76] = (long)lat_gps >> 40;
-	telemetry_tx_buf[77] = (long)lat_gps >> 32;
-	telemetry_tx_buf[78] = (long)lat_gps >> 24;
-	telemetry_tx_buf[79] = (long)lat_gps >> 16;
-	telemetry_tx_buf[80] = (long)lat_gps >> 8;
-	telemetry_tx_buf[81] = (long)lat_gps;
+	telemetry_tx_buf[74] = (long long int)lat_gps >> 56;
+	telemetry_tx_buf[75] = (long long int)lat_gps >> 48;
+	telemetry_tx_buf[76] = (long long int)lat_gps >> 40;
+	telemetry_tx_buf[77] = (long long int)lat_gps >> 32;
+	telemetry_tx_buf[78] = (long long int)lat_gps >> 24;
+	telemetry_tx_buf[79] = (long long int)lat_gps >> 16;
+	telemetry_tx_buf[80] = (long long int)lat_gps >> 8;
+	telemetry_tx_buf[81] = (long long int)lat_gps;
 
-	telemetry_tx_buf[82] = (long)pvt.lat >> 56;
-	telemetry_tx_buf[83] = (long)pvt.lat >> 48;
-	telemetry_tx_buf[84] = (long)pvt.lat >> 40;
-	telemetry_tx_buf[85] = (long)pvt.lat >> 32;
-	telemetry_tx_buf[86] = (long)pvt.lat >> 24;
-	telemetry_tx_buf[87] = (long)pvt.lat >> 16;
-	telemetry_tx_buf[88] = (long)pvt.lat >> 8;
-	telemetry_tx_buf[89] = (long)pvt.lat;
+	telemetry_tx_buf[82] = (long long int)pvt.lat >> 56;
+	telemetry_tx_buf[83] = (long long int)pvt.lat >> 48;
+	telemetry_tx_buf[84] = (long long int)pvt.lat >> 40;
+	telemetry_tx_buf[85] = (long long int)pvt.lat >> 32;
+	telemetry_tx_buf[86] = (long long int)pvt.lat >> 24;
+	telemetry_tx_buf[87] = (long long int)pvt.lat >> 16;
+	telemetry_tx_buf[88] = (long long int)pvt.lat >> 8;
+	telemetry_tx_buf[89] = (long long int)pvt.lat;
+
+	telemetry_tx_buf[90] = (int)gps_roll_adjust >> 24;
+	telemetry_tx_buf[91] = (int)gps_roll_adjust >> 16;
+	telemetry_tx_buf[92] = (int)gps_roll_adjust >> 8;
+	telemetry_tx_buf[93] = (int)gps_roll_adjust;
+
+	telemetry_tx_buf[94] = (int)gps_pitch_adjust >> 24;
+	telemetry_tx_buf[95] = (int)gps_pitch_adjust >> 16;
+	telemetry_tx_buf[96] = (int)gps_pitch_adjust >> 8;
+	telemetry_tx_buf[97] = (int)gps_pitch_adjust;
 }
 
 
