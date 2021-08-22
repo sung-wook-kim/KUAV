@@ -34,6 +34,10 @@ pvt_lat_list = []
 roll_adjust_list = []
 pitch_adjust_list = []
 
+motor_one_list = []
+motor_two_list = []
+motor_three_list = []
+motor_four_list = []
 def receive_data(byte, sign = True):
     temp = []
     data = None
@@ -95,6 +99,12 @@ while True:
 
         df['roll_adjust'] = roll_adjust_list
         df['pitch_adjust'] = pitch_adjust_list
+
+        df['motor_one'] = motor_one_list
+        df['motor_two'] = motor_two_list
+        df['motor_three'] = motor_three_list
+        df['motor_four'] = motor_four_list
+
         df.to_csv(f"data/pid_data_{timevar}.csv")
         print("Data is saved in data folder")
 
@@ -128,6 +138,11 @@ while True:
             roll_adjust = receive_data(4)
             pitch_adjust = receive_data(4)
 
+            motor_one = receive_data(4)
+            motor_two = receive_data(4)
+            motor_three = receive_data(4)
+            motor_four = receive_data(4)
+            
             ser.reset_input_buffer()
 
             out_reference_list.append(out_reference)
@@ -155,8 +170,15 @@ while True:
 
             roll_adjust_list.append(roll_adjust)
             pitch_adjust_list.append(pitch_adjust)
+
+            motor_one_list.append(motor_one)
+            motor_two_list.append(motor_two)
+            motor_three_list.append(motor_three)
+            motor_four_list.append(motor_four)
+
             # print(f'reference\tmeas_value\terror\terror_deriv\terror_sum\tp_result\ti_result\td_result\tpid_result\n')
             # print(f'-------------------------------------------------------------------------------------------------\n')
             # print(f'{pvt_lat} {lat_gps}\t{out_reference}\t{out_meas_value}\t{out_error}\t{out_error_deriv}\t{out_error_sum}\t{out_p_result}\t{out_i_result}\t{out_d_result}\t{out_pid_result}')
             # print(f'{in_reference}\t{in_meas_value}\t{in_error}\t{in_error_deriv}\t{in_error_sum}\t{in_p_result}\t{in_i_result}\t{in_d_result}\t{in_pid_result}')
             # print(f'{in_reference}\t{in_meas_value}\t{in_error}\t{in_error_deriv}\t{in_error_sum}\t{in_p_result}\
+            print(motor_one , motor_two , motor_three , motor_four )
