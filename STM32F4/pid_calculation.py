@@ -2,34 +2,67 @@ import serial
 from time import time
 import time
 import pandas as pd
-
+import matplotlib.pyplot as plt
+import threading
+import struct
 ser = serial.Serial('COM7', 115200)
 ser.flush()
 
+global lat_out_reference , lat_out_meas_value , lon_out_reference , lon_out_meas_value,i , my_checksum
+
+lat_out_reference = 0 
+lat_out_meas_value = 0
+lon_out_reference = 0 
+lon_out_meas_value = 0
+my_checksum = 0xffffffff
 i = 0
 
-out_reference_list = []
-out_meas_value_list = []
-out_error_list = []
-out_error_deriv_list = []
-out_error_sum_list = []
-out_p_result_list = []
-out_i_result_list = []
-out_d_result_list = []
-out_pid_result_list = []
+lat_out_reference_list = []
+lat_out_meas_value_list = []
+lat_out_error_list = []
+lat_out_error_deriv_list = []
+lat_out_error_sum_list = []
+lat_out_p_result_list = []
+lat_out_i_result_list = []
+lat_out_d_result_list = []
+lat_out_pid_result_list = []
 
-in_reference_list = []
-in_meas_value_list = []
-in_error_list = []
-in_error_deriv_list = []
-in_error_sum_list = []
-in_p_result_list = []
-in_i_result_list = []
-in_d_result_list = []
-in_pid_result_list = []
+lat_in_reference_list = []
+lat_in_meas_value_list = []
+lat_in_error_list = []
+lat_in_error_deriv_list = []
+lat_in_error_sum_list = []
+lat_in_p_result_list = []
+lat_in_i_result_list = []
+lat_in_d_result_list = []
+lat_in_pid_result_list = []
+
+
+lon_out_reference_list = []
+lon_out_meas_value_list = []
+lon_out_error_list = []
+lon_out_error_deriv_list = []
+lon_out_error_sum_list = []
+lon_out_p_result_list = []
+lon_out_i_result_list = []
+lon_out_d_result_list = []
+lon_out_pid_result_list = []
+
+lon_in_reference_list = []
+lon_in_meas_value_list = []
+lon_in_error_list = []
+lon_in_error_deriv_list = []
+lon_in_error_sum_list = []
+lon_in_p_result_list = []
+lon_in_i_result_list = []
+lon_in_d_result_list = []
+lon_in_pid_result_list = []
 
 lat_gps_list = []
 pvt_lat_list = []
+
+lon_gps_list = []
+pvt_lon_list = []
 
 roll_adjust_list = []
 pitch_adjust_list = []
@@ -38,13 +71,18 @@ motor_one_list = []
 motor_two_list = []
 motor_three_list = []
 motor_four_list = []
+yaw_list = []
+
+
 def receive_data(byte, sign = True):
+    global my_checksum
     temp = []
     data = None
 
     for _ in range(byte):
-        temp.append(int(ser.read(1).hex(), 16) & 0xff)
-
+        a = int(ser.read(1).hex(), 16) & 0xff
+        temp.append(a)
+        my_checksum -= a
     try:
         if byte == 1:
             data = temp[0]
@@ -67,118 +105,219 @@ def receive_data(byte, sign = True):
 
     return data
 
+def connect():
+    global lat_out_reference , lat_out_meas_value , lon_out_meas_value , lon_out_reference ,i , my_checksum
+    while True:
+        i+=1
+        if i % 100 == 0:
+            now = time.localtime()
+            timevar = time.strftime('%d%H%M', now)
+            df = pd.DataFrame()
+            df['lat_out_reference'] = lat_out_reference_list
+            df['lat_out_meas_value'] = lat_out_meas_value_list
+            df['lat_out_error'] = lat_out_error_list
+            df['lat_out_error_deriv'] = lat_out_error_deriv_list
+            df['lat_out_error_sum'] = lat_out_error_sum_list
+            df['lat_out_p_result'] = lat_out_p_result_list
+            df['lat_out_i_reult'] = lat_out_i_result_list
+            df['lat_out_d_result'] = lat_out_d_result_list
+            df['lat_out_pid_result'] = lat_out_pid_result_list
 
+            df['lat_in_reference'] = lat_in_reference_list
+            df['lat_in_meas_value'] = lat_in_meas_value_list
+            df['lat_in_error'] = lat_in_error_list
+            df['lat_in_error_deriv'] = lat_in_error_deriv_list
+            df['lat_in_error_sum'] = lat_in_error_sum_list
+            df['lat_in_p_result'] = lat_in_p_result_list
+            df['lat_in_i_reult'] = lat_in_i_result_list
+            df['lat_in_d_result'] = lat_in_d_result_list
+            df['lat_in_pid_result'] = lat_in_pid_result_list
+
+            df['lat_gps'] = lat_gps_list
+            df['pvt_lat'] = pvt_lat_list
+
+            df['lon_out_reference'] = lon_out_reference_list
+            df['lon_out_meas_value'] = lon_out_meas_value_list
+            df['lon_out_error'] = lon_out_error_list
+            df['lon_out_error_deriv'] = lon_out_error_deriv_list
+            df['lon_out_error_sum'] = lon_out_error_sum_list
+            df['lon_out_p_result'] = lon_out_p_result_list
+            df['lon_out_i_reult'] = lon_out_i_result_list
+            df['lon_out_d_result'] = lon_out_d_result_list
+            df['lon_out_pid_result'] = lon_out_pid_result_list
+
+            df['lon_in_reference'] = lon_in_reference_list
+            df['lon_in_meas_value'] = lon_in_meas_value_list
+            df['lon_in_error'] = lon_in_error_list
+            df['lon_in_error_deriv'] = lon_in_error_deriv_list
+            df['lon_in_error_sum'] = lon_in_error_sum_list
+            df['lon_in_p_result'] = lon_in_p_result_list
+            df['lon_in_i_reult'] = lon_in_i_result_list
+            df['lon_in_d_result'] = lon_in_d_result_list
+            df['lon_in_pid_result'] = lon_in_pid_result_list
+
+            df['lon_gps'] = lon_gps_list
+            df['pvt_lon'] = pvt_lon_list
+
+            df['roll_adjust'] = roll_adjust_list
+            df['pitch_adjust'] = pitch_adjust_list
+
+            df['motor_one'] = motor_one_list
+            df['motor_two'] = motor_two_list
+            df['motor_three'] = motor_three_list
+            df['motor_four'] = motor_four_list
+
+            df['yaw'] = yaw_list
+            df.to_csv(f"pid_data_{timevar}.csv")
+            print("Data is saved in data folder")
+        
+        my_checksum = 0xffffffff
+        a = int(ser.read(1).hex(),16)
+        if a == 0x11:
+            b = int(ser.read(1).hex(),16)
+            if b == 0x03:
+                my_checksum -= 0x11
+                my_checksum -= 0x03
+                lat_out_reference = receive_data(4)
+                lat_out_meas_value = receive_data(4)
+                print(lat_out_meas_value)
+                lat_out_error = receive_data(4)
+                lat_out_error_deriv = receive_data(4)
+                lat_out_error_sum = receive_data(4)
+                lat_out_p_result = receive_data(4)
+                lat_out_i_result = receive_data(4)
+                lat_out_d_result = receive_data(4)
+                lat_out_pid_result = receive_data(4)
+                lat_in_reference = receive_data(4)
+                lat_in_meas_value = receive_data(4)
+                lat_in_error = receive_data(4)
+                lat_in_error_deriv = receive_data(4)
+                lat_in_error_sum = receive_data(4)
+                lat_in_p_result = receive_data(4)
+                lat_in_i_result = receive_data(4)
+                lat_in_d_result = receive_data(4)
+                lat_in_pid_result = receive_data(4)
+
+                lat_gps = receive_data(8)
+                pvt_lat = receive_data(8)
+
+                lon_out_reference = receive_data(4)
+                lon_out_meas_value = receive_data(4)
+                lon_out_error = receive_data(4)
+                lon_out_error_deriv = receive_data(4)
+                lon_out_error_sum = receive_data(4)
+                lon_out_p_result = receive_data(4)
+                lon_out_i_result = receive_data(4)
+                lon_out_d_result = receive_data(4)
+                lon_out_pid_result = receive_data(4)
+
+                lon_in_reference = receive_data(4)
+                lon_in_meas_value = receive_data(4)
+                lon_in_error = receive_data(4)
+                lon_in_error_deriv = receive_data(4)
+                lon_in_error_sum = receive_data(4)
+                lon_in_p_result = receive_data(4)
+                lon_in_i_result = receive_data(4)
+                lon_in_d_result = receive_data(4)
+                lon_in_pid_result = receive_data(4)
+
+                lon_gps = receive_data(8)
+                pvt_lon = receive_data(8)
+
+
+                roll_adjust = receive_data(4)
+                pitch_adjust = receive_data(4)
+
+                motor_one = receive_data(4 , sign=False)
+                motor_two = receive_data(4, sign=False)
+                motor_three = receive_data(4, sign=False)
+                motor_four = receive_data(4, sign=False)
+
+                yaw = receive_data(4)                
+
+                checksum_1 = int(ser.read(1).hex(), 16) & 0xff
+                checksum_2 = int(ser.read(1).hex(), 16) & 0xff
+                checksum_3 = int(ser.read(1).hex(), 16) & 0xff
+                checksum_4 = int(ser.read(1).hex(), 16) & 0xff
+                
+                checksum = checksum_1 << 24 | checksum_2 << 16 | checksum_3 << 8 | checksum_4 
+
+                if checksum == my_checksum: 
+                    lat_out_reference_list.append(lat_out_reference)
+                    lat_out_meas_value_list.append(lat_out_meas_value)
+                    lat_out_error_list.append(lat_out_error)
+                    lat_out_error_deriv_list.append(lat_out_error_deriv)
+                    lat_out_error_sum_list.append(lat_out_error_sum)
+                    lat_out_p_result_list.append(lat_out_p_result)
+                    lat_out_i_result_list.append(lat_out_i_result)
+                    lat_out_d_result_list.append(lat_out_d_result)
+                    lat_out_pid_result_list.append(lat_out_pid_result)
+
+                    lat_in_reference_list.append(lat_in_reference)
+                    lat_in_meas_value_list.append(lat_in_meas_value)
+                    lat_in_error_list.append(lat_in_error)
+                    lat_in_error_deriv_list.append(lat_in_error_deriv)
+                    lat_in_error_sum_list.append(lat_in_error_sum)
+                    lat_in_p_result_list.append(lat_in_p_result)
+                    lat_in_i_result_list.append(lat_in_i_result)
+                    lat_in_d_result_list.append(lat_in_d_result)
+                    lat_in_pid_result_list.append(lat_in_pid_result)
+
+                    lat_gps_list.append(lat_gps)
+                    pvt_lat_list.append(pvt_lat)
+                    
+
+                    lon_out_reference_list.append(lon_out_reference)
+                    lon_out_meas_value_list.append(lon_out_meas_value)
+                    lon_out_error_list.append(lon_out_error)
+                    lon_out_error_deriv_list.append(lon_out_error_deriv)
+                    lon_out_error_sum_list.append(lon_out_error_sum)
+                    lon_out_p_result_list.append(lon_out_p_result)
+                    lon_out_i_result_list.append(lon_out_i_result)
+                    lon_out_d_result_list.append(lon_out_d_result)
+                    lon_out_pid_result_list.append(lon_out_pid_result)
+
+                    lon_in_reference_list.append(lon_in_reference)
+                    lon_in_meas_value_list.append(lon_in_meas_value)
+                    lon_in_error_list.append(lon_in_error)
+                    lon_in_error_deriv_list.append(lon_in_error_deriv)
+                    lon_in_error_sum_list.append(lon_in_error_sum)
+                    lon_in_p_result_list.append(lon_in_p_result)
+                    lon_in_i_result_list.append(lon_in_i_result)
+                    lon_in_d_result_list.append(lon_in_d_result)
+                    lon_in_pid_result_list.append(lon_in_pid_result)
+
+                    lon_gps_list.append(lon_gps)
+                    pvt_lon_list.append(pvt_lon)
+
+                    roll_adjust_list.append(roll_adjust)
+                    pitch_adjust_list.append(pitch_adjust)
+
+                    motor_one_list.append(motor_one)
+                    motor_two_list.append(motor_two)
+                    motor_three_list.append(motor_three)
+                    motor_four_list.append(motor_four)
+                    yaw_list.append(yaw)
+                    # print(f'reference\tmeas_value\terror\terror_deriv\terror_sum\tp_result\ti_result\td_result\tpid_result\n')
+                    # print(f'-------------------------------------------------------------------------------------------------\n')
+                    # print(f'{pvt_lat} {lat_gps}\t{out_reference}\t{out_meas_value}\t{out_error}\t{out_error_deriv}\t{out_error_sum}\t{out_p_result}\t{out_i_result}\t{out_d_result}\t{out_pid_result}')
+                    # print(f'{in_reference}\t{in_meas_value}\t{in_error}\t{in_error_deriv}\t{in_error_sum}\t{in_p_result}\t{in_i_result}\t{in_d_result}\t{in_pid_result}')
+                    # print(f'{in_reference}\t{in_meas_value}\t{in_error}\t{in_error_deriv}\t{in_error_sum}\t{in_p_result}\
+                    print(motor_one , motor_two , motor_three , motor_four , yaw)
+                    ser.reset_input_buffer()
+
+thread1 = threading.Thread(target = connect)
+thread1.start()
+
+j = 0
 while True:
-    i+=1
-    if i % 100 == 0:
-        now = time.localtime()
-        timevar = time.strftime('%d%H%M%S', now)
-        df = pd.DataFrame()
-        df['out_reference'] = out_reference_list
-        df['out_meas_value'] = out_meas_value_list
-        df['out_error'] = out_error_list
-        df['out_error_deriv'] = out_error_deriv_list
-        df['out_error_sum'] = out_error_sum_list
-        df['out_p_result'] = out_p_result_list
-        df['out_i_reult'] = out_i_result_list
-        df['out_d_result'] = out_d_result_list
-        df['out_pid_result'] = out_pid_result_list
-
-        df['in_reference'] = in_reference_list
-        df['in_meas_value'] = in_meas_value_list
-        df['in_error'] = in_error_list
-        df['in_error_deriv'] = in_error_deriv_list
-        df['in_error_sum'] = in_error_sum_list
-        df['in_p_result'] = in_p_result_list
-        df['in_i_reult'] = in_i_result_list
-        df['in_d_result'] = in_d_result_list
-        df['in_pid_result'] = in_pid_result_list
-
-        df['lat_gps'] = lat_gps_list
-        df['pvt_lat'] = pvt_lat_list
-
-        df['roll_adjust'] = roll_adjust_list
-        df['pitch_adjust'] = pitch_adjust_list
-
-        df['motor_one'] = motor_one_list
-        df['motor_two'] = motor_two_list
-        df['motor_three'] = motor_three_list
-        df['motor_four'] = motor_four_list
-
-        df.to_csv(f"data/pid_data_{timevar}.csv")
-        print("Data is saved in data folder")
-
-    a = int(ser.read(1).hex(),16)
-    if a == 0x11:
-        b = int(ser.read(1).hex(),16)
-        if b == 0x03:
-            out_reference = receive_data(4)
-            out_meas_value = receive_data(4)
-            out_error = receive_data(4)
-            out_error_deriv = receive_data(4)
-            out_error_sum = receive_data(4)
-            out_p_result = receive_data(4)
-            out_i_result = receive_data(4)
-            out_d_result = receive_data(4)
-            out_pid_result = receive_data(4)
-
-            in_reference = receive_data(4)
-            in_meas_value = receive_data(4)
-            in_error = receive_data(4)
-            in_error_deriv = receive_data(4)
-            in_error_sum = receive_data(4)
-            in_p_result = receive_data(4)
-            in_i_result = receive_data(4)
-            in_d_result = receive_data(4)
-            in_pid_result = receive_data(4)
-
-            lat_gps = receive_data(8)
-            pvt_lat = receive_data(8)
-
-            roll_adjust = receive_data(4)
-            pitch_adjust = receive_data(4)
-
-            motor_one = receive_data(4)
-            motor_two = receive_data(4)
-            motor_three = receive_data(4)
-            motor_four = receive_data(4)
-            
-            ser.reset_input_buffer()
-
-            out_reference_list.append(out_reference)
-            out_meas_value_list.append(out_meas_value)
-            out_error_list.append(out_error)
-            out_error_deriv_list.append(out_error_deriv)
-            out_error_sum_list.append(out_error_sum)
-            out_p_result_list.append(out_p_result)
-            out_i_result_list.append(out_i_result)
-            out_d_result_list.append(out_d_result)
-            out_pid_result_list.append(out_pid_result)
-
-            in_reference_list.append(in_reference)
-            in_meas_value_list.append(in_meas_value)
-            in_error_list.append(in_error)
-            in_error_deriv_list.append(in_error_deriv)
-            in_error_sum_list.append(in_error_sum)
-            in_p_result_list.append(in_p_result)
-            in_i_result_list.append(in_i_result)
-            in_d_result_list.append(in_d_result)
-            in_pid_result_list.append(in_pid_result)
-
-            lat_gps_list.append(lat_gps)
-            pvt_lat_list.append(pvt_lat)
-
-            roll_adjust_list.append(roll_adjust)
-            pitch_adjust_list.append(pitch_adjust)
-
-            motor_one_list.append(motor_one)
-            motor_two_list.append(motor_two)
-            motor_three_list.append(motor_three)
-            motor_four_list.append(motor_four)
-
-            # print(f'reference\tmeas_value\terror\terror_deriv\terror_sum\tp_result\ti_result\td_result\tpid_result\n')
-            # print(f'-------------------------------------------------------------------------------------------------\n')
-            # print(f'{pvt_lat} {lat_gps}\t{out_reference}\t{out_meas_value}\t{out_error}\t{out_error_deriv}\t{out_error_sum}\t{out_p_result}\t{out_i_result}\t{out_d_result}\t{out_pid_result}')
-            # print(f'{in_reference}\t{in_meas_value}\t{in_error}\t{in_error_deriv}\t{in_error_sum}\t{in_p_result}\t{in_i_result}\t{in_d_result}\t{in_pid_result}')
-            # print(f'{in_reference}\t{in_meas_value}\t{in_error}\t{in_error_deriv}\t{in_error_sum}\t{in_p_result}\
-            print(motor_one , motor_two , motor_three , motor_four )
+    if lat_out_meas_value != 0 and lon_out_meas_value !=0:
+        plt.scatter(lon_out_meas_value,lat_out_meas_value)
+        if (lat_out_reference != lat_out_meas_value) or(lon_out_reference != lon_out_meas_value):
+            plt.scatter(lon_out_reference , lat_out_reference , c= 'k' , s = 50)
+        plt.xlabel('lat')
+        plt.ylabel('lon')
+        plt.pause(0.05)
+        j+=1
+        #print("one scatter", lat , lon , target_lat , target_lon)
+plt.show()

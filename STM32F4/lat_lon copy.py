@@ -37,16 +37,16 @@ def connect():
     roll_li = []
     while True:
         i+=1
-        # # 100개의 데이터 마다 저장
-        # if i%100 == 0:
-        #     df = pd.DataFrame()
-        #     df['lat'] = alt_li
-        #     df['lon'] = target_li
-        #     df['target_lat'] = error_li
-        #     df['target_lon'] = value_li
-        #     df['pitch_adjust'] = pitch_li
-        #     df['roll_adjust'] = roll_li
-        #     df.to_csv(f"Data/{timevar}_alt_data.csv")
+        # 100개의 데이터 마다 저장
+        if i%100 == 0:
+            df = pd.DataFrame()
+            df['lat'] = alt_li
+            df['lon'] = target_li
+            df['target_lat'] = error_li
+            df['target_lon'] = value_li
+            df['pitch_adjust'] = pitch_li
+            df['roll_adjust'] = roll_li
+            df.to_csv(f"Data/{timevar}_alt_data.csv")
 
         a = int(ser.read(1).hex(), 16)
         if a == 0x77:
