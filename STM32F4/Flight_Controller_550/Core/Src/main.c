@@ -78,9 +78,10 @@ extern uint8_t ibus_rx_buf[32];
 extern uint8_t ibus_rx_cplt_flag;
 
 extern uint8_t uart1_rx_data;
-uint8_t telemetry_tx_buf[100];
+uint8_t telemetry_tx_buf[220];
 uint8_t telemetry_rx_buf[20];
 uint8_t telemetry_rx_cplt_flag;
+unsigned int chksum_pid = 0xffffffff;
 
 extern uint8_t nx_rx_cplt_flag;
 extern uint8_t nx_rx_buf;
@@ -391,7 +392,7 @@ lat.out.kp = 0.01;
 lat.out.ki = 0.f;
 lat.out.kd = 0.001;
 
-lat.in.kp = 25;
+lat.in.kp = 1;
 lat.in.ki = 1;
 lat.in.kd = 0.f;
 
@@ -399,7 +400,7 @@ lon.out.kp = 0.01;
 lon.out.ki = 0.f;
 lon.out.kd = 0.001;
 
-lon.in.kp = 25;
+lon.in.kp = 1;
 lon.in.ki = 1;
 lon.in.kd = 0;
 
@@ -558,7 +559,7 @@ lon.in.kd = 0;
 
 		  flight_mode = 1;
 		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 2;
-		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1) flight_mode = 3;
+		  else if(iBus.SwA == 2000 && iBus.SwB == 2000) flight_mode = 3;
 
 
 		  if(flight_mode == 2) //Altitude Holding Mode
@@ -789,7 +790,7 @@ lon.in.kd = 0;
 	  {
 		  tim7_20ms_flag = 0;
 		  Encode_Msg_PID(&telemetry_tx_buf[0]);
-		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 98); // altitude : 26, gps : 35, pid : 75
+		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 210); // altitude : 26, gps : 35, pid : 75
 //		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 20);
 	  }
@@ -1665,15 +1666,160 @@ void Encode_Msg_PID(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[88] = (long long int)pvt.lat >> 8;
 	telemetry_tx_buf[89] = (long long int)pvt.lat;
 
-	telemetry_tx_buf[90] = (int)gps_roll_adjust >> 24;
-	telemetry_tx_buf[91] = (int)gps_roll_adjust >> 16;
-	telemetry_tx_buf[92] = (int)gps_roll_adjust >> 8;
-	telemetry_tx_buf[93] = (int)gps_roll_adjust;
+	telemetry_tx_buf[90] = (int)lon.out.reference >> 24;
+	telemetry_tx_buf[91] = (int)lon.out.reference >> 16;
+	telemetry_tx_buf[92] = (int)lon.out.reference >> 8;
+	telemetry_tx_buf[93] = (int)lon.out.reference;
 
-	telemetry_tx_buf[94] = (int)gps_pitch_adjust >> 24;
-	telemetry_tx_buf[95] = (int)gps_pitch_adjust >> 16;
-	telemetry_tx_buf[96] = (int)gps_pitch_adjust >> 8;
-	telemetry_tx_buf[97] = (int)gps_pitch_adjust;
+	telemetry_tx_buf[94] = (int)lon.out.meas_value >> 24;
+	telemetry_tx_buf[95] = (int)lon.out.meas_value >> 16;
+	telemetry_tx_buf[96] = (int)lon.out.meas_value >> 8;
+	telemetry_tx_buf[97] = (int)lon.out.meas_value;
+
+	telemetry_tx_buf[98] = (int)lon.out.error >> 24;
+	telemetry_tx_buf[99] = (int)lon.out.error >> 16;
+	telemetry_tx_buf[100] = (int)lon.out.error >> 8;
+	telemetry_tx_buf[101] = (int)lon.out.error;
+
+	telemetry_tx_buf[102] = (int)lon.out.error_deriv >> 24;
+	telemetry_tx_buf[103] = (int)lon.out.error_deriv >> 16;
+	telemetry_tx_buf[104] = (int)lon.out.error_deriv >> 8;
+	telemetry_tx_buf[105] = (int)lon.out.error_deriv;
+
+	telemetry_tx_buf[106] = (int)lon.out.error_sum >> 24;
+	telemetry_tx_buf[107] = (int)lon.out.error_sum >> 16;
+	telemetry_tx_buf[108] = (int)lon.out.error_sum >> 8;
+	telemetry_tx_buf[109] = (int)lon.out.error_sum;
+
+	telemetry_tx_buf[110] = (int)lon.out.p_result >> 24;
+	telemetry_tx_buf[111] = (int)lon.out.p_result >> 16;
+	telemetry_tx_buf[112] = (int)lon.out.p_result >> 8;
+	telemetry_tx_buf[113] = (int)lon.out.p_result;
+
+	telemetry_tx_buf[114] = (int)lon.out.i_result >> 24;
+	telemetry_tx_buf[115] = (int)lon.out.i_result >> 16;
+	telemetry_tx_buf[116] = (int)lon.out.i_result >> 8;
+	telemetry_tx_buf[117] = (int)lon.out.i_result;
+
+	telemetry_tx_buf[118] = (int)lon.out.d_result >> 24;
+	telemetry_tx_buf[119] = (int)lon.out.d_result >> 16;
+	telemetry_tx_buf[120] = (int)lon.out.d_result >> 8;
+	telemetry_tx_buf[121] = (int)lon.out.d_result;
+
+	telemetry_tx_buf[122] = (int)lon.out.pid_result >> 24;
+	telemetry_tx_buf[123] = (int)lon.out.pid_result >> 16;
+	telemetry_tx_buf[124] = (int)lon.out.pid_result >> 8;
+	telemetry_tx_buf[125] = (int)lon.out.pid_result;
+
+	telemetry_tx_buf[126] = (int)lon.in.reference >> 24;
+	telemetry_tx_buf[127] = (int)lon.in.reference >> 16;
+	telemetry_tx_buf[128] = (int)lon.in.reference >> 8;
+	telemetry_tx_buf[129] = (int)lon.in.reference;
+
+	telemetry_tx_buf[130] = (int)lon.in.meas_value >> 24;
+	telemetry_tx_buf[131] = (int)lon.in.meas_value >> 16;
+	telemetry_tx_buf[132] = (int)lon.in.meas_value >> 8;
+	telemetry_tx_buf[133] = (int)lon.in.meas_value;
+
+	telemetry_tx_buf[134] = (int)lon.in.error >> 24;
+	telemetry_tx_buf[135] = (int)lon.in.error >> 16;
+	telemetry_tx_buf[136] = (int)lon.in.error >> 8;
+	telemetry_tx_buf[137] = (int)lon.in.error;
+
+	telemetry_tx_buf[138] = (int)lon.in.error_deriv >> 24;
+	telemetry_tx_buf[139] = (int)lon.in.error_deriv >> 16;
+	telemetry_tx_buf[140] = (int)lon.in.error_deriv >> 8;
+	telemetry_tx_buf[141] = (int)lon.in.error_deriv;
+
+	telemetry_tx_buf[142] = (int)lon.in.error_sum >> 24;
+	telemetry_tx_buf[143] = (int)lon.in.error_sum >> 16;
+	telemetry_tx_buf[144] = (int)lon.in.error_sum >> 8;
+	telemetry_tx_buf[145] = (int)lon.in.error_sum;
+
+	telemetry_tx_buf[146] = (int)lon.in.p_result >> 24;
+	telemetry_tx_buf[147] = (int)lon.in.p_result >> 16;
+	telemetry_tx_buf[148] = (int)lon.in.p_result >> 8;
+	telemetry_tx_buf[149] = (int)lon.in.p_result;
+
+	telemetry_tx_buf[150] = (int)lon.in.i_result >> 24;
+	telemetry_tx_buf[151] = (int)lon.in.i_result >> 16;
+	telemetry_tx_buf[152] = (int)lon.in.i_result >> 8;
+	telemetry_tx_buf[153] = (int)lon.in.i_result;
+
+	telemetry_tx_buf[154] = (int)lon.in.d_result >> 24;
+	telemetry_tx_buf[155] = (int)lon.in.d_result >> 16;
+	telemetry_tx_buf[156] = (int)lon.in.d_result >> 8;
+	telemetry_tx_buf[157] = (int)lon.in.d_result;
+
+	telemetry_tx_buf[158] = (int)lon.in.pid_result >> 24;
+	telemetry_tx_buf[159] = (int)lon.in.pid_result >> 16;
+	telemetry_tx_buf[160] = (int)lon.in.pid_result >> 8;
+	telemetry_tx_buf[161] = (int)lon.in.pid_result;
+
+	telemetry_tx_buf[162] = (long long int)lon_gps >> 56;
+	telemetry_tx_buf[163] = (long long int)lon_gps >> 48;
+	telemetry_tx_buf[164] = (long long int)lon_gps >> 40;
+	telemetry_tx_buf[165] = (long long int)lon_gps >> 32;
+	telemetry_tx_buf[166] = (long long int)lon_gps >> 24;
+	telemetry_tx_buf[167] = (long long int)lon_gps >> 16;
+	telemetry_tx_buf[168] = (long long int)lon_gps >> 8;
+	telemetry_tx_buf[169] = (long long int)lon_gps;
+
+	telemetry_tx_buf[170] = (long long int)pvt.lon >> 56;
+	telemetry_tx_buf[171] = (long long int)pvt.lon >> 48;
+	telemetry_tx_buf[172] = (long long int)pvt.lon >> 40;
+	telemetry_tx_buf[173] = (long long int)pvt.lon >> 32;
+	telemetry_tx_buf[174] = (long long int)pvt.lon >> 24;
+	telemetry_tx_buf[175] = (long long int)pvt.lon >> 16;
+	telemetry_tx_buf[176] = (long long int)pvt.lon >> 8;
+	telemetry_tx_buf[177] = (long long int)pvt.lon;
+
+	telemetry_tx_buf[178] = (int)gps_roll_adjust >> 24;
+	telemetry_tx_buf[179] = (int)gps_roll_adjust >> 16;
+	telemetry_tx_buf[180] = (int)gps_roll_adjust >> 8;
+	telemetry_tx_buf[181] = (int)gps_roll_adjust;
+
+	telemetry_tx_buf[182] = (int)gps_pitch_adjust >> 24;
+	telemetry_tx_buf[183] = (int)gps_pitch_adjust >> 16;
+	telemetry_tx_buf[184] = (int)gps_pitch_adjust >> 8;
+	telemetry_tx_buf[185] = (int)gps_pitch_adjust;
+
+	telemetry_tx_buf[186] = ccr1 >> 24;
+	telemetry_tx_buf[187] = ccr1 >> 16;
+	telemetry_tx_buf[188] = ccr1 >> 8;
+	telemetry_tx_buf[189] = ccr1;
+
+	telemetry_tx_buf[190] = ccr2 >> 24;
+	telemetry_tx_buf[191] = ccr2 >> 16;
+	telemetry_tx_buf[192] = ccr2 >> 8;
+	telemetry_tx_buf[193] = ccr2;
+
+	telemetry_tx_buf[194] = ccr3 >> 24;
+	telemetry_tx_buf[195] = ccr3 >> 16;
+	telemetry_tx_buf[196] = ccr3 >> 8;
+	telemetry_tx_buf[197] = ccr3;
+
+	telemetry_tx_buf[198] = ccr4 >> 24;
+	telemetry_tx_buf[199] = ccr4 >> 16;
+	telemetry_tx_buf[200] = ccr4 >> 8;
+	telemetry_tx_buf[201] = ccr4;
+
+	telemetry_tx_buf[202] = (int)BNO080_Yaw >> 24;
+	telemetry_tx_buf[203] = (int)BNO080_Yaw >> 16;
+	telemetry_tx_buf[204] = (int)BNO080_Yaw >> 8;
+	telemetry_tx_buf[205] = (int)BNO080_Yaw;
+
+	chksum_pid = 0xffffffff;
+
+	for(int i=0; i<206; i++)
+	{
+		chksum_pid = chksum_pid - telemetry_tx_buf[i];
+	}
+
+	telemetry_tx_buf[206] = chksum_pid >> 24;
+	telemetry_tx_buf[207] = chksum_pid >> 16;
+	telemetry_tx_buf[208] = chksum_pid >> 8;
+	telemetry_tx_buf[209] = chksum_pid;
 }
 
 
