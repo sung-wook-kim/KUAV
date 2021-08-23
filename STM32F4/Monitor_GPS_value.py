@@ -7,7 +7,7 @@ import random
 import time
 import pandas as pd
 
-ser = serial.Serial('COM7', 115200)
+ser = serial.serial('COM7', 115200)
 ser.flush()
 
 i = 0
