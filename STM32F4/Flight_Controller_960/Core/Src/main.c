@@ -1639,28 +1639,28 @@ void Encode_Msg_Temp(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[4] = ((int)(actual_pressure_fast * 100)) >> 8;
 	telemetry_tx_buf[5] = ((int)(actual_pressure_fast * 100));
 
-	telemetry_tx_buf[2] = ((int)(altitude_setpoint * 100)) >> 24;
-	telemetry_tx_buf[3] = ((int)(altitude_setpoint * 100)) >> 16;
-	telemetry_tx_buf[4] = ((int)(altitude_setpoint * 100)) >> 8;
-	telemetry_tx_buf[5] = ((int)(altitude_setpoint * 100));
+	telemetry_tx_buf[6] = ((int)(altitude_setpoint * 100)) >> 24;
+	telemetry_tx_buf[7] = ((int)(altitude_setpoint * 100)) >> 16;
+	telemetry_tx_buf[8] = ((int)(altitude_setpoint * 100)) >> 8;
+	telemetry_tx_buf[9] = ((int)(altitude_setpoint * 100));
 
-	telemetry_tx_buf[2] = ((int)(altitude.out.error * 100)) >> 24;
-	telemetry_tx_buf[3] = ((int)(altitude.out.error * 100)) >> 16;
-	telemetry_tx_buf[4] = ((int)(altitude.out.error * 100)) >> 8;
-	telemetry_tx_buf[5] = ((int)(altitude.out.error * 100));
+	telemetry_tx_buf[10] = ((int)(altitude.out.error * 100)) >> 24;
+	telemetry_tx_buf[11] = ((int)(altitude.out.error * 100)) >> 16;
+	telemetry_tx_buf[12] = ((int)(altitude.out.error * 100)) >> 8;
+	telemetry_tx_buf[13] = ((int)(altitude.out.error * 100));
 
-	telemetry_tx_buf[4] = (iBus.LV) >> 8;
-	telemetry_tx_buf[5] = (iBus.LV);
+	telemetry_tx_buf[14] = (iBus.LV) >> 8;
+	telemetry_tx_buf[15] = (iBus.LV);
 
-	telemetry_tx_buf[2] = ((int)(altitude.in.pid_result)) >> 24;
-	telemetry_tx_buf[3] = ((int)(altitude.in.pid_result)) >> 16;
-	telemetry_tx_buf[4] = ((int)(altitude.in.pid_result)) >> 8;
-	telemetry_tx_buf[5] = ((int)(altitude.in.pid_result));
+	telemetry_tx_buf[16] = ((int)(altitude.in.pid_result)) >> 24;
+	telemetry_tx_buf[17] = ((int)(altitude.in.pid_result)) >> 16;
+	telemetry_tx_buf[18] = ((int)(altitude.in.pid_result)) >> 8;
+	telemetry_tx_buf[19] = ((int)(altitude.in.pid_result));
 
-	telemetry_tx_buf[2] = ((int)(batVolt * 1000)) >> 24;
-	telemetry_tx_buf[3] = ((int)(batVolt * 1000)) >> 16;
-	telemetry_tx_buf[4] = ((int)(batVolt * 1000)) >> 8;
-	telemetry_tx_buf[5] = ((int)(batVolt * 1000));
+	telemetry_tx_buf[20] = ((int)(batVolt * 1000)) >> 24;
+	telemetry_tx_buf[21] = ((int)(batVolt * 1000)) >> 16;
+	telemetry_tx_buf[22] = ((int)(batVolt * 1000)) >> 8;
+	telemetry_tx_buf[23] = ((int)(batVolt * 1000));
 }
 
 void Read_Gps(void)
