@@ -719,20 +719,20 @@ lon.in.kd = 0;
 			  {
 				  yaw_heading_reference = BNO080_Yaw;
 				  Single_Yaw_Rate_PID_Calculation(&yaw_rate, (iBus.LH-1500), ICM20602.gyro_z);
-				  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result + roll.in.pid_result -yaw_rate.pid_result;
-				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result + roll.in.pid_result +yaw_rate.pid_result;
-				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result - roll.in.pid_result -yaw_rate.pid_result;
-				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result - roll.in.pid_result +yaw_rate.pid_result;
+				  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 *0.75 - pitch.in.pid_result + roll.in.pid_result -yaw_rate.pid_result;
+				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 *0.75 + pitch.in.pid_result + roll.in.pid_result +yaw_rate.pid_result;
+				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 *0.75 + pitch.in.pid_result - roll.in.pid_result -yaw_rate.pid_result;
+				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 *0.75 - pitch.in.pid_result - roll.in.pid_result +yaw_rate.pid_result;
 				  ccr2 = (unsigned int)((float)ccr2 * MOTOR_FREQ_ADJUST);
 				  ccr4 = (unsigned int)((float)ccr4 * MOTOR_FREQ_ADJUST);
 			  }
 			  else
 			  {
 				  Single_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference, BNO080_Yaw, ICM20602.gyro_z);
-				  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result + roll.in.pid_result -yaw_heading.pid_result;
-				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result + roll.in.pid_result +yaw_heading.pid_result;
-				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result - roll.in.pid_result -yaw_heading.pid_result;
-				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result - roll.in.pid_result +yaw_heading.pid_result;
+				  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 * 0.75 - pitch.in.pid_result + roll.in.pid_result -yaw_heading.pid_result;
+				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 * 0.75 + pitch.in.pid_result + roll.in.pid_result +yaw_heading.pid_result;
+				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 * 0.75 + pitch.in.pid_result - roll.in.pid_result -yaw_heading.pid_result;
+				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 * 0.75 - pitch.in.pid_result - roll.in.pid_result +yaw_heading.pid_result;
 				  ccr2 = (unsigned int)((float)ccr2 * MOTOR_FREQ_ADJUST);
 				  ccr4 = (unsigned int)((float)ccr4 * MOTOR_FREQ_ADJUST);
 			  }
@@ -1279,8 +1279,8 @@ void Encode_Msg_AHRS(unsigned char* telemetry_tx_buf)
 	  telemetry_tx_buf[13] = (short)((iBus.RV-1500)*0.07f*100);
 	  telemetry_tx_buf[14] = ((short)((iBus.RV-1500)*0.07f*100))>>8;
 
-	  telemetry_tx_buf[15] = (unsigned short)yaw_heading_reference;
-	  telemetry_tx_buf[16] = (unsigned short)yaw_heading_reference >> 8;
+	  telemetry_tx_buf[15] = (unsigned short)(yaw_heading_reference*100);
+	  telemetry_tx_buf[16] = (unsigned short)(yaw_heading_reference*100) >> 8;
 
 	  telemetry_tx_buf[17] = 0x00;
 	  telemetry_tx_buf[18] = 0x00;
