@@ -583,8 +583,8 @@ lon.in.kd = 0;
 		  else is_yaw_middle = 0;
 
 		  flight_mode = 1;
-		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 2;
-		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1) flight_mode = 3;
+		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 /*&& is_throttle_middle == 1*/) flight_mode = 2;
+		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 /*&& is_throttle_middle == 1*/) flight_mode = 3;
 
 
 		  if(flight_mode == 2) //Altitude Holding Mode
@@ -822,27 +822,25 @@ lon.in.kd = 0;
 
 
 	  /********************* Telemetry Communication ************************/
-	  if(tim7_20ms_flag == 1)
+	  if(tim7_20ms_flag == 1 && tim7_100ms_flag == 0)
 	  {
 		  tim7_20ms_flag = 0;
-
+		  Encode_Msg_Temp(&telemetry_tx_buf[0]);
+		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 24); // altitude : 26, gps : 35, pid : 75
+//		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
+//		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 20);
 	  }
-
-	  if(tim7_100ms_flag == 1)
+	  else if(tim7_20ms_flag == 1 && tim7_100ms_flag == 1)
 	  {
+		  tim7_20ms_flag = 0;
 		  tim7_100ms_flag = 0;
-		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
-		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
+		  Encode_Msg_Temp(&telemetry_tx_buf[0]);
+		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 24);
+//		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);lat_gps
+//		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
 //		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
 //		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
-//		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35
-	  }
-
-	  if(tim7_200ms_flag == 1)
-	  {
-		  tim7_200ms_flag = 0;
-//		  Encode_Msg_Nx(&nx_tx_buf[0]);
-//		  HAL_UART_Transmit_DMA(&huart6, &nx_tx_buf[0], 35);
+//		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35, pid : 75
 	  }
 
 	  if(gps_add_counter >= 0)gps_add_counter --;
@@ -1631,6 +1629,39 @@ void Encode_Msg_Nx(unsigned char* nx_tx_buf)
 	nx_tx_buf[34] = (int)batVolt;
 }
 
+void Encode_Msg_Temp(unsigned char* telemery_tx_buf)
+{
+	telemetry_tx_buf[0] = 0x88;
+	telemetry_tx_buf[1] = 0x18;
+
+	telemetry_tx_buf[2] = ((int)(actual_pressure_fast * 100)) >> 24;
+	telemetry_tx_buf[3] = ((int)(actual_pressure_fast * 100)) >> 16;
+	telemetry_tx_buf[4] = ((int)(actual_pressure_fast * 100)) >> 8;
+	telemetry_tx_buf[5] = ((int)(actual_pressure_fast * 100));
+
+	telemetry_tx_buf[2] = ((int)(altitude_setpoint * 100)) >> 24;
+	telemetry_tx_buf[3] = ((int)(altitude_setpoint * 100)) >> 16;
+	telemetry_tx_buf[4] = ((int)(altitude_setpoint * 100)) >> 8;
+	telemetry_tx_buf[5] = ((int)(altitude_setpoint * 100));
+
+	telemetry_tx_buf[2] = ((int)(altitude.out.error * 100)) >> 24;
+	telemetry_tx_buf[3] = ((int)(altitude.out.error * 100)) >> 16;
+	telemetry_tx_buf[4] = ((int)(altitude.out.error * 100)) >> 8;
+	telemetry_tx_buf[5] = ((int)(altitude.out.error * 100));
+
+	telemetry_tx_buf[4] = (iBus.LV) >> 8;
+	telemetry_tx_buf[5] = (iBus.LV);
+
+	telemetry_tx_buf[2] = ((int)(altitude.in.pid_result)) >> 24;
+	telemetry_tx_buf[3] = ((int)(altitude.in.pid_result)) >> 16;
+	telemetry_tx_buf[4] = ((int)(altitude.in.pid_result)) >> 8;
+	telemetry_tx_buf[5] = ((int)(altitude.in.pid_result));
+
+	telemetry_tx_buf[2] = ((int)(batVolt * 1000)) >> 24;
+	telemetry_tx_buf[3] = ((int)(batVolt * 1000)) >> 16;
+	telemetry_tx_buf[4] = ((int)(batVolt * 1000)) >> 8;
+	telemetry_tx_buf[5] = ((int)(batVolt * 1000));
+}
 
 void Read_Gps(void)
 {
