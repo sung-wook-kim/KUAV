@@ -489,7 +489,7 @@ lon.in.kd = 0;
 		  LPS22HH_GetTemperature(&LPS22HH.temperature_raw);
 
 		  //Default Unit = 1m
-		  LPS22HH.baroAlt = getAltitude2(LPS22HH.pressure_raw/4096.f, LPS22HH.temperature_raw/100.f);
+		  LPS22HH.baroAlt = getAltitude1(LPS22HH.pressure_raw/4096.f/*, LPS22HH.temperature_raw/100.f*/);
 		  baro_offset += LPS22HH.baroAlt;
 		  HAL_Delay(100);
 
@@ -789,8 +789,8 @@ lon.in.kd = 0;
 	  if(tim7_20ms_flag == 1 && tim7_100ms_flag == 0)
 	  {
 		  tim7_20ms_flag = 0;
-		  Encode_Msg_PID(&telemetry_tx_buf[0]);
-		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 210); // altitude : 26, gps : 35, pid : 75
+		  Encode_Msg_Temp(&telemetry_tx_buf[0]);
+		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 28); // altitude : 26, gps : 35, pid : 75
 //		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 20);
 	  }
@@ -848,7 +848,7 @@ lon.in.kd = 0;
 		  LPS22HH_GetPressure(&LPS22HH.pressure_raw);
 		  LPS22HH_GetTemperature(&LPS22HH.temperature_raw);
 
-		  LPS22HH.baroAlt = getAltitude2(LPS22HH.pressure_raw/4096.f, LPS22HH.temperature_raw/100.f); //Default Unit = 1m
+		  LPS22HH.baroAlt = getAltitude1(LPS22HH.pressure_raw/4096.f/*, LPS22HH.temperature_raw/100.f*/); //Default Unit = 1m
 		  LPS22HH.baroAltGround = LPS22HH.baroAlt - baro_offset;
 
 		  //moving average of altitude
@@ -1822,6 +1822,44 @@ void Encode_Msg_PID(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[209] = chksum_pid;
 }
 
+void Encode_Msg_Temp(unsigned char* telemery_tx_buf)
+{
+	telemetry_tx_buf[0] = 0x88;
+	telemetry_tx_buf[1] = 0x18;
+
+	telemetry_tx_buf[2] = ((int)(actual_pressure_fast * 100)) >> 24;
+	telemetry_tx_buf[3] = ((int)(actual_pressure_fast * 100)) >> 16;
+	telemetry_tx_buf[4] = ((int)(actual_pressure_fast * 100)) >> 8;
+	telemetry_tx_buf[5] = ((int)(actual_pressure_fast * 100));
+
+	telemetry_tx_buf[6] = ((int)(altitude_setpoint * 100)) >> 24;
+	telemetry_tx_buf[7] = ((int)(altitude_setpoint * 100)) >> 16;
+	telemetry_tx_buf[8] = ((int)(altitude_setpoint * 100)) >> 8;
+	telemetry_tx_buf[9] = ((int)(altitude_setpoint * 100));
+
+	telemetry_tx_buf[10] = ((int)(altitude.out.error * 100)) >> 24;
+	telemetry_tx_buf[11] = ((int)(altitude.out.error * 100)) >> 16;
+	telemetry_tx_buf[12] = ((int)(altitude.out.error * 100)) >> 8;
+	telemetry_tx_buf[13] = ((int)(altitude.out.error * 100));
+
+	telemetry_tx_buf[14] = (iBus.LV) >> 8;
+	telemetry_tx_buf[15] = (iBus.LV);
+
+	telemetry_tx_buf[16] = ((int)(altitude.in.pid_result)) >> 24;
+	telemetry_tx_buf[17] = ((int)(altitude.in.pid_result)) >> 16;
+	telemetry_tx_buf[18] = ((int)(altitude.in.pid_result)) >> 8;
+	telemetry_tx_buf[19] = ((int)(altitude.in.pid_result));
+
+	telemetry_tx_buf[20] = ((int)(batVolt * 1000)) >> 24;
+	telemetry_tx_buf[21] = ((int)(batVolt * 1000)) >> 16;
+	telemetry_tx_buf[22] = ((int)(batVolt * 1000)) >> 8;
+	telemetry_tx_buf[23] = ((int)(batVolt * 1000));
+
+	telemetry_tx_buf[24] = ((int)(LPS22HH.temperature_raw/100.f)) >> 24;
+	telemetry_tx_buf[25] = ((int)(LPS22HH.temperature_raw/100.f)) >> 16;
+	telemetry_tx_buf[26] = ((int)(LPS22HH.temperature_raw/100.f)) >> 8;
+	telemetry_tx_buf[27] = ((int)(LPS22HH.temperature_raw/100.f));
+}
 
 void return_to_home(void) {
 

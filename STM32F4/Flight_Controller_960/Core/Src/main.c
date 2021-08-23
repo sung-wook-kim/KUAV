@@ -508,7 +508,7 @@ lon.in.kd = 0;
 		  LPS22HH_GetTemperature(&LPS22HH.temperature_raw);
 
 		  //Default Unit = 1m
-		  LPS22HH.baroAlt = getAltitude2(LPS22HH.pressure_raw/4096.f, LPS22HH.temperature_raw/100.f);
+		  LPS22HH.baroAlt = getAltitude1(LPS22HH.pressure_raw/4096.f/*,LPS22HH.temperature_raw/100.f*/);
 		  baro_offset += LPS22HH.baroAlt;
 		  HAL_Delay(100);
 
@@ -589,17 +589,14 @@ lon.in.kd = 0;
 
 		  if(flight_mode == 2) //Altitude Holding Mode
 		  {
-			  if(iBus.VrB < 1100) iBus_VrB_flag = 0; // Change Altitude Setpoint
-			  else if(iBus.VrB > 1200) iBus_VrB_flag = 1;
+			  if(iBus.VrB < 1100) iBus_VrB_flag = 0;
+			  else if(iBus.VrB > 1900) iBus_VrB_flag = 2;
+			  else iBus_VrB_flag = 1;
 
-			  if(iBus_VrB_flag==1 && iBus_VrB_Prev_flag==0) altitude_setpoint += 0.5f;
+			  if(iBus_VrB_flag==0 && iBus_VrB_Prev_flag==1) altitude_setpoint -= 0.5f;
+			  else if(iBus_VrB_flag==2 && iBus_VrB_Prev_flag==1) altitude_setpoint += 0.5f;
+
 			  iBus_VrB_Prev_flag = iBus_VrB_flag;
-
-			  if(iBus.VrA > 1900) iBus_VrA_flag = 0; // Change Altitude Setpoint
-			  else if(iBus.VrA < 1800) iBus_VrA_flag = 1;
-
-			  if(iBus_VrA_flag==1 && iBus_VrA_Prev_flag==0) altitude_setpoint -= 0.5f;
-			  iBus_VrA_Prev_flag = iBus_VrA_flag;
 
 			  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, actual_pressure_fast);
 
@@ -826,7 +823,7 @@ lon.in.kd = 0;
 	  {
 		  tim7_20ms_flag = 0;
 		  Encode_Msg_Temp(&telemetry_tx_buf[0]);
-		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 24); // altitude : 26, gps : 35, pid : 75
+		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 28); // altitude : 26, gps : 35, pid : 75
 //		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 20);
 	  }
@@ -835,7 +832,7 @@ lon.in.kd = 0;
 		  tim7_20ms_flag = 0;
 		  tim7_100ms_flag = 0;
 		  Encode_Msg_Temp(&telemetry_tx_buf[0]);
-		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 24);
+		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 28);
 //		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);lat_gps
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
 //		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
@@ -889,7 +886,7 @@ lon.in.kd = 0;
 		  LPS22HH_GetPressure(&LPS22HH.pressure_raw);
 		  LPS22HH_GetTemperature(&LPS22HH.temperature_raw);
 
-		  LPS22HH.baroAlt = getAltitude2(LPS22HH.pressure_raw/4096.f, LPS22HH.temperature_raw/100.f); //Default Unit = 1m
+		  LPS22HH.baroAlt = getAltitude1(LPS22HH.pressure_raw/4096.f/*, LPS22HH.temperature_raw/100.f*/); //Default Unit = 1m
 		  LPS22HH.baroAltGround = LPS22HH.baroAlt - baro_offset;
 
 		  //moving average of altitude
@@ -1661,6 +1658,13 @@ void Encode_Msg_Temp(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[21] = ((int)(batVolt * 1000)) >> 16;
 	telemetry_tx_buf[22] = ((int)(batVolt * 1000)) >> 8;
 	telemetry_tx_buf[23] = ((int)(batVolt * 1000));
+
+	telemetry_tx_buf[24] = ((int)(LPS22HH.temperature_raw/100.f)) >> 24;
+	telemetry_tx_buf[25] = ((int)(LPS22HH.temperature_raw/100.f)) >> 16;
+	telemetry_tx_buf[26] = ((int)(LPS22HH.temperature_raw/100.f)) >> 8;
+	telemetry_tx_buf[27] = ((int)(LPS22HH.temperature_raw/100.f));
+
+
 }
 
 void Read_Gps(void)
