@@ -1631,6 +1631,39 @@ void Encode_Msg_Nx(unsigned char* nx_tx_buf)
 	nx_tx_buf[34] = (int)batVolt;
 }
 
+void Encode_Msg_Temp(unsigned char* telemery_tx_buf)
+{
+	telemetry_tx_buf[0] = 0x88;
+	telemetry_tx_buf[1] = 0x18;
+
+	telemetry_tx_buf[2] = ((int)(actual_pressure_fast * 100)) >> 24;
+	telemetry_tx_buf[3] = ((int)(actual_pressure_fast * 100)) >> 16;
+	telemetry_tx_buf[4] = ((int)(actual_pressure_fast * 100)) >> 8;
+	telemetry_tx_buf[5] = ((int)(actual_pressure_fast * 100));
+
+	telemetry_tx_buf[2] = ((int)(altitude_setpoint * 100)) >> 24;
+	telemetry_tx_buf[3] = ((int)(altitude_setpoint * 100)) >> 16;
+	telemetry_tx_buf[4] = ((int)(altitude_setpoint * 100)) >> 8;
+	telemetry_tx_buf[5] = ((int)(altitude_setpoint * 100));
+
+	telemetry_tx_buf[2] = ((int)(altitude.out.error * 100)) >> 24;
+	telemetry_tx_buf[3] = ((int)(altitude.out.error * 100)) >> 16;
+	telemetry_tx_buf[4] = ((int)(altitude.out.error * 100)) >> 8;
+	telemetry_tx_buf[5] = ((int)(altitude.out.error * 100));
+
+	telemetry_tx_buf[4] = (iBus.LV) >> 8;
+	telemetry_tx_buf[5] = (iBus.LV);
+
+	telemetry_tx_buf[2] = ((int)(altitude.in.pid_result)) >> 24;
+	telemetry_tx_buf[3] = ((int)(altitude.in.pid_result)) >> 16;
+	telemetry_tx_buf[4] = ((int)(altitude.in.pid_result)) >> 8;
+	telemetry_tx_buf[5] = ((int)(altitude.in.pid_result));
+
+	telemetry_tx_buf[2] = ((int)(batVolt * 1000)) >> 24;
+	telemetry_tx_buf[3] = ((int)(batVolt * 1000)) >> 16;
+	telemetry_tx_buf[4] = ((int)(batVolt * 1000)) >> 8;
+	telemetry_tx_buf[5] = ((int)(batVolt * 1000));
+}
 
 void Read_Gps(void)
 {
