@@ -822,27 +822,23 @@ lon.in.kd = 0;
 
 
 	  /********************* Telemetry Communication ************************/
-	  if(tim7_20ms_flag == 1)
+	  if(tim7_20ms_flag == 1 && tim7_100ms_flag == 0)
 	  {
 		  tim7_20ms_flag = 0;
-
+		  Encode_Msg_Temp(&telemetry_tx_buf[0]);
+		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 24); // altitude : 26, gps : 35, pid : 75
+//		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
+//		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 20);
 	  }
-
-	  if(tim7_100ms_flag == 1)
+	  else if(tim7_20ms_flag == 1 && tim7_100ms_flag == 1)
 	  {
+		  tim7_20ms_flag = 0;
 		  tim7_100ms_flag = 0;
-		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
-		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
+//		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);lat_gps
+//		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
 //		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
 //		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
-//		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35
-	  }
-
-	  if(tim7_200ms_flag == 1)
-	  {
-		  tim7_200ms_flag = 0;
-//		  Encode_Msg_Nx(&nx_tx_buf[0]);
-//		  HAL_UART_Transmit_DMA(&huart6, &nx_tx_buf[0], 35);
+//		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35, pid : 75
 	  }
 
 	  if(gps_add_counter >= 0)gps_add_counter --;
