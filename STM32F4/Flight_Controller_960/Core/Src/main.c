@@ -583,8 +583,8 @@ lon.in.kd = 0;
 		  else is_yaw_middle = 0;
 
 		  flight_mode = 1;
-		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 2;
-		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1) flight_mode = 3;
+		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 /*&& is_throttle_middle == 1*/) flight_mode = 2;
+		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 /*&& is_throttle_middle == 1*/) flight_mode = 3;
 
 
 		  if(flight_mode == 2) //Altitude Holding Mode
@@ -834,6 +834,8 @@ lon.in.kd = 0;
 	  {
 		  tim7_20ms_flag = 0;
 		  tim7_100ms_flag = 0;
+		  Encode_Msg_Temp(&telemetry_tx_buf[0]);
+		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 24);
 //		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);lat_gps
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
 //		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
