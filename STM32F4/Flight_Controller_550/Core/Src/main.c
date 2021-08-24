@@ -124,7 +124,7 @@ double lat_waypoint;
 double lon_waypoint;
 float gps_roll_adjust;
 float gps_pitch_adjust;
-#define GPS_PD_MAX 15000
+#define GPS_PD_MAX 200
 #define GPS_PD_MIN -GPS_PD_MAX
 
 // Return to home value
@@ -538,7 +538,7 @@ unsigned short adcVal;
   LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
 
 
-("Start\n");
+  printf("Start\n");
 
   /* USER CODE END 2 */
 
@@ -583,7 +583,7 @@ unsigned short adcVal;
 
 		  flight_mode = 1;
 		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 2;
-		  else if(iBus.SwA == 2000 && iBus.SwB == 2000) flight_mode = 3;
+		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1) flight_mode = 3;
 
 
 		  if(flight_mode == 2) //Altitude Holding Mode
@@ -627,8 +627,8 @@ unsigned short adcVal;
 			  Double_GPS_PID_Calculation(&lon, lon_waypoint, lon_gps);
 
 			  //Because the correction is calculated as if the nose was facing north, we need to convert it for the current heading.
-			  gps_roll_adjust = ((float)lon.in.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) + ((float)lat.in.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
-			  gps_pitch_adjust = ((float)lat.in.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) - ((float)lon.in.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
+			  gps_roll_adjust = ((float)lon.out.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) + ((float)lat.out.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
+			  gps_pitch_adjust = ((float)lat.out.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) - ((float)lon.out.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
 
 			  //Limit the maximum correction to 300. This way we still have full control with the pitch and roll stick on the transmitter.
 			  if (gps_roll_adjust > GPS_PD_MAX) gps_roll_adjust = GPS_PD_MAX;
@@ -849,9 +849,6 @@ unsigned short adcVal;
 		  BNO080_Roll -= BNO080_ROLL_OFFSET;
 		  BNO080_Pitch = -BNO080_Pitch;
 		  BNO080_Pitch -= BNO080_PITCH_OFFSET;
-
-		  float theta = 360.f - BNO080_Yaw;
-		  float theta_radian = theta * 0.01745329252f;
 	  }
 
 	  /***********************************************************************************************
@@ -885,14 +882,6 @@ unsigned short adcVal;
 		  pressure_rotating_mem_location++;
 		  if(pressure_rotating_mem_location == 5) pressure_rotating_mem_location = 0;
 		  actual_pressure_fast = pressure_total_average / 5.0f;
-
-		  //1st order IIR
-/*		  actual_pressure_slow = actual_pressure_slow * 0.985f + actual_pressure_fast * 0.015f;
-		  actual_pressure_diff = actual_pressure_slow - actual_pressure_fast;
-		  if (actual_pressure_diff > 4)actual_pressure_diff = 4;
-		  if (actual_pressure_diff < -4)actual_pressure_diff = -4;
-		  if (actual_pressure_diff > 0.5 || actual_pressure_diff < -0.5) actual_pressure_slow -= actual_pressure_diff / 3.0;
-		   actual_pressure = actual_pressure_slow; */
 	  }
 
 	  if(m8n_rx_cplt_flag == 1) // GPS receive checking
@@ -1124,7 +1113,7 @@ void BNO080_Calibration(void)
 
 
 
-			("%f,%f,%f,", x, y, z);
+			printf("%f,%f,%f,", x, y, z);
 			if (accuracy == 0) printf("Unreliable\t");
 			else if (accuracy == 1) printf("Low\t");
 			else if (accuracy == 2) printf("Medium\t");
@@ -1176,7 +1165,7 @@ void BNO080_Calibration(void)
 			if(BNO080_calibrationComplete() == 1)
 			{
 
-("\nCalibration data successfully stored\n");
+				printf("\nCalibration data successfully stored\n");
 				LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4);
 				TIM3->PSC = 2000;
 				HAL_Delay(300);

@@ -144,16 +144,6 @@ void Reset_PID_Integrator(PIDSingle* axis)
 	axis->error_sum = 0;
 }
 
-void Reset_GPS_Integrator(PDSingle_GPS* axis)
-{
-	axis->total_average = 0;
-	axis->rotating_mem_location = 0;
-	for(int i; i < sizeof(axis->rotating_mem); i++)
-	{
-		axis->rotating_mem[i] = 0;
-	}
-}
-
 void Reset_All_PID_Integrator(void)
 {
 	Reset_PID_Integrator(&roll.in);
@@ -166,8 +156,66 @@ void Reset_All_PID_Integrator(void)
 	Reset_PID_Integrator(&altitude.in);
 	Reset_PID_Integrator(&altitude.out);
 
-	Reset_GPS_Integrator(&lat);
-	Reset_GPS_Integrator(&lon);
+	Reset_PID_Integrator(&lat.in);
+	Reset_PID_Integrator(&lat.out);
+
+	Reset_PID_Integrator(&lon.in);
+	Reset_PID_Integrator(&lon.out);
+}
+
+void Single_Altitude_PID_Calculation(PIDSingle* axis, float set_point_altitude, float current_altitude)
+{
+#define I_RESULT_MAX 4000
+#define I_RESULT_MIN -I_RESULT_MAX
+
+	axis->reference = set_point_altitude;
+	axis->meas_value = current_altitude;
+
+	axis->error = axis->reference - axis->meas_value;
+	axis->error_sum = axis->error_sum + axis->error * DT;
+	axis->error_deriv = -(axis->meas_value - axis->meas_value_prev) / DT;
+	axis->meas_value_prev  = axis->meas_value;
+	/*
+	axis->kp = 0;
+	if(axis->error > 0.05 || axis->error < -0.05)
+	{
+		if(axis->error > 0) axis->kp = (axis->error - 0.05) * 3000;
+		else axis->kp = (-(axis->error) - 0.05) * 3000;
+
+		if(axis->kp > 5000) axis->kp = 5000;
+	}*/
+	axis->p_result = axis->kp * axis->error;
+	axis->i_result = axis->ki * axis->error_sum;
+	axis->d_result = axis->kd * axis->error_deriv;
+
+	if(axis->i_result > I_RESULT_MAX) axis->i_result = I_RESULT_MAX;
+	else if(axis->i_result < I_RESULT_MIN ) axis->i_result = I_RESULT_MIN;
+
+	axis->pid_result = axis->p_result + axis->i_result + axis->d_result;
+	if(axis->pid_result < -3000) axis->pid_result = -3000;
+	else if(axis->pid_result > 10000) axis->pid_result = 10000;
+
+}
+
+void Single_Altitude_Rate_PID_Calculation(PIDSingle* axis, float set_point_rate, float current_altitude)
+{
+	axis->reference = set_point_rate;
+	axis->meas_value = current_altitude;
+
+	axis->meas_rate = -(axis->meas_value - axis->meas_value_prev) / DT;
+	axis->meas_value_prev = axis->meas_value;
+
+	axis->error = axis->reference - axis->meas_rate;
+	axis->p_result = axis->kp * axis->error;
+
+	axis->error_sum = axis->error_sum + axis->error * DT;
+	axis->i_result = axis->ki * axis->error_sum;
+
+	axis->error_deriv = -(axis->meas_rate - axis->meas_rate_prev) / DT;
+	axis->meas_rate_prev = axis->meas_rate_prev;
+	axis->d_result = axis->kd * axis->error_deriv;
+
+	axis->pid_result = axis->p_result + axis->i_result + axis->d_result;
 }
 
 void Double_Altitude_PID_Calculation(PIDDouble* axis, float set_point_altitude, float current_altitude)
@@ -191,7 +239,7 @@ void Double_Altitude_PID_Calculation(PIDDouble* axis, float set_point_altitude, 
 	axis->out.d_result = axis->out.error_deriv_filt * axis->out.kd;				//Calculate D result of outer loop
 #endif
 
-	axis->out.pid_result = axis->out.p_result + axis->out.d_result;
+	axis->out.pid_result = axis->out.p_result + axis->out.i_result + axis->out.d_result;
 	/****************************************************************************************/
 
 	/************ Double PID Inner Begin (Roll and Pitch Angular Rate Control) **************/
@@ -223,36 +271,11 @@ if (axis->in.pid_result > 8000) axis->in.pid_result = 8000;
 
 }
 
-void Single_GPS_PD_Calculation(PDSingle_GPS* axis, signed int set_point_gps, signed int gps)
-{
-	axis->reference = set_point_gps;
-	axis->meas_value = gps;
-
-	axis->error = axis->reference - axis->meas_value;                                                         //Calculate the latitude error between waypoint and actual position.
-
-	axis->total_average -=  axis->rotating_mem[axis->rotating_mem_location];                         //Subtract the current memory position to make room for the new value.
-	axis->rotating_mem[ axis->rotating_mem_location] = axis->error - axis->error_prev;          //Calculate the new change between the actual pressure and the previous measurement.
-	axis->total_average +=  axis->rotating_mem[ axis->rotating_mem_location];                         //Add the new value to the long term avarage value.
-
-	axis->rotating_mem_location++;                                                                        //Increase the rotating memory location.
-	if ( axis->rotating_mem_location == 35) axis->rotating_mem_location = 0;                                //Start at 0 when the memory location 35 is reached.
-
-	axis->error_prev = axis->error;                                                             //Remember the error for the next loop.
-
-	//Calculate the GPS pitch and roll correction as if the nose of the multicopter is facing north.
-	//The Proportional part = (float)gps_lat_error * gps_p_gain.
-	//The Derivative part = (float)gps_lat_total_avarage * gps_d_gain.
-	axis->p_result = axis->kp * axis->error;
-
-	axis->d_result = axis->kd * axis->total_average;
-
-	axis->pd_result = axis->p_result + axis->d_result;
-}
-
-void Double_GPS_PID_Calculation(PIDDouble* axis, float set_point_gps, float gps)
+void Double_GPS_PID_Calculation(PIDDouble* axis, double set_point_gps, double  gps)
 {
    /*********** Double PID Outer Begin (Roll and Pitch Angular Position Control) *************/
-
+#define GPS_OUTER_DERIV_FILT_ENABLE 1
+#define GPS_INNER_DERIV_FILT_ENABLE 1
    axis->out.reference = set_point_gps;   //Set point of outer PID control
    axis->out.meas_value = gps;
 
@@ -269,10 +292,10 @@ void Double_GPS_PID_Calculation(PIDDouble* axis, float set_point_gps, float gps)
    axis->out.error_deriv = -(axis->out.meas_value - axis->out.meas_value_prev)/DT;//Define derivative of outer loop
    axis->out.meas_value_prev = axis->out.meas_value;
 
-#if !OUTER_DERIV_FILT_ENABLE
+#if !GPS_OUTER_DERIV_FILT_ENABLE
    axis->out.d_result = axis->out.error_deriv * axis->out.kd;         //Calculate D result of outer loop
 #else
-   axis->out.error_deriv_filt = axis->out.error_deriv_filt * 0.6f + axis->out.error_deriv * 0.4f;   //filter for derivative
+   axis->out.error_deriv_filt = axis->out.error_deriv_filt * 0.1f + axis->out.error_deriv * 0.9f;   //filter for derivative
    axis->out.d_result = axis->out.error_deriv_filt * axis->out.kd;                           //Calculate D result of inner loop
 #endif
 
@@ -281,7 +304,7 @@ void Double_GPS_PID_Calculation(PIDDouble* axis, float set_point_gps, float gps)
 
    /************ Double PID Inner Begin (Roll and Pitch Angular Rate Control) **************/
    axis->in.reference = axis->out.pid_result;   //Set point of inner PID control is the PID result of outer loop (for double PID control)
-   axis->in.meas_value = -(axis->out.error_deriv);
+   axis->in.meas_value = -(axis->out.error_deriv_filt);
 
    axis->in.error = axis->in.reference - axis->in.meas_value;   //Define error of inner loop
    axis->in.p_result = axis->in.error * axis->in.kp;         //Calculate P result of inner loop
@@ -296,10 +319,10 @@ void Double_GPS_PID_Calculation(PIDDouble* axis, float set_point_gps, float gps)
    axis->in.error_deriv = -(axis->in.meas_value - axis->in.meas_value_prev) / DT;   //Define derivative of inner loop
    axis->in.meas_value_prev = axis->in.meas_value;                           //Refresh value_prev to the latest value
 
-#if !INNER_DERIV_FILT_ENABLE
+#if !GPS_INNER_DERIV_FILT_ENABLE
    axis->in.d_result = axis->in.error_deriv * axis->in.kd;            //Calculate D result of inner loop
 #else
-   axis->in.error_deriv_filt = axis->in.error_deriv_filt * 0.5f + axis->in.error_deriv * 0.5f;   //filter for derivative
+   axis->in.error_deriv_filt = axis->in.error_deriv_filt * 0.1f + axis->in.error_deriv * 0.9f;   //filter for derivative
    axis->in.d_result = axis->in.error_deriv_filt * axis->in.kd;                        //Calculate D result of inner loop
 #endif
 
