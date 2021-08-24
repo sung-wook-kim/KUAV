@@ -31,8 +31,8 @@ void EP_PIDGain_Write(unsigned char id, float PGain, float IGain, float DGain)
 	unsigned char buf_write[16];
 	Parser parser;
 
-	buf_write[0] = 0x46;
-	buf_write[1] = 0x43;
+	buf_write[0] = 0x45;
+	buf_write[1] = 0x50;
 	buf_write[2] = id;
 	parser.f = PGain;
 	buf_write[3] = parser.byte[0];
@@ -116,7 +116,7 @@ unsigned char EP_PIDGain_Read(unsigned char id, float* PGain, float* IGain, floa
 		chksum -= buf_read[i];
 	}
 
-	if(buf_read[15] == chksum && buf_read[0] == 0x46 && buf_read[1] == 0x43)
+	if(buf_read[15] == chksum && buf_read[0] == 0x45 && buf_read[1] == 0x50)
 	{
 		parser.byte[0] = buf_read[3];
 		parser.byte[1] = buf_read[4];
