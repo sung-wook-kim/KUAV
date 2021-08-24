@@ -83,7 +83,7 @@ extern uint8_t ibus_rx_cplt_flag;
 
 extern uint8_t uart1_rx_data;
 uint8_t telemetry_tx_buf[40];
-uint8_t telemetry_rx_buf[20];
+uint8_t telemetry_rx_buf[30];
 uint8_t telemetry_rx_cplt_flag;
 
 extern uint8_t nx_rx_cplt_flag;
@@ -374,6 +374,7 @@ unsigned short adcVal;
 
   /*************Save Initial Gain into EEPROM**************/
 
+// Roll
 EP_PIDGain_Read(0, &roll.in.kp, &roll.in.ki, &roll.in.kd);
 Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 0, roll.in.kp, roll.in.ki, roll.in.kd);
 HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
@@ -381,7 +382,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
 EP_PIDGain_Read(1, &roll.out.kp, &roll.out.ki, &roll.out.kd);
 Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 1, roll.out.kp, roll.out.ki, roll.out.kd);
 HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
-
+//Pitch
 EP_PIDGain_Read(2, &pitch.in.kp, &pitch.in.ki, &pitch.in.kd);
 Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 2, pitch.in.kp, pitch.in.ki, pitch.in.kd);
 HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
@@ -389,7 +390,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
 EP_PIDGain_Read(3, &pitch.out.kp, &pitch.out.ki, &pitch.out.kd);
 Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 3, pitch.out.kp, pitch.out.ki, pitch.out.kd);
 HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
-
+// Yaw
 EP_PIDGain_Read(4, &yaw_heading.kp, &yaw_heading.ki, &yaw_heading.kd);
 Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 4, yaw_heading.kp, yaw_heading.ki, yaw_heading.kd);
 HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
@@ -397,31 +398,55 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
 EP_PIDGain_Read(5, &yaw_rate.kp, &yaw_rate.ki, &yaw_rate.kd);
 Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 5, yaw_rate.kp, yaw_rate.ki, yaw_rate.kd);
 HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
+// Altitude Gain
+EP_PIDGain_Read(6, &altitude.in.kp, &altitude.in.ki, &altitude.in.kd);
+Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 6, altitude.in.kp, altitude.in.ki, altitude.in.kd);
+HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 
-// Altitude Hold PID Gain
-altitude.out.kp = 2;
-altitude.out.ki = 0;
-altitude.out.kd = 0.01;
-altitude.in.kp = 1000;
-altitude.in.ki = 10;
-altitude.in.kd = 0;
+EP_PIDGain_Read(7, &altitude.out.kp, &altitude.out.ki, &altitude.out.kd);
+Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 7, altitude.out.kp, altitude.out.ki, altitude.out.kd);
+HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
+// Latitude
+EP_PIDGain_Read(8, &lat.in.kp, &lat.in.ki, &lat.in.kd);
+Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 8, lat.in.kp, lat.in.ki, lat.in.kd);
+HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
 
-// GPS Hold PID Gain
-lat.out.kp = 0;
-lat.out.ki = 0;
-lat.out.kd = 0;
+EP_PIDGain_Read(9, &lat.out.kp, &lat.out.ki, &lat.out.kd);
+Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 9, lat.out.kp, lat.out.ki, lat.out.kd);
+HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
+// Longitude
+EP_PIDGain_Read(10, &lon.in.kp, &lon.in.ki, &lon.in.kd);
+Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 10, lon.in.kp, lon.in.ki, lon.in.kd);
+HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 
-lat.in.kp = 0;
-lat.in.ki = 0;
-lat.in.kd = 0;
-
-lon.out.kp = 0;
-lon.out.ki = 0;
-lon.out.kd = 0;
-
-lon.in.kp = 0;
-lon.in.ki = 0;
-lon.in.kd = 0;
+EP_PIDGain_Read(11, &lon.out.kp, &lon.out.ki, &lon.out.kd);
+Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 11, lon.out.kp, lon.out.ki, lon.out.kd);
+HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
+//
+//// Altitude Hold PID Gain
+//altitude.out.kp = 2;
+//altitude.out.ki = 0;
+//altitude.out.kd = 0.01;
+//altitude.in.kp = 1000;
+//altitude.in.ki = 10;
+//altitude.in.kd = 0;
+//
+//// GPS Hold PID Gain
+//lat.out.kp = 0;
+//lat.out.ki = 0;
+//lat.out.kd = 0;
+//
+//lat.in.kp = 0;
+//lat.in.ki = 0;
+//lat.in.kd = 0;
+//
+//lon.out.kp = 0;
+//lon.out.ki = 0;
+//lon.out.kd = 0;
+//
+//lon.in.kp = 0;
+//lon.in.ki = 0;
+//lon.in.kd = 0;
 
 /*Receiver Detection*/
   while(Is_iBus_Received() == 0)
@@ -508,7 +533,7 @@ lon.in.kd = 0;
 		  LPS22HH_GetTemperature(&LPS22HH.temperature_raw);
 
 		  //Default Unit = 1m
-		  LPS22HH.baroAlt = getAltitude2(LPS22HH.pressure_raw/4096.f, LPS22HH.temperature_raw/100.f);
+		  LPS22HH.baroAlt = getAltitude1(LPS22HH.pressure_raw/4096.f/*,LPS22HH.temperature_raw/100.f*/);
 		  baro_offset += LPS22HH.baroAlt;
 		  HAL_Delay(100);
 
@@ -583,23 +608,20 @@ lon.in.kd = 0;
 		  else is_yaw_middle = 0;
 
 		  flight_mode = 1;
-		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 2;
-		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1) flight_mode = 3;
+		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 /*&& is_throttle_middle == 1*/) flight_mode = 2;
+		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 /*&& is_throttle_middle == 1*/) flight_mode = 3;
 
 
 		  if(flight_mode == 2) //Altitude Holding Mode
 		  {
-			  if(iBus.VrB < 1100) iBus_VrB_flag = 0; // Change Altitude Setpoint
-			  else if(iBus.VrB > 1200) iBus_VrB_flag = 1;
+			  if(iBus.VrB < 1100) iBus_VrB_flag = 0;
+			  else if(iBus.VrB > 1900) iBus_VrB_flag = 2;
+			  else iBus_VrB_flag = 1;
 
-			  if(iBus_VrB_flag==1 && iBus_VrB_Prev_flag==0) altitude_setpoint += 0.5f;
+			  if(iBus_VrB_flag==0 && iBus_VrB_Prev_flag==1) altitude_setpoint -= 0.5f;
+			  else if(iBus_VrB_flag==2 && iBus_VrB_Prev_flag==1) altitude_setpoint += 0.5f;
+
 			  iBus_VrB_Prev_flag = iBus_VrB_flag;
-
-			  if(iBus.VrA > 1900) iBus_VrA_flag = 0; // Change Altitude Setpoint
-			  else if(iBus.VrA < 1800) iBus_VrA_flag = 1;
-
-			  if(iBus_VrA_flag==1 && iBus_VrA_Prev_flag==0) altitude_setpoint -= 0.5f;
-			  iBus_VrA_Prev_flag = iBus_VrA_flag;
 
 			  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, actual_pressure_fast);
 
@@ -822,27 +844,27 @@ lon.in.kd = 0;
 
 
 	  /********************* Telemetry Communication ************************/
-	  if(tim7_20ms_flag == 1)
+	  if(tim7_20ms_flag == 1 && tim7_100ms_flag == 0)
 	  {
 		  tim7_20ms_flag = 0;
-
+//		  Encode_Msg_Temp(&telemetry_tx_buf[0]);
+//		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 28); // altitude : 26, gps : 35, pid : 75
+//		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
+//		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 20);
 	  }
-
-	  if(tim7_100ms_flag == 1)
+	  else if(tim7_20ms_flag == 1 && tim7_100ms_flag == 1)
 	  {
+		  tim7_20ms_flag = 0;
 		  tim7_100ms_flag = 0;
-		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
-		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
+//		  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], roll.in.kp, roll.in.ki, roll.in.kd);
+//		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
+//		  Encode_Msg_Temp(&telemetry_tx_buf[0]);
+//		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 28);
+//		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);lat_gps
+//		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
 //		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
 //		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
-//		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35
-	  }
-
-	  if(tim7_200ms_flag == 1)
-	  {
-		  tim7_200ms_flag = 0;
-//		  Encode_Msg_Nx(&nx_tx_buf[0]);
-//		  HAL_UART_Transmit_DMA(&huart6, &nx_tx_buf[0], 35);
+//		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35, pid : 75
 	  }
 
 	  if(gps_add_counter >= 0)gps_add_counter --;
@@ -891,7 +913,7 @@ lon.in.kd = 0;
 		  LPS22HH_GetPressure(&LPS22HH.pressure_raw);
 		  LPS22HH_GetTemperature(&LPS22HH.temperature_raw);
 
-		  LPS22HH.baroAlt = getAltitude2(LPS22HH.pressure_raw/4096.f, LPS22HH.temperature_raw/100.f); //Default Unit = 1m
+		  LPS22HH.baroAlt = getAltitude1(LPS22HH.pressure_raw/4096.f/*, LPS22HH.temperature_raw/100.f*/); //Default Unit = 1m
 		  LPS22HH.baroAltGround = LPS22HH.baroAlt - baro_offset;
 
 		  //moving average of altitude
@@ -1191,14 +1213,14 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 			switch(cnt_1)
 					{
 					case 0:
-						if(uart1_rx_data==0x47)
+						if(uart1_rx_data==0x46)
 						{
 							telemetry_rx_buf[cnt_1]=uart1_rx_data;
 							cnt_1++;
 						}
 						break;
 					case 1:
-						if(uart1_rx_data==0x53)
+						if(uart1_rx_data==0x43)
 						{
 							telemetry_rx_buf[cnt_1]=uart1_rx_data;
 							cnt_1++;
@@ -1311,13 +1333,16 @@ void Encode_Msg_PID_Gain(unsigned char* telemetry_tx_buf, unsigned char id, floa
 	  telemetry_tx_buf[16] = 0x00;
 	  telemetry_tx_buf[17] = 0x00;
 	  telemetry_tx_buf[18] = 0x00;
-
-	  telemetry_tx_buf[19] = 0xff;
-
-	  for(int i=0; i<19; i++)
-	  {
-		  telemetry_tx_buf[19] = telemetry_tx_buf[19] - telemetry_tx_buf[i];
-	  }
+//
+//	  unsigned short chksum = 0xffff;
+//
+//	  for(int i=0; i<19; i++)
+//	  {
+//		  chksum = chksum - telemetry_tx_buf[i];
+//	  }
+//
+//	  telemetry_tx_buf[19] = chksum << 8;
+//	  telemetry_tx_buf[20] = chksum & 0xff;
 }
 
 void Receive_Pid_Gain(void)
@@ -1328,11 +1353,7 @@ void Receive_Pid_Gain(void)
 
 		  		  if(iBus.SwA == 1000) //Check FS-i6 Switch A
 		  		  {
-		  			  unsigned char chksum = 0xff;
-		  			  for(int i=0;i<19;i++) chksum = chksum - telemetry_rx_buf[i];
 
-		  			  if(chksum == telemetry_rx_buf[19]) //Check checksum of GCS Message
-		  			  {
 		  				  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4);
 
 		  				  TIM3->PSC = 1000;
@@ -1343,60 +1364,114 @@ void Receive_Pid_Gain(void)
 		  				  switch(telemetry_rx_buf[2]) //Check ID of GCS Message
 		  				  {
 		  				  case 0:
-		  					  roll.in.kp = *(float*)&telemetry_rx_buf[3];
-		  					  roll.in.ki = *(float*)&telemetry_rx_buf[7];
-		  					  roll.in.kd = *(float*)&telemetry_rx_buf[11];
+		  					  roll.in.kp = (*(int*)&telemetry_rx_buf[3]) / 100.f;
+		  					  roll.in.ki = (*(int*)&telemetry_rx_buf[7]) / 100.f;
+		  					  roll.in.kd = (*(int*)&telemetry_rx_buf[11]) / 100.f;
 		  					  EP_PIDGain_Write(telemetry_rx_buf[2], roll.in.kp, roll.in.ki, roll.in.kd);
 		  					  EP_PIDGain_Read(telemetry_rx_buf[2], &roll.in.kp, &roll.in.ki, &roll.in.kd);
 		  					  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], roll.in.kp, roll.in.ki, roll.in.kd);
-		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 20);
+		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
 		  					  break;
 		  				  case 1:
-		  					  roll.out.kp = *(float*)&telemetry_rx_buf[3];
-		  					  roll.out.ki = *(float*)&telemetry_rx_buf[7];
-		  					  roll.out.kd = *(float*)&telemetry_rx_buf[11];
+		  					  roll.out.kp = *(int*)&telemetry_rx_buf[3] / 100.f;
+		  					  roll.out.ki = *(int*)&telemetry_rx_buf[7] / 100.f;
+		  					  roll.out.kd = *(int*)&telemetry_rx_buf[11] / 100.f;
 		  					  EP_PIDGain_Write(telemetry_rx_buf[2], roll.out.kp, roll.out.ki, roll.out.kd);
 		  					  EP_PIDGain_Read(telemetry_rx_buf[2], &roll.out.kp, &roll.out.ki, &roll.out.kd);
 		  					  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], roll.out.kp, roll.out.ki, roll.out.kd);
-		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 20);
+		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
 		  					  break;
 		  				  case 2:
-		  					  pitch.in.kp = *(float*)&telemetry_rx_buf[3];
-		  					  pitch.in.ki = *(float*)&telemetry_rx_buf[7];
-		  					  pitch.in.kd = *(float*)&telemetry_rx_buf[11];
+		  					  pitch.in.kp = *(int*)&telemetry_rx_buf[3] / 100.f;
+		  					  pitch.in.ki = *(int*)&telemetry_rx_buf[7] / 100.f;
+		  					  pitch.in.kd = *(int*)&telemetry_rx_buf[11] / 100.f;
 		  					  EP_PIDGain_Write(telemetry_rx_buf[2], pitch.in.kp, pitch.in.ki, pitch.in.kd);
 		  					  EP_PIDGain_Read(telemetry_rx_buf[2], &pitch.in.kp, &pitch.in.ki, &pitch.in.kd);
 		  					  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], pitch.in.kp, pitch.in.ki, pitch.in.kd);
-		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 20);
+		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
 		  					  break;
 		  				  case 3:
-		  					  pitch.out.kp = *(float*)&telemetry_rx_buf[3];
-		  					  pitch.out.ki = *(float*)&telemetry_rx_buf[7];
-		  					  pitch.out.kd = *(float*)&telemetry_rx_buf[11];
+		  					  pitch.out.kp = *(int*)&telemetry_rx_buf[3] / 100.f;
+		  					  pitch.out.ki = *(int*)&telemetry_rx_buf[7] / 100.f;
+		  					  pitch.out.kd = *(int*)&telemetry_rx_buf[11] / 100.f;
 		  					  EP_PIDGain_Write(telemetry_rx_buf[2], pitch.out.kp, pitch.out.ki, pitch.out.kd);
 		  					  EP_PIDGain_Read(telemetry_rx_buf[2], &pitch.out.kp, &pitch.out.ki, &pitch.out.kd);
 		  					  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], pitch.out.kp, pitch.out.ki, pitch.out.kd);
-		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 20);
+		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
 		  					  break;
 		  				  case 4:
-		  					  yaw_heading.kp = *(float*)&telemetry_rx_buf[3];
-		  					  yaw_heading.ki = *(float*)&telemetry_rx_buf[7];
-		  					  yaw_heading.kd = *(float*)&telemetry_rx_buf[11];
+		  					  yaw_heading.kp = *(int*)&telemetry_rx_buf[3] / 100.f;
+		  					  yaw_heading.ki = *(int*)&telemetry_rx_buf[7] / 100.f;
+		  					  yaw_heading.kd = *(int*)&telemetry_rx_buf[11] / 100.f;
 		  					  EP_PIDGain_Write(telemetry_rx_buf[2], yaw_heading.kp, yaw_heading.ki, yaw_heading.kd);
 		  					  EP_PIDGain_Read(telemetry_rx_buf[2], &yaw_heading.kp, &yaw_heading.ki, &yaw_heading.kd);
 		  					  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], yaw_heading.kp, yaw_heading.ki, yaw_heading.kd);
-		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 20);
+		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
 		  					  break;
 		  				  case 5:
-		  					  yaw_rate.kp = *(float*)&telemetry_rx_buf[3];
-		  					  yaw_rate.ki = *(float*)&telemetry_rx_buf[7];
-		  					  yaw_rate.kd = *(float*)&telemetry_rx_buf[11];
+		  					  yaw_rate.kp = *(int*)&telemetry_rx_buf[3] / 100.f;
+		  					  yaw_rate.ki = *(int*)&telemetry_rx_buf[7] / 100.f;
+		  					  yaw_rate.kd = *(int*)&telemetry_rx_buf[11] / 100.f;
 		  					  EP_PIDGain_Write(telemetry_rx_buf[2], yaw_rate.kp, yaw_rate.ki, yaw_rate.kd);
 		  					  EP_PIDGain_Read(telemetry_rx_buf[2], &yaw_rate.kp, &yaw_rate.ki, &yaw_rate.kd);
 		  					  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], yaw_rate.kp, yaw_rate.ki, yaw_rate.kd);
-		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 20);
+		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
 		  					  break;
-		  				  case 0x10:
+		  				  case 6:
+		  					  altitude.in.kp = *(int*)&telemetry_rx_buf[3] / 100.f;
+		  					  altitude.in.ki = *(int*)&telemetry_rx_buf[7] / 100.f;
+		  					  altitude.in.kd = *(int*)&telemetry_rx_buf[11] / 100.f;
+		  					  EP_PIDGain_Write(telemetry_rx_buf[2], altitude.in.kp, altitude.in.ki, altitude.in.kd);
+		  					  EP_PIDGain_Read(telemetry_rx_buf[2], &altitude.in.kp, &altitude.in.ki, &altitude.in.kd);
+		  					  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], altitude.in.kp, altitude.in.ki, altitude.in.kd);
+		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
+		  					  break;
+		  				  case 7:
+		  					  altitude.out.kp = *(int*)&telemetry_rx_buf[3] / 100.f;
+		  					  altitude.out.ki = *(int*)&telemetry_rx_buf[7] / 100.f;
+		  					  altitude.out.kd = *(int*)&telemetry_rx_buf[11] / 100.f;
+		  					  EP_PIDGain_Write(telemetry_rx_buf[2], altitude.out.kp, altitude.out.ki, altitude.out.kd);
+		  					  EP_PIDGain_Read(telemetry_rx_buf[2], &altitude.out.kp, &altitude.out.ki, &altitude.out.kd);
+		  					  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], altitude.out.kp, altitude.out.ki, altitude.out.kd);
+		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
+		  					  break;
+		  				  case 8:
+		  					  lat.in.kp = *(int*)&telemetry_rx_buf[3] / 100.f;
+		  					  lat.in.ki = *(int*)&telemetry_rx_buf[7] / 100.f;
+		  					  lat.in.kd = *(int*)&telemetry_rx_buf[11] / 100.f;
+		  					  EP_PIDGain_Write(telemetry_rx_buf[2], lat.in.kp, lat.in.ki, lat.in.kd);
+		  					  EP_PIDGain_Read(telemetry_rx_buf[2], &lat.in.kp, &lat.in.ki, &lat.in.kd);
+		  					  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], lat.in.kp, lat.in.ki, lat.in.kd);
+		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
+		  					  break;
+		  				  case 9:
+		  					  lat.out.kp = *(int*)&telemetry_rx_buf[3] / 100.f;
+		  					  lat.out.ki = *(int*)&telemetry_rx_buf[7] / 100.f;
+		  					  lat.out.kd = *(int*)&telemetry_rx_buf[11] / 100.f;
+		  					  EP_PIDGain_Write(telemetry_rx_buf[2], lat.out.kp, lat.out.ki, lat.out.kd);
+		  					  EP_PIDGain_Read(telemetry_rx_buf[2], &lat.out.kp, &lat.out.ki, &lat.out.kd);
+		  					  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], lat.out.kp, lat.out.ki, lat.out.kd);
+		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
+		  					  break;
+		  				  case 10:
+		  					  lon.in.kp = *(int*)&telemetry_rx_buf[3] / 100.f;
+		  					  lon.in.ki = *(int*)&telemetry_rx_buf[7] / 100.f;
+		  					  lon.in.kd = *(int*)&telemetry_rx_buf[11] / 100.f;
+		  					  EP_PIDGain_Write(telemetry_rx_buf[2], lon.in.kp, lon.in.ki, lon.in.kd);
+		  					  EP_PIDGain_Read(telemetry_rx_buf[2], &lon.in.kp, &lon.in.ki, &lon.in.kd);
+		  					  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], lon.in.kp, lon.in.ki, lon.in.kd);
+		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
+		  					  break;
+		  				  case 11:
+		  					  lon.out.kp = *(int*)&telemetry_rx_buf[3] / 100.f;
+		  					  lon.out.ki = *(int*)&telemetry_rx_buf[7] / 100.f;
+		  					  lon.out.kd = *(int*)&telemetry_rx_buf[11] / 100.f;
+		  					  EP_PIDGain_Write(telemetry_rx_buf[2], lon.out.kp, lon.out.ki, lon.out.kd);
+		  					  EP_PIDGain_Read(telemetry_rx_buf[2], &lon.out.kp, &lon.out.ki, &lon.out.kd);
+		  					  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], lon.out.kp, lon.out.ki, lon.out.kd);
+		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
+		  					  break;
+		  				  case 12:
 		  					  switch(telemetry_rx_buf[3]) //Check PID Gain ID of GCS PID Gain Request Message
 		  					  {
 		  					  case 0:
@@ -1439,7 +1514,7 @@ void Receive_Pid_Gain(void)
 		  						  break;
 		  					  }
 		  					  break;
-		  				  }
+
 		  			  }
 		  		  }
 		  	  }
@@ -1631,6 +1706,46 @@ void Encode_Msg_Nx(unsigned char* nx_tx_buf)
 	nx_tx_buf[34] = (int)batVolt;
 }
 
+void Encode_Msg_Temp(unsigned char* telemery_tx_buf)
+{
+	telemetry_tx_buf[0] = 0x88;
+	telemetry_tx_buf[1] = 0x18;
+
+	telemetry_tx_buf[2] = ((int)(actual_pressure_fast * 100)) >> 24;
+	telemetry_tx_buf[3] = ((int)(actual_pressure_fast * 100)) >> 16;
+	telemetry_tx_buf[4] = ((int)(actual_pressure_fast * 100)) >> 8;
+	telemetry_tx_buf[5] = ((int)(actual_pressure_fast * 100));
+
+	telemetry_tx_buf[6] = ((int)(altitude_setpoint * 100)) >> 24;
+	telemetry_tx_buf[7] = ((int)(altitude_setpoint * 100)) >> 16;
+	telemetry_tx_buf[8] = ((int)(altitude_setpoint * 100)) >> 8;
+	telemetry_tx_buf[9] = ((int)(altitude_setpoint * 100));
+
+	telemetry_tx_buf[10] = ((int)(altitude.out.error * 100)) >> 24;
+	telemetry_tx_buf[11] = ((int)(altitude.out.error * 100)) >> 16;
+	telemetry_tx_buf[12] = ((int)(altitude.out.error * 100)) >> 8;
+	telemetry_tx_buf[13] = ((int)(altitude.out.error * 100));
+
+	telemetry_tx_buf[14] = (iBus.LV) >> 8;
+	telemetry_tx_buf[15] = (iBus.LV);
+
+	telemetry_tx_buf[16] = ((int)(altitude.in.pid_result)) >> 24;
+	telemetry_tx_buf[17] = ((int)(altitude.in.pid_result)) >> 16;
+	telemetry_tx_buf[18] = ((int)(altitude.in.pid_result)) >> 8;
+	telemetry_tx_buf[19] = ((int)(altitude.in.pid_result));
+
+	telemetry_tx_buf[20] = ((int)(batVolt * 1000)) >> 24;
+	telemetry_tx_buf[21] = ((int)(batVolt * 1000)) >> 16;
+	telemetry_tx_buf[22] = ((int)(batVolt * 1000)) >> 8;
+	telemetry_tx_buf[23] = ((int)(batVolt * 1000));
+
+	telemetry_tx_buf[24] = ((int)(LPS22HH.temperature_raw/100.f)) >> 24;
+	telemetry_tx_buf[25] = ((int)(LPS22HH.temperature_raw/100.f)) >> 16;
+	telemetry_tx_buf[26] = ((int)(LPS22HH.temperature_raw/100.f)) >> 8;
+	telemetry_tx_buf[27] = ((int)(LPS22HH.temperature_raw/100.f));
+
+
+}
 
 void Read_Gps(void)
 {
@@ -1779,7 +1894,7 @@ void return_to_home(void) {
 
 void Calculate_Takeoff_Throttle()
 {
-	takeoff_throttle = 84 * ( batVolt * (-21.765) + 1874.829 - 1000);
+	takeoff_throttle = 83.9 * 0.7 * ( batVolt * (-17.158) + 1915.5 - 1000);
 }
 /* USER CODE END 4 */
 
