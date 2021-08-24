@@ -23,7 +23,7 @@ class NX(BaseCamera):
         self.serSTM = serial.Serial('/dev/ttyUSB1' , 115200,timeout=1)
         self.serSTM.flush()
         print("stm")
-        self.serLIDAR = serial.Serial('/dev/ttyUSB0', 115200 , timeout =1)
+        self.serLIDAR = serial.Serial('/dev/ttyUSB0', 115200 , timeout =1)  
         self.serLIDAR.flush()
         print("lidar")
         ##gimbalstart
