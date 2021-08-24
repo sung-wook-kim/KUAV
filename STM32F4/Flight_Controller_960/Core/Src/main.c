@@ -583,7 +583,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  else is_yaw_middle = 0;
 
 		  flight_mode = 1;
-		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 2;
+		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000/* && is_throttle_middle == 1*/) flight_mode = 2;
 		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1) flight_mode = 3;
 
 
@@ -2080,7 +2080,7 @@ void return_to_home(void) {
 
 void Calculate_Takeoff_Throttle()
 {
-	takeoff_throttle = 83.9 * 0.7 * ( batVolt * (-17.158) + 1915.5 - 1000);
+	takeoff_throttle = 83.9 * 0.7 * ( batVolt * (-17.158) + 1915.5 - 1000) -600;
 }
 /* USER CODE END 4 */
 

@@ -2,7 +2,7 @@ import serial
 import time
 import numpy as np
 import struct
-ser = serial.Serial('COM7', 115200, timeout=1)
+ser = serial.Serial('COM4', 115200, timeout=1)
 
 # use no arming mode
 while True:

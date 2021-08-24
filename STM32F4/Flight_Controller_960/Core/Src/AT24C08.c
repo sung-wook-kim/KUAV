@@ -107,6 +107,24 @@ unsigned char EP_PIDGain_Read(unsigned char id, float* PGain, float* IGain, floa
 		case 5:
 			AT24C08_Page_Read(5, &buf_read[0], 16);
 			break;
+		case 6:
+			AT24C08_Page_Read(6, &buf_read[0], 16);
+			break;
+		case 7:
+			AT24C08_Page_Read(7, &buf_read[0], 16);
+			break;
+		case 8:
+			AT24C08_Page_Read(8, &buf_read[0], 16);
+			break;
+		case 9:
+			AT24C08_Page_Read(9, &buf_read[0], 16);
+			break;
+		case 10:
+			AT24C08_Page_Read(10, &buf_read[0], 16);
+			break;
+		case 11:
+			AT24C08_Page_Read(11, &buf_read[0], 16);
+			break;
 		}
 
 	unsigned char chksum = 0xff;
