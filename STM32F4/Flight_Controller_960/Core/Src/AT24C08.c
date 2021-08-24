@@ -79,6 +79,24 @@ void EP_PIDGain_Write(unsigned char id, float PGain, float IGain, float DGain)
 	case 5:
 		AT24C08_Page_Write(5, &buf_write[0], 16);
 		break;
+	case 6:
+		AT24C08_Page_Write(6, &buf_write[0], 16);
+		break;
+	case 7:
+		AT24C08_Page_Write(7, &buf_write[0], 16);
+		break;
+	case 8:
+		AT24C08_Page_Write(8, &buf_write[0], 16);
+		break;
+	case 9:
+		AT24C08_Page_Write(9, &buf_write[0], 16);
+		break;
+	case 10:
+		AT24C08_Page_Write(10, &buf_write[0], 16);
+		break;
+	case 11:
+		AT24C08_Page_Write(11, &buf_write[0], 16);
+		break;
 	}
 }
 
