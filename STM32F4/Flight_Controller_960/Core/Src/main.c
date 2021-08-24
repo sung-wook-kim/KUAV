@@ -374,6 +374,7 @@ unsigned short adcVal;
 
   /*************Save Initial Gain into EEPROM**************/
 
+// Roll
 EP_PIDGain_Read(0, &roll.in.kp, &roll.in.ki, &roll.in.kd);
 Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 0, roll.in.kp, roll.in.ki, roll.in.kd);
 HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
@@ -381,7 +382,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
 EP_PIDGain_Read(1, &roll.out.kp, &roll.out.ki, &roll.out.kd);
 Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 1, roll.out.kp, roll.out.ki, roll.out.kd);
 HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
-
+//Pitch
 EP_PIDGain_Read(2, &pitch.in.kp, &pitch.in.ki, &pitch.in.kd);
 Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 2, pitch.in.kp, pitch.in.ki, pitch.in.kd);
 HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
@@ -389,7 +390,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
 EP_PIDGain_Read(3, &pitch.out.kp, &pitch.out.ki, &pitch.out.kd);
 Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 3, pitch.out.kp, pitch.out.ki, pitch.out.kd);
 HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
-
+// Yaw
 EP_PIDGain_Read(4, &yaw_heading.kp, &yaw_heading.ki, &yaw_heading.kd);
 Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 4, yaw_heading.kp, yaw_heading.ki, yaw_heading.kd);
 HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
@@ -397,31 +398,55 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
 EP_PIDGain_Read(5, &yaw_rate.kp, &yaw_rate.ki, &yaw_rate.kd);
 Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 5, yaw_rate.kp, yaw_rate.ki, yaw_rate.kd);
 HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
+// Altitude Gain
+EP_PIDGain_Read(6, &altitude.in.kp, &altitude.in.ki, &altitude.in.kd);
+Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 6, altitude.in.kp, altitude.in.ki, altitude.in.kd);
+HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 
-// Altitude Hold PID Gain
-altitude.out.kp = 2;
-altitude.out.ki = 0;
-altitude.out.kd = 0.01;
-altitude.in.kp = 1000;
-altitude.in.ki = 10;
-altitude.in.kd = 0;
+EP_PIDGain_Read(7, &altitude.out.kp, &altitude.out.ki, &altitude.out.kd);
+Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 7, altitude.out.kp, altitude.out.ki, altitude.out.kd);
+HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
+// Latitude
+EP_PIDGain_Read(8, &lat.in.kp, &lat.in.ki, &lat.in.kd);
+Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 8, lat.in.kp, lat.in.ki, lat.in.kd);
+HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 20, 10);
 
-// GPS Hold PID Gain
-lat.out.kp = 0;
-lat.out.ki = 0;
-lat.out.kd = 0;
+EP_PIDGain_Read(9, &lat.out.kp, &lat.out.ki, &lat.out.kd);
+Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 9, lat.out.kp, lat.out.ki, lat.out.kd);
+HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
+// Longitude
+EP_PIDGain_Read(10, &lon.in.kp, &lon.in.ki, &lon.in.kd);
+Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 10, lon.in.kp, lon.in.ki, lon.in.kd);
+HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 
-lat.in.kp = 0;
-lat.in.ki = 0;
-lat.in.kd = 0;
-
-lon.out.kp = 0;
-lon.out.ki = 0;
-lon.out.kd = 0;
-
-lon.in.kp = 0;
-lon.in.ki = 0;
-lon.in.kd = 0;
+EP_PIDGain_Read(11, &lon.out.kp, &lon.out.ki, &lon.out.kd);
+Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 11, lon.out.kp, lon.out.ki, lon.out.kd);
+HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
+//
+//// Altitude Hold PID Gain
+//altitude.out.kp = 2;
+//altitude.out.ki = 0;
+//altitude.out.kd = 0.01;
+//altitude.in.kp = 1000;
+//altitude.in.ki = 10;
+//altitude.in.kd = 0;
+//
+//// GPS Hold PID Gain
+//lat.out.kp = 0;
+//lat.out.ki = 0;
+//lat.out.kd = 0;
+//
+//lat.in.kp = 0;
+//lat.in.ki = 0;
+//lat.in.kd = 0;
+//
+//lon.out.kp = 0;
+//lon.out.ki = 0;
+//lon.out.kd = 0;
+//
+//lon.in.kp = 0;
+//lon.in.ki = 0;
+//lon.in.kd = 0;
 
 /*Receiver Detection*/
   while(Is_iBus_Received() == 0)
@@ -1392,7 +1417,61 @@ void Receive_Pid_Gain(void)
 		  					  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], yaw_rate.kp, yaw_rate.ki, yaw_rate.kd);
 		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
 		  					  break;
-		  				  case 0x10:
+		  				  case 6:
+		  					  altitude.in.kp = *(int*)&telemetry_rx_buf[3] / 100.f;
+		  					  altitude.in.ki = *(int*)&telemetry_rx_buf[7] / 100.f;
+		  					  altitude.in.kd = *(int*)&telemetry_rx_buf[11] / 100.f;
+		  					  EP_PIDGain_Write(telemetry_rx_buf[2], altitude.in.kp, altitude.in.ki, altitude.in.kd);
+		  					  EP_PIDGain_Read(telemetry_rx_buf[2], &altitude.in.kp, &altitude.in.ki, &altitude.in.kd);
+		  					  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], altitude.in.kp, altitude.in.ki, altitude.in.kd);
+		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
+		  					  break;
+		  				  case 7:
+		  					  altitude.out.kp = *(int*)&telemetry_rx_buf[3] / 100.f;
+		  					  altitude.out.ki = *(int*)&telemetry_rx_buf[7] / 100.f;
+		  					  altitude.out.kd = *(int*)&telemetry_rx_buf[11] / 100.f;
+		  					  EP_PIDGain_Write(telemetry_rx_buf[2], altitude.out.kp, altitude.out.ki, altitude.out.kd);
+		  					  EP_PIDGain_Read(telemetry_rx_buf[2], &altitude.out.kp, &altitude.out.ki, &altitude.out.kd);
+		  					  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], altitude.out.kp, altitude.out.ki, altitude.out.kd);
+		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
+		  					  break;
+		  				  case 8:
+		  					  lat.in.kp = *(int*)&telemetry_rx_buf[3] / 100.f;
+		  					  lat.in.ki = *(int*)&telemetry_rx_buf[7] / 100.f;
+		  					  lat.in.kd = *(int*)&telemetry_rx_buf[11] / 100.f;
+		  					  EP_PIDGain_Write(telemetry_rx_buf[2], lat.in.kp, lat.in.ki, lat.in.kd);
+		  					  EP_PIDGain_Read(telemetry_rx_buf[2], &lat.in.kp, &lat.in.ki, &lat.in.kd);
+		  					  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], lat.in.kp, lat.in.ki, lat.in.kd);
+		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
+		  					  break;
+		  				  case 9:
+		  					  lat.out.kp = *(int*)&telemetry_rx_buf[3] / 100.f;
+		  					  lat.out.ki = *(int*)&telemetry_rx_buf[7] / 100.f;
+		  					  lat.out.kd = *(int*)&telemetry_rx_buf[11] / 100.f;
+		  					  EP_PIDGain_Write(telemetry_rx_buf[2], lat.out.kp, lat.out.ki, lat.out.kd);
+		  					  EP_PIDGain_Read(telemetry_rx_buf[2], &lat.out.kp, &lat.out.ki, &lat.out.kd);
+		  					  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], lat.out.kp, lat.out.ki, lat.out.kd);
+		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
+		  					  break;
+		  				  case 10:
+		  					  lon.in.kp = *(int*)&telemetry_rx_buf[3] / 100.f;
+		  					  lon.in.ki = *(int*)&telemetry_rx_buf[7] / 100.f;
+		  					  lon.in.kd = *(int*)&telemetry_rx_buf[11] / 100.f;
+		  					  EP_PIDGain_Write(telemetry_rx_buf[2], lon.in.kp, lon.in.ki, lon.in.kd);
+		  					  EP_PIDGain_Read(telemetry_rx_buf[2], &lon.in.kp, &lon.in.ki, &lon.in.kd);
+		  					  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], lon.in.kp, lon.in.ki, lon.in.kd);
+		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
+		  					  break;
+		  				  case 11:
+		  					  lon.out.kp = *(int*)&telemetry_rx_buf[3] / 100.f;
+		  					  lon.out.ki = *(int*)&telemetry_rx_buf[7] / 100.f;
+		  					  lon.out.kd = *(int*)&telemetry_rx_buf[11] / 100.f;
+		  					  EP_PIDGain_Write(telemetry_rx_buf[2], lon.out.kp, lon.out.ki, lon.out.kd);
+		  					  EP_PIDGain_Read(telemetry_rx_buf[2], &lon.out.kp, &lon.out.ki, &lon.out.kd);
+		  					  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], lon.out.kp, lon.out.ki, lon.out.kd);
+		  					  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
+		  					  break;
+		  				  case 12:
 		  					  switch(telemetry_rx_buf[3]) //Check PID Gain ID of GCS PID Gain Request Message
 		  					  {
 		  					  case 0:
