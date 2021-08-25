@@ -135,9 +135,8 @@ unsigned char return_to_home_step = 0;
 double lat_gps_home = 0;
 double lon_gps_home = 0;
 unsigned char gps_home_cnt = 0;
-float return_to_home_decrease;
-float return_to_home_lat_factor = 0, return_to_home_lon_factor = 0,return_to_home_move_factor = 0;
-float l_lat_gps_float_adjust = 0, l_lon_gps_float_adjust = 0;
+double return_to_home_lat_factor = 0, return_to_home_lon_factor = 0,return_to_home_move_factor = 0;
+double lat_gps_float_adjust = 0, lon_gps_float_adjust = 0;
 unsigned char is_lat_nearby = 0, is_lon_nearby = 0;
 
 // Motor Value
@@ -675,30 +674,32 @@ unsigned short adcVal;
 		  {
 			  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, actual_pressure_fast);
 
-			  if (l_lat_gps_float_adjust > 1) {
-				  lat_waypoint ++;
-				  l_lat_gps_float_adjust --;
+			  return_to_home();
+
+			  if (lat_gps_float_adjust > 10) {
+				  lat_waypoint += 10;
+				  lat_gps_float_adjust -= 10;
 			  }
-			  if (l_lat_gps_float_adjust < -1) {
-				  lat_waypoint --;
-				  l_lat_gps_float_adjust ++;
+			  if (lat_gps_float_adjust < -10) {
+				  lat_waypoint -= 10;
+				  lat_gps_float_adjust += 10;
 			  }
 
-			  if (l_lon_gps_float_adjust > 1) {
-				  lon_waypoint ++;
-				  l_lon_gps_float_adjust --;
+			  if (lon_gps_float_adjust > 10) {
+				  lon_waypoint += 10;
+				  lon_gps_float_adjust -= 10;
 			  }
-			  if (l_lon_gps_float_adjust < -1) {
-				  lon_waypoint --;
-				  l_lon_gps_float_adjust ++;
+			  if (lon_gps_float_adjust < -10) {
+				  lon_waypoint -= 10;
+				  lon_gps_float_adjust += 10;
 			  }
 
 			  Double_GPS_PID_Calculation(&lat, lat_waypoint, lat_gps);
 			  Double_GPS_PID_Calculation(&lon, lon_waypoint, lon_gps);
 
 			  //Because the correction is calculated as if the nose was facing north, we need to convert it for the current heading.
-			  gps_roll_adjust = ((float)lon.in.pid_result * cos(BNO080_Yaw * 0.017453)) + ((float)lat.in.pid_result * cos((BNO080_Yaw - 90) * 0.017453));
-			  gps_pitch_adjust = ((float)lat.in.pid_result * cos(BNO080_Yaw * 0.017453)) + ((float)lon.in.pid_result * cos((BNO080_Yaw + 90) * 0.017453));
+			  gps_roll_adjust = ((float)lon.in.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) + ((float)lat.in.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
+			  gps_pitch_adjust = ((float)lat.in.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) - ((float)lon.in.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
 
 			  //Limit the maximum correction to 300. This way we still have full controll with the pitch and roll stick on the transmitter.
 			  if (gps_roll_adjust > GPS_PD_MAX) gps_roll_adjust = GPS_PD_MAX;
@@ -706,11 +707,11 @@ unsigned short adcVal;
 			  if (gps_pitch_adjust > GPS_PD_MAX) gps_pitch_adjust = GPS_PD_MAX;
 			  if (gps_pitch_adjust < GPS_PD_MIN) gps_pitch_adjust = GPS_PD_MIN;
 
-			  Single_Yaw_Heading_PID_Calculation(&yaw_heading, 0 , BNO080_Yaw, ICM20602.gyro_z);
-			  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.pid_result + altitude.in.pid_result - gps_pitch_adjust + gps_roll_adjust;
-			  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.pid_result + altitude.in.pid_result + gps_pitch_adjust + gps_roll_adjust;
-			  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.pid_result + altitude.in.pid_result + gps_pitch_adjust - gps_roll_adjust;
-			  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.pid_result + altitude.in.pid_result - gps_pitch_adjust - gps_roll_adjust;
+			  Single_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference , BNO080_Yaw, ICM20602.gyro_z);
+			  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.pid_result + altitude.in.pid_result;
+			  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.pid_result + altitude.in.pid_result;
+			  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.pid_result + altitude.in.pid_result;
+			  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.pid_result + altitude.in.pid_result;
 			  ccr2 = (unsigned int)((float)ccr2 * MOTOR_FREQ_ADJUST);
 		  }
 		  else// Default Manual Mode
@@ -1056,6 +1057,12 @@ int abs_int(int a, int b)
 }
 
 float abs_float(float a, float b)
+{
+	if(a > b) return (a-b);
+	else return (b-a);
+}
+
+double abs_double(double a, double b)
 {
 	if(a > b) return (a-b);
 	else return (b-a);
@@ -2012,60 +2019,58 @@ void Encode_Msg_Temp(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[27] = ((int)(LPS22HH.temperature_raw/100.f));
 }
 
-void return_to_home(void) {
+void return_to_home(void)
+{
 
-	if (flight_mode == 4) {
+	if (flight_mode == 4)
+	{
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//Step 0 - make some basic calculations
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////
-		if (return_to_home_step == 0) {
+		if (return_to_home_step == 0)
+		{
 			//Is the quadcopter nearby? Then land without returning to home.
-			if( lat_waypoint - lat_gps_home < 100 && lat_waypoint - lat_gps_home > -100 ) is_lat_nearby = 1;
-			if( lon_waypoint - lon_gps_home < 100 && lon_waypoint - lon_gps_home > -100 ) is_lon_nearby = 1;
+			//			if( lat_waypoint - lat_gps_home < 100 && lat_waypoint - lat_gps_home > -100 ) is_lat_nearby = 1;
+			//			if( lon_waypoint - lon_gps_home < 100 && lon_waypoint - lon_gps_home > -100 ) is_lon_nearby = 1;
+			//			if (is_lat_nearby == 1 && is_lon_nearby == 1)return_to_home_step = 3;
 
-			if (is_lat_nearby == 1 && is_lon_nearby == 1)return_to_home_step = 3;
-			else {
-				return_to_home_move_factor = 0.0;
-				if (return_to_home_lat_factor == 1 || return_to_home_lon_factor == 1)return_to_home_step = 1;
-				//cos(((float)l_lat_gps / 1000000.0)
-				if (abs_int(lat_gps_home, lat_waypoint) >= abs_int(lon_gps_home, lon_waypoint)) {
-					return_to_home_lon_factor = (float)abs_int(lon_gps_home, lon_waypoint) / (float)abs_int(lat_gps_home, lat_waypoint);
-					return_to_home_lat_factor = 1;
-				}
-				else {
-					return_to_home_lon_factor = 1;
-					return_to_home_lat_factor = (float)abs_int(lat_gps_home, lat_waypoint) / (float)abs_int(lon_gps_home, lon_waypoint);
-				}
-
-				if (actual_pressure_fast < 20)return_to_home_decrease = 20 - actual_pressure_fast;
-				else return_to_home_decrease = 0;
+			return_to_home_move_factor = 0.0;
+			if (return_to_home_lat_factor == 1 || return_to_home_lon_factor == 1)return_to_home_step = 1;
+			//cos(((float)l_lat_gps / 1000000.0)
+			if (abs_double(lat_gps_home, lat_waypoint) >= abs_double(lon_gps_home, lon_waypoint))
+			{
+				return_to_home_lon_factor = abs_double(lon_gps_home, lon_waypoint) / abs_double(lat_gps_home, lat_waypoint);
+				return_to_home_lat_factor = 1;
+			}
+			else
+			{
+				return_to_home_lon_factor = 1;
+				return_to_home_lat_factor = abs_double(lat_gps_home, lat_waypoint) / abs_double(lon_gps_home, lon_waypoint);
 			}
 		}
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//Step - 1 increase the altitude to 20 meter above ground level
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////
-		if (return_to_home_step == 1) {
-			if (return_to_home_decrease <= 0)return_to_home_step = 2;
-			if (return_to_home_decrease > 0) {
-				altitude_setpoint -= 0.05;
-				return_to_home_decrease -= 0.05;
-			}
+		if (return_to_home_step == 1)
+		{
+			return_to_home_step = 2;
 		}
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//Step 2 - Return to the home position
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////
-		if (return_to_home_step == 2) {
+		if (return_to_home_step == 2)
+		{
 			if (lat_gps_home == lat_waypoint && lon_gps_home == lon_waypoint)return_to_home_step = 3;
-			if (abs_int(lat_gps_home, lat_waypoint) < 160 && abs_int(lon_gps_home, lon_waypoint) < 160 && return_to_home_move_factor > 0.05)return_to_home_move_factor -= 0.00015;
+			if (abs_double(lat_gps_home, lat_waypoint) < 160 && abs_double(lon_gps_home, lon_waypoint) < 160 && return_to_home_move_factor > 0.05)return_to_home_move_factor -= 0.00015;
 			else if (return_to_home_move_factor < 0.20)return_to_home_move_factor += 0.0001;
 
 			if (lat_gps_home != lat_waypoint) {
-				if (lat_gps_home > lat_waypoint) l_lat_gps_float_adjust += return_to_home_move_factor * return_to_home_lat_factor;
-				if (lat_gps_home < lat_waypoint) l_lat_gps_float_adjust -= return_to_home_move_factor * return_to_home_lat_factor;
+				if (lat_gps_home > lat_waypoint) lat_gps_float_adjust += return_to_home_move_factor * return_to_home_lat_factor;
+				if (lat_gps_home < lat_waypoint) lat_gps_float_adjust -= return_to_home_move_factor * return_to_home_lat_factor;
 			}
 			if (lon_gps_home != lon_waypoint) {
-				if (lon_gps_home > lon_waypoint) l_lon_gps_float_adjust += return_to_home_move_factor * return_to_home_lon_factor;
-				if (lon_gps_home < lon_waypoint) l_lon_gps_float_adjust -= return_to_home_move_factor * return_to_home_lon_factor;
+				if (lon_gps_home > lon_waypoint) lon_gps_float_adjust += return_to_home_move_factor * return_to_home_lon_factor;
+				if (lon_gps_home < lon_waypoint) lon_gps_float_adjust -= return_to_home_move_factor * return_to_home_lon_factor;
 			}
 		}
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////
