@@ -587,7 +587,7 @@ unsigned short adcVal;
 		  flight_mode = 1;
 		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 2;
 		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1 && (pvt.fixType == 2 || pvt.fixType == 3)) flight_mode = 3;
-		  else if(iBus.SwA == 2000 && iBus.Vrb > 1900) flight_mode = 4;
+		  else if(iBus.SwA == 2000 && iBus.VrB > 1900) flight_mode = 4;
 
 		  if(flight_mode == 2) //Altitude Holding Mode
 		  {
