@@ -134,6 +134,7 @@ float gps_pitch_adjust;
 unsigned char return_to_home_step = 0;
 double lat_gps_home = 0;
 double lon_gps_home = 0;
+unsigned char gps_home_cnt = 0;
 float return_to_home_decrease;
 float return_to_home_lat_factor = 0, return_to_home_lon_factor = 0,return_to_home_move_factor = 0;
 float l_lat_gps_float_adjust = 0, l_lon_gps_float_adjust = 0;
@@ -359,8 +360,25 @@ unsigned short adcVal;
 		  }
 	  }
  }
- lat_gps_home = (double)pvt.lat;
- lon_gps_home = (double)pvt.lon;
+ while(gps_home_cnt < 10)
+ {
+	 if(m8n_rx_cplt_flag == 1) // GPS receive checking
+		  {
+			  m8n_rx_cplt_flag = 0;
+
+			  if(M8N_UBX_CHKSUM_Check(&m8n_rx_buf[0], 100) == 1)
+			  {
+				  M8N_UBX_NAV_PVT_Parsing(&m8n_rx_buf[0], &pvt);
+
+				  lat_gps_home += (double)pvt.lat;
+				  lon_gps_home += (double)pvt.lon;
+
+				  gps_home_cnt++;
+			  }
+		  }
+ }
+ lat_gps_home /= 10.00;
+ lon_gps_home /= 10.00;
 
   // Correct ICM20602 bias
   ICM20602_Writebyte(0x13, (gyro_x_offset*-2)>>8);
