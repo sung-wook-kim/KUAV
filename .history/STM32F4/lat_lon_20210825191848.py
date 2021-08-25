@@ -63,7 +63,7 @@ def receive_data(byte, sign = True):
     return data
 
 def connect():
-    global my_checksum, yaw, numSV, fixtype lat_gps , lon_gps , lat_waypoint , lon_waypoint , i , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li, numSV_li, fixtype_li
+    global my_checksum, yaw, numSV, lat_gps , lon_gps , lat_waypoint , lon_waypoint , i , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li
     while True:
         i+=1
         if i % 100 == 0:
@@ -73,7 +73,6 @@ def connect():
 
             df['yaw'] = yaw_li
             df['numSV'] = numSV_li
-            df['fixtype'] = fixtype_li
             df['lat'] = lat_gps_li
             df['lon'] = lon_gps_li
             df['lat_waypoint'] = lat_waypoint_li
@@ -99,7 +98,6 @@ def connect():
                 lon_waypoint = receive_data(8)
                 pitch_adjust = receive_data(4)
                 roll_adjust = receive_data(4)
-                fixtype = receive_data(1,sign = False)
                 
                 checksum_1 = int(ser.read(1).hex(), 16) & 0xff
                 checksum_2 = int(ser.read(1).hex(), 16) & 0xff
@@ -107,18 +105,16 @@ def connect():
                 checksum_4 = int(ser.read(1).hex(), 16) & 0xff
                 
                 checksum = checksum_1 << 24 | checksum_2 << 16 | checksum_3 << 8 | checksum_4
-                print(f'lat = {lat_gps}, lon = {lon_gps}, target_lat = {lat_waypoint},target_lon = {lon_waypoint} ,yaw = {yaw}, vol = {volatge / 100} , numSV = {numSV}, fixtype = {fixtype}')
+                print(f'lat = {lat_gps}, lon = {lon_gps}, target_lat = {lat_waypoint},target_lon = {lon_waypoint} ,yaw = {yaw}, vol = {volatge / 100} , numSV = {numSV}')
                 ser.reset_input_buffer()
                 if checksum == my_checksum:
                     yaw_li.append(yaw)
-                    numSV_li.append(numSV)
                     lat_gps_li.append(lat_gps)
                     lon_gps_li.append(lon_gps)
                     lat_waypoint_li.append(lat_waypoint)
                     lon_waypoint_li.append(lon_waypoint)
                     pitch_li.append(pitch_adjust)
                     roll_li.append(roll_adjust)
-                    fixtype_li.append(fixtype)
 
                     # print(f'reference\tmeas_value\terror\terror_deriv\terror_sum\tp_result\ti_result\td_result\tpid_result\n')
                     # print(f'-------------------------------------------------------------------------------------------------\n')
