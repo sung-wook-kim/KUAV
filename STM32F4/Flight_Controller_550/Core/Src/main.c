@@ -132,8 +132,8 @@ float gps_pitch_adjust;
 
 // Return to home value
 unsigned char return_to_home_step = 0;
-signed int lat_gps_home = 0;
-signed int lon_gps_home = 0;
+double lat_gps_home = 0;
+double lon_gps_home = 0;
 float return_to_home_decrease;
 float return_to_home_lat_factor = 0, return_to_home_lon_factor = 0,return_to_home_move_factor = 0;
 float l_lat_gps_float_adjust = 0, l_lon_gps_float_adjust = 0;
@@ -159,6 +159,8 @@ float abs_float(float, float);
 int Is_iBus_Throttle_min(void);
 void ESC_Calibration(void);
 int Is_iBus_Received(void);
+int Is_GPS_Accuracy(void);
+int Is_GPS_In_Korea(void);
 void Receive_Pid_Gain(void);
 void BNO080_Calibration(void);
 void return_to_home(void);
@@ -344,6 +346,22 @@ unsigned short adcVal;
   /*GNSS Initialization*/
   M8N_Initialization();
 
+  // GPS Home
+  while(Is_GPS_In_Korea() != 1 || Is_GPS_Accuracy() != 1)
+  {
+	  if(m8n_rx_cplt_flag == 1) // GPS receive checking
+	  {
+		  m8n_rx_cplt_flag = 0;
+
+		  if(M8N_UBX_CHKSUM_Check(&m8n_rx_buf[0], 100) == 1)
+		  {
+			  M8N_UBX_NAV_PVT_Parsing(&m8n_rx_buf[0], &pvt);
+		  }
+	  }
+  }
+  lat_gps_home = (double)pvt.lat;
+  lon_gps_home = (double)pvt.lon;
+
   // Correct ICM20602 bias
   ICM20602_Writebyte(0x13, (gyro_x_offset*-2)>>8);
   ICM20602_Writebyte(0x14, (gyro_x_offset*-2));
@@ -406,30 +424,6 @@ unsigned short adcVal;
   Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 11, lon.out.kp, lon.out.ki, lon.out.kd);
   HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 
-// Altitude Hold PID Gain
-//altitude.out.kp = 2;
-//altitude.out.ki = 0;
-//altitude.out.kd = 0.01;
-//altitude.in.kp = 1000;
-//altitude.in.ki = 10;
-//altitude.in.kd = 0;
-//
-//// GPS Hold PID Gain
-//lat.out.kp = 0.01;
-//lat.out.ki = 0.f;
-//lat.out.kd = 0.001;
-//
-//lat.in.kp = 1;
-//lat.in.ki = 1;
-//lat.in.kd = 0.f;
-//
-//lon.out.kp = 0.01;
-//lon.out.ki = 0.f;
-//lon.out.kd = 0.001;
-//
-//lon.in.kp = 1;
-//lon.in.ki = 1;
-//lon.in.kd = 0;
 
 /*Receiver Detection*/
   while(Is_iBus_Received() == 0)
@@ -727,8 +721,8 @@ unsigned short adcVal;
 			  Reset_PID_Integrator(&altitude.out);
 			  Reset_PID_Integrator(&altitude.in);
 
-			  lat_waypoint = lat_gps;
-			  lon_waypoint = lon_gps;
+			  lat_waypoint = lat_gps_home;
+			  lon_waypoint = lon_gps_home;
 			  Reset_PID_Integrator(&lat.out);
 			  Reset_PID_Integrator(&lat.in);
 			  Reset_PID_Integrator(&lon.out);
@@ -1060,6 +1054,27 @@ int Is_iBus_Throttle_min(void)
 		}
 	}
 
+	return 0;
+}
+
+int Is_GPS_In_Korea(void)
+{
+	if(pvt.lat < 378205050 && pvt.lat > 347027100)
+	{
+		if(pvt.lon < 1294902500 && pvt.lon > 1263699600)
+		{
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int Is_GPS_Accuracy(void)
+{
+	if(pvt.fixType == 2 || pvt.fixType == 3)
+	{
+		return 1;
+	}
 	return 0;
 }
 
