@@ -327,24 +327,26 @@ while True:
         li_out = [0x46, 0x43, 0x09, out_lat_p_4,  out_lat_p_3, out_lat_p_2, out_lat_p_1, out_lat_i_4, out_lat_i_3, out_lat_i_2,
                 out_lat_i_1, out_lat_d_4, out_lat_d_3, out_lat_d_2, out_lat_d_1, 0x00, 0x00, 0x00, 0x00]
         ser.reset_input_buffer()
-        for i in range(5):
-            ser.write(li_in)
-        if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
-            if int(ser.read(1).hex(), 16) == 0x08:
-                drone_lat_in_p = struct.unpack('f',ser.read(4))
-                drone_lat_in_i = struct.unpack('f',ser.read(4))
-                drone_lat_in_d = struct.unpack('f',ser.read(4))
-                print("IN : " , drone_lat_in_p , drone_lat_in_i , drone_lat_in_d )
-                ser.reset_input_buffer()
-        for i in range(5):
-            ser.write(li_out)
-        if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
-            if int(ser.read(1).hex(), 16) == 0x09:
-                drone_lat_out_p = struct.unpack('f',ser.read(4))
-                drone_lat_out_i = struct.unpack('f',ser.read(4))
-                drone_lat_out_d = struct.unpack('f',ser.read(4))
-                print("OUT : " , drone_lat_out_p , drone_lat_out_i , drone_lat_out_d )
-                ser.reset_input_buffer()
+        for _ in range(3):
+            for i in range(5):
+                ser.write(li_in)
+            if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
+                if int(ser.read(1).hex(), 16) == 0x08:
+                    drone_lat_in_p = struct.unpack('f',ser.read(4))
+                    drone_lat_in_i = struct.unpack('f',ser.read(4))
+                    drone_lat_in_d = struct.unpack('f',ser.read(4))
+                    print("IN : " , drone_lat_in_p , drone_lat_in_i , drone_lat_in_d )
+                    ser.reset_input_buffer()
+            for i in range(5):
+                ser.write(li_out)
+            if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
+                if int(ser.read(1).hex(), 16) == 0x09:
+                    drone_lat_out_p = struct.unpack('f',ser.read(4))
+                    drone_lat_out_i = struct.unpack('f',ser.read(4))
+                    drone_lat_out_d = struct.unpack('f',ser.read(4))
+                    print("OUT : " , drone_lat_out_p , drone_lat_out_i , drone_lat_out_d )
+                    ser.reset_input_buffer()
+
     elif key == '6':
         print("lon제어 PID 수정")
         e = input().split(' ')
@@ -391,24 +393,25 @@ while True:
         li_out = [0x46, 0x43, 0x0b, out_lon_p_4,  out_lon_p_3, out_lon_p_2, out_lon_p_1, out_lon_i_4, out_lon_i_3, out_lon_i_2,
                 out_lon_i_1, out_lon_d_4, out_lon_d_3, out_lon_d_2, out_lon_d_1, 0x00, 0x00, 0x00, 0x00]
         ser.reset_input_buffer()
-        for i in range(5):
-            ser.write(li_in)
-        if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
-            if int(ser.read(1).hex(), 16) == 0x0a:
-                drone_lon_in_p = struct.unpack('f',ser.read(4))
-                drone_lon_in_i = struct.unpack('f',ser.read(4))
-                drone_lon_in_d = struct.unpack('f',ser.read(4))
-                print("IN : " , drone_lon_in_p , drone_lon_in_i , drone_lon_in_d )
-                ser.reset_input_buffer()
-        for i in range(5):
-            ser.write(li_out)
-        if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
-            if int(ser.read(1).hex(), 16) == 0x0b:
-                drone_lon_out_p = struct.unpack('f',ser.read(4))
-                drone_lon_out_i = struct.unpack('f',ser.read(4))
-                drone_lon_out_d = struct.unpack('f',ser.read(4))
-                print("OUT : " , drone_lon_out_p , drone_lon_out_i , drone_lon_out_d )
-                ser.reset_input_buffer()
+        for _ in range(3):
+            for i in range(5):
+                ser.write(li_in)
+            if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
+                if int(ser.read(1).hex(), 16) == 0x0a:
+                    drone_lon_in_p = struct.unpack('f',ser.read(4))
+                    drone_lon_in_i = struct.unpack('f',ser.read(4))
+                    drone_lon_in_d = struct.unpack('f',ser.read(4))
+                    print("IN : " , drone_lon_in_p , drone_lon_in_i , drone_lon_in_d )
+                    ser.reset_input_buffer()
+            for i in range(5):
+                ser.write(li_out)
+            if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
+                if int(ser.read(1).hex(), 16) == 0x0b:
+                    drone_lon_out_p = struct.unpack('f',ser.read(4))
+                    drone_lon_out_i = struct.unpack('f',ser.read(4))
+                    drone_lon_out_d = struct.unpack('f',ser.read(4))
+                    print("OUT : " , drone_lon_out_p , drone_lon_out_i , drone_lon_out_d )
+                    ser.reset_input_buffer()
     elif key == '7':
         print("종료")
         break

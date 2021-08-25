@@ -112,6 +112,7 @@ float actual_pressure_fast = 0, actual_pressure_slow = 0;
 float actual_pressure;
 
 // Gps Value
+#define DECLINATION 8.5f
 double lat_gps_previous;
 double lon_gps_previous;
 double lat_gps_actual;
@@ -122,6 +123,8 @@ double lat_gps;
 double lon_gps;
 double lat_waypoint;
 double lon_waypoint;
+double lat_diff;
+double lon_diff;
 float gps_roll_adjust;
 float gps_pitch_adjust;
 #define GPS_PD_MAX 200
@@ -583,7 +586,7 @@ unsigned short adcVal;
 
 		  flight_mode = 1;
 		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 2;
-		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1) flight_mode = 3;
+		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1 && (pvt.fixType == 2 || pvt.fixType == 3)) flight_mode = 3;
 
 
 		  if(flight_mode == 2) //Altitude Holding Mode
@@ -627,8 +630,8 @@ unsigned short adcVal;
 			  Double_GPS_PID_Calculation(&lon, lon_waypoint, lon_gps);
 
 			  //Because the correction is calculated as if the nose was facing north, we need to convert it for the current heading.
-			  gps_roll_adjust = ((float)lon.out.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) + ((float)lat.out.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
-			  gps_pitch_adjust = ((float)lat.out.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) - ((float)lon.out.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
+			  gps_roll_adjust = ((float)lon.in.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) + ((float)lat.in.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
+			  gps_pitch_adjust = ((float)lat.in.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) - ((float)lon.in.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
 
 			  //Limit the maximum correction to 300. This way we still have full control with the pitch and roll stick on the transmitter.
 			  if (gps_roll_adjust > GPS_PD_MAX) gps_roll_adjust = GPS_PD_MAX;
@@ -856,6 +859,7 @@ unsigned short adcVal;
 		  BNO080_Roll -= BNO080_ROLL_OFFSET;
 		  BNO080_Pitch = -BNO080_Pitch;
 		  BNO080_Pitch -= BNO080_PITCH_OFFSET;
+		  BNO080_Yaw -= DECLINATION;
 	  }
 
 	  /***********************************************************************************************
@@ -899,20 +903,27 @@ unsigned short adcVal;
 		  {
 			  M8N_UBX_NAV_PVT_Parsing(&m8n_rx_buf[0], &pvt);
 
-			  if(lat_gps_previous == 0 || lon_gps_previous == 0)
+			  if(pvt.fixType == 2 || pvt.fixType == 3)
 			  {
-				  lat_gps_previous = (double)pvt.lat;
-				  lon_gps_previous = (double)pvt.lon;
-			  }
-			  else
-			  {
-				  lat_gps_previous = lat_gps_actual;
-				  lon_gps_previous = lon_gps_actual;
-			  }
+				  if(lat_gps_previous == 0 || lon_gps_previous == 0)
+				  {
+					  lat_gps_previous = (double)pvt.lat;
+					  lon_gps_previous = (double)pvt.lon;
+				  }
+				  else
+				  {
+					  lat_gps_previous = lat_gps_actual;
+					  lon_gps_previous = lon_gps_actual;
+				  }
 
-			  lat_gps_actual = (double)pvt.lat;
-			  lon_gps_actual = (double)pvt.lon;
+				  if((double)pvt.lat > lat_gps_previous)lat_diff = (double)pvt.lat - lat_gps_previous;
+				  else lat_diff = lat_gps_previous - (double)pvt.lat;
+				  if((double)pvt.lon > lon_gps_previous)lon_diff = (double)pvt.lon - lon_gps_previous;
+				  else lon_diff = lon_gps_previous - (double)pvt.lon;
 
+				  if(lat_diff < 10000) lat_gps_actual = (double)pvt.lat;
+				  if(lon_diff < 10000) lon_gps_actual = (double)pvt.lon;
+			  }
 		  }
 		  else
 		  {
@@ -1589,7 +1600,7 @@ void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[4] = ((int)(batVolt * 100)) >> 8;
 	telemetry_tx_buf[5] = ((int)(batVolt * 100));
 
-	telemetry_tx_buf[6] = pvt.numSV;
+	telemetry_tx_buf[6] = pvt.fixType;
 
 	telemetry_tx_buf[7] = (int)BNO080_Yaw >> 24;
 	telemetry_tx_buf[8] = (int)BNO080_Yaw >> 16;

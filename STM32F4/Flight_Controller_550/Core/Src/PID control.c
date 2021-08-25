@@ -283,10 +283,10 @@ void Double_GPS_PID_Calculation(PIDDouble* axis, double set_point_gps, double  g
    axis->out.p_result = axis->out.error * axis->out.kp;         //Calculate P result of outer loop
 
    axis->out.error_sum = axis->out.error_sum + axis->out.error * DT;   //Define summation of outer loop
-#define OUT_ERR_SUM_MAX 500
-#define OUT_ERR_SUM_MIN -OUT_ERR_SUM_MAX
-   if(axis->out.error_sum > OUT_ERR_SUM_MAX) axis->out.error_sum = OUT_ERR_SUM_MAX;
-   else if(axis->out.error_sum < OUT_ERR_SUM_MIN) axis->out.error_sum = OUT_ERR_SUM_MIN;
+#define GPS_OUT_ERR_SUM_MAX 500
+#define GPS_OUT_ERR_SUM_MIN -GPS_OUT_ERR_SUM_MAX
+   if(axis->out.error_sum > GPS_OUT_ERR_SUM_MAX) axis->out.error_sum = GPS_OUT_ERR_SUM_MAX;
+   else if(axis->out.error_sum < GPS_OUT_ERR_SUM_MIN) axis->out.error_sum = GPS_OUT_ERR_SUM_MIN;
    axis->out.i_result = axis->out.error_sum * axis->out.ki;         //Calculate I result of outer loop
 
    axis->out.error_deriv = -(axis->out.meas_value - axis->out.meas_value_prev)/DT;//Define derivative of outer loop
@@ -310,10 +310,10 @@ void Double_GPS_PID_Calculation(PIDDouble* axis, double set_point_gps, double  g
    axis->in.p_result = axis->in.error * axis->in.kp;         //Calculate P result of inner loop
 
    axis->in.error_sum = axis->in.error_sum + axis->in.error * DT;   //Define summation of inner loop
-#define IN_ERR_SUM_MAX 500
-#define IN_ERR_SUM_MIN -IN_ERR_SUM_MAX
-   if(axis->in.error_sum > IN_ERR_SUM_MAX) axis->in.error_sum = IN_ERR_SUM_MAX;
-   else if(axis->in.error_sum < IN_ERR_SUM_MIN) axis->in.error_sum = IN_ERR_SUM_MIN;
+#define GPS_IN_ERR_SUM_MAX 200
+#define GPS_IN_ERR_SUM_MIN -GPS_IN_ERR_SUM_MAX
+   if(axis->in.error_sum > GPS_IN_ERR_SUM_MAX) axis->in.error_sum = GPS_IN_ERR_SUM_MAX;
+   else if(axis->in.error_sum < GPS_IN_ERR_SUM_MIN) axis->in.error_sum = GPS_IN_ERR_SUM_MIN;
    axis->in.i_result = axis->in.error_sum * axis->in.ki;                     //Calculate I result of inner loop
 
    axis->in.error_deriv = -(axis->in.meas_value - axis->in.meas_value_prev) / DT;   //Define derivative of inner loop

@@ -5,11 +5,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import threading
 import struct
-ser = serial.Serial('COM8', 115200)
+ser = serial.Serial('COM7', 115200)
 ser.flush()
 
-global lat_gps , lon_gps , lat_waypoint , lon_waypoint , my_checksum , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li
+global yaw, lat_gps , lon_gps , lat_waypoint , lon_waypoint , my_checksum , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li
 
+yaw = 0
 lat_gps = 0 
 lat_waypoint = 0
 lon_gps = 0 
@@ -17,6 +18,7 @@ lon_waypoint = 0
 my_checksum = 0xffffffff
 i = 0
 
+yaw_li = []
 lat_gps_li = []
 lon_gps_li = []
 lat_waypoint_li = []
@@ -56,14 +58,15 @@ def receive_data(byte, sign = True):
     return data
 
 def connect():
-    global my_checksum , lat_gps , lon_gps , lat_waypoint , lon_waypoint , i , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li
+    global my_checksum ,yaw, lat_gps , lon_gps , lat_waypoint , lon_waypoint , i , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li
     while True:
         i+=1
         if i % 100 == 0:
             now = time.localtime()
             timevar = time.strftime('%d%H%M', now)
             df = pd.DataFrame()
-        
+
+            df['yaw'] = yaw_li
             df['lat'] = lat_gps_li
             df['lon'] = lon_gps_li
             df['lat_waypoint'] = lat_waypoint_li
@@ -95,11 +98,11 @@ def connect():
                 checksum_3 = int(ser.read(1).hex(), 16) & 0xff
                 checksum_4 = int(ser.read(1).hex(), 16) & 0xff
                 
-                checksum = checksum_1 << 24 | checksum_2 << 16 | checksum_3 << 8 | checksum_4 
-                print(checksum -  my_checksum)
-                print(f'lat = {lat_gps}, lon = {lon_gps}, target_lat = {lat_waypoint},target_lon = {lon_waypoint} ,yaw = {yaw}')
+                checksum = checksum_1 << 24 | checksum_2 << 16 | checksum_3 << 8 | checksum_4
+                print(f'lat = {lat_gps}, lon = {lon_gps}, target_lat = {lat_waypoint},target_lon = {lon_waypoint} ,yaw = {yaw}, vol = {volatge / 100}')
                 ser.reset_input_buffer()
-                if checksum == my_checksum: 
+                if checksum == my_checksum:
+                    yaw_li.append(yaw)
                     lat_gps_li.append(lat_gps)
                     lon_gps_li.append(lon_gps)
                     lat_waypoint_li.append(lat_waypoint)
@@ -112,7 +115,7 @@ def connect():
                     # print(f'{pvt_lat} {lat_gps}\t{out_reference}\t{out_meas_value}\t{out_error}\t{out_error_deriv}\t{out_error_sum}\t{out_p_result}\t{out_i_result}\t{out_d_result}\t{out_pid_result}')
                     # print(f'{in_reference}\t{in_meas_value}\t{in_error}\t{in_error_deriv}\t{in_error_sum}\t{in_p_result}\t{in_i_result}\t{in_d_result}\t{in_pid_result}')
                     # print(f'{in_reference}\t{in_meas_value}\t{in_error}\t{in_error_deriv}\t{in_error_sum}\t{in_p_result}\
-                    print("check")
+                    # print("check")
                     ser.reset_input_buffer()
 
 thread1 = threading.Thread(target = connect)
