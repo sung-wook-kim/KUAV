@@ -8,7 +8,7 @@ ser = serial.Serial('COM7', 115200, timeout=1)
 Roll Pitch : 10 3 2.5 35 0 11
 YAW : 400 5 120 50 0 4
 altitude : 1050 10 0 2 0 0.01
-GPS : 2.2 0.01 0.01 0.35 0 0
+GPS : 0 0 0 0.2  0 0.05
 ---------------960---------------
 Roll Pitch : 5 0 2 30 0 26
 Yaw : 200 0 60 20 0 1.5
@@ -69,24 +69,25 @@ while True:
         li_out = [0x46, 0x43, 0x01, out_roll_p_4,  out_roll_p_3, out_roll_p_2, out_roll_p_1, out_roll_i_4, out_roll_i_3, out_roll_i_2,
                 out_roll_i_1, out_roll_d_4, out_roll_d_3, out_roll_d_2, out_roll_d_1, 0x00, 0x00, 0x00, 0x00]
         ser.reset_input_buffer()
-        for i in range(5):
-            ser.write(li_in)
-        if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
-            if int(ser.read(1).hex(), 16) == 0x00:
-                drone_roll_in_p = struct.unpack('f',ser.read(4))
-                drone_roll_in_i = struct.unpack('f',ser.read(4))
-                drone_roll_in_d = struct.unpack('f',ser.read(4))
-                print("IN : " , drone_roll_in_p , drone_roll_in_i , drone_roll_in_d )
-                ser.reset_input_buffer()
-        for i in range(5):
-            ser.write(li_out)
-        if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
-            if int(ser.read(1).hex(), 16) == 0x01:
-                drone_roll_out_p = struct.unpack('f',ser.read(4))
-                drone_roll_out_i = struct.unpack('f',ser.read(4))
-                drone_roll_out_d = struct.unpack('f',ser.read(4))
-                print("OUT : " , drone_roll_out_p , drone_roll_out_i , drone_roll_out_d )
-                ser.reset_input_buffer()
+        for _ in range(3):
+            for i in range(5):
+                ser.write(li_in)
+            if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
+                if int(ser.read(1).hex(), 16) == 0x00:
+                    drone_roll_in_p = struct.unpack('f',ser.read(4))
+                    drone_roll_in_i = struct.unpack('f',ser.read(4))
+                    drone_roll_in_d = struct.unpack('f',ser.read(4))
+                    print("IN : " , drone_roll_in_p , drone_roll_in_i , drone_roll_in_d )
+                    ser.reset_input_buffer()
+            for i in range(5):
+                ser.write(li_out)
+            if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
+                if int(ser.read(1).hex(), 16) == 0x01:
+                    drone_roll_out_p = struct.unpack('f',ser.read(4))
+                    drone_roll_out_i = struct.unpack('f',ser.read(4))
+                    drone_roll_out_d = struct.unpack('f',ser.read(4))
+                    print("OUT : " , drone_roll_out_p , drone_roll_out_i , drone_roll_out_d )
+                    ser.reset_input_buffer()
       
     elif key == '2':
         print("자세제어 pitch pid 수정")
@@ -134,24 +135,25 @@ while True:
         li_out = [0x46, 0x43, 0x03, out_pitch_p_4,  out_pitch_p_3, out_pitch_p_2, out_pitch_p_1, out_pitch_i_4, out_pitch_i_3, out_pitch_i_2,
                 out_pitch_i_1, out_pitch_d_4, out_pitch_d_3, out_pitch_d_2, out_pitch_d_1, 0x00, 0x00, 0x00, 0x00]
         ser.reset_input_buffer()
-        for i in range(5):
-            ser.write(li_in)
-        if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
-            if int(ser.read(1).hex(), 16) == 0x02:
-                drone_pitch_in_p = struct.unpack('f',ser.read(4))
-                drone_pitch_in_i = struct.unpack('f',ser.read(4))
-                drone_pitch_in_d = struct.unpack('f',ser.read(4))
-                print("IN : " , drone_pitch_in_p , drone_pitch_in_i , drone_pitch_in_d )
-                ser.reset_input_buffer()
-        for i in range(5):
-            ser.write(li_out)
-        if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
-            if int(ser.read(1).hex(), 16) == 0x03:
-                drone_pitch_out_p = struct.unpack('f',ser.read(4))
-                drone_pitch_out_i = struct.unpack('f',ser.read(4))
-                drone_pitch_out_d = struct.unpack('f',ser.read(4))
-                print("OUT : " , drone_pitch_out_p , drone_pitch_out_i , drone_pitch_out_d )
-                ser.reset_input_buffer()
+        for _ in range(3):
+            for i in range(5):
+                ser.write(li_in)
+            if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
+                if int(ser.read(1).hex(), 16) == 0x02:
+                    drone_pitch_in_p = struct.unpack('f',ser.read(4))
+                    drone_pitch_in_i = struct.unpack('f',ser.read(4))
+                    drone_pitch_in_d = struct.unpack('f',ser.read(4))
+                    print("IN : " , drone_pitch_in_p , drone_pitch_in_i , drone_pitch_in_d )
+                    ser.reset_input_buffer()
+            for i in range(5):
+                ser.write(li_out)
+            if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
+                if int(ser.read(1).hex(), 16) == 0x03:
+                    drone_pitch_out_p = struct.unpack('f',ser.read(4))
+                    drone_pitch_out_i = struct.unpack('f',ser.read(4))
+                    drone_pitch_out_d = struct.unpack('f',ser.read(4))
+                    print("OUT : " , drone_pitch_out_p , drone_pitch_out_i , drone_pitch_out_d )
+                    ser.reset_input_buffer()
 
     elif key == '3':
         print("자세제어 yaw pid 수정 ")
@@ -199,24 +201,25 @@ while True:
         li_out = [0x46, 0x43, 0x05, out_yaw_p_4,  out_yaw_p_3, out_yaw_p_2, out_yaw_p_1, out_yaw_i_4, out_yaw_i_3, out_yaw_i_2,
                 out_yaw_i_1, out_yaw_d_4, out_yaw_d_3, out_yaw_d_2, out_yaw_d_1, 0x00, 0x00, 0x00, 0x00]
         ser.reset_input_buffer()
-        for i in range(5):
-            ser.write(li_in)
-        if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
-            if int(ser.read(1).hex(), 16) == 0x04:
-                drone_yaw_in_p = struct.unpack('f',ser.read(4))
-                drone_yaw_in_i = struct.unpack('f',ser.read(4))
-                drone_yaw_in_d = struct.unpack('f',ser.read(4))
-                print("IN : " , drone_yaw_in_p , drone_yaw_in_i , drone_yaw_in_d )
-                ser.reset_input_buffer()
-        for i in range(5):
-            ser.write(li_out)
-        if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
-            if int(ser.read(1).hex(), 16) == 0x05:
-                drone_yaw_out_p = struct.unpack('f',ser.read(4))
-                drone_yaw_out_i = struct.unpack('f',ser.read(4))
-                drone_yaw_out_d = struct.unpack('f',ser.read(4))
-                print("OUT : " , drone_yaw_out_p , drone_yaw_out_i , drone_yaw_out_d )
-                ser.reset_input_buffer()
+        for _ in range(3):
+            for i in range(5):
+                ser.write(li_in)
+            if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
+                if int(ser.read(1).hex(), 16) == 0x04:
+                    drone_yaw_in_p = struct.unpack('f',ser.read(4))
+                    drone_yaw_in_i = struct.unpack('f',ser.read(4))
+                    drone_yaw_in_d = struct.unpack('f',ser.read(4))
+                    print("IN : " , drone_yaw_in_p , drone_yaw_in_i , drone_yaw_in_d )
+                    ser.reset_input_buffer()
+            for i in range(5):
+                ser.write(li_out)
+            if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
+                if int(ser.read(1).hex(), 16) == 0x05:
+                    drone_yaw_out_p = struct.unpack('f',ser.read(4))
+                    drone_yaw_out_i = struct.unpack('f',ser.read(4))
+                    drone_yaw_out_d = struct.unpack('f',ser.read(4))
+                    print("OUT : " , drone_yaw_out_p , drone_yaw_out_i , drone_yaw_out_d )
+                    ser.reset_input_buffer()
     elif key == '4':
         print("고도 제어 pid 수정 ")
         d = input().split(' ')
@@ -262,25 +265,26 @@ while True:
         alt_li_out = [0x46, 0x43, 0x07, out_alt_p_4,  out_alt_p_3, out_alt_p_2, out_alt_p_1, out_alt_i_4, out_alt_i_3, out_alt_i_2,
                 out_alt_i_1, out_alt_d_4, out_alt_d_3, out_alt_d_2, out_alt_d_1, 0x00, 0x00, 0x00, 0x00]
         ser.reset_input_buffer()
-        for i in range(5):
-            ser.write(alt_li_in)
-        if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
-            if int(ser.read(1).hex(), 16) == 0x06:
-                drone_alt_in_p = struct.unpack('f',ser.read(4))
-                drone_alt_in_i = struct.unpack('f',ser.read(4))
-                drone_alt_in_d = struct.unpack('f',ser.read(4))
-                print("IN : " , drone_alt_in_p , drone_alt_in_i , drone_alt_in_d )
-                ser.reset_input_buffer()
-        for i in range(5):
-            ser.write(alt_li_out)
-        if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
-            if int(ser.read(1).hex(), 16) == 0x07:
-                drone_alt_out_p = struct.unpack('f',ser.read(4))
-                drone_alt_out_i = struct.unpack('f',ser.read(4))
-                drone_alt_out_d = struct.unpack('f',ser.read(4))
-                print("OUT : " , drone_alt_out_p , drone_alt_out_i , drone_alt_out_d )
-                ser.reset_input_buffer()
-        
+        for _ in range(3):
+            for i in range(5):
+                ser.write(alt_li_in)
+            if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
+                if int(ser.read(1).hex(), 16) == 0x06:
+                    drone_alt_in_p = struct.unpack('f',ser.read(4))
+                    drone_alt_in_i = struct.unpack('f',ser.read(4))
+                    drone_alt_in_d = struct.unpack('f',ser.read(4))
+                    print("IN : " , drone_alt_in_p , drone_alt_in_i , drone_alt_in_d )
+                    ser.reset_input_buffer()
+            for i in range(5):
+                ser.write(alt_li_out)
+            if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
+                if int(ser.read(1).hex(), 16) == 0x07:
+                    drone_alt_out_p = struct.unpack('f',ser.read(4))
+                    drone_alt_out_i = struct.unpack('f',ser.read(4))
+                    drone_alt_out_d = struct.unpack('f',ser.read(4))
+                    print("OUT : " , drone_alt_out_p , drone_alt_out_i , drone_alt_out_d )
+                    ser.reset_input_buffer()
+            
     elif key == '5':
         print("lat제어 PID 수정")
         e = input().split(' ')
@@ -346,7 +350,6 @@ while True:
                     drone_lat_out_d = struct.unpack('f',ser.read(4))
                     print("OUT : " , drone_lat_out_p , drone_lat_out_i , drone_lat_out_d )
                     ser.reset_input_buffer()
-
     elif key == '6':
         print("lon제어 PID 수정")
         e = input().split(' ')
