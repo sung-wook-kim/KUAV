@@ -511,16 +511,6 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
   }
   baro_offset = baro_offset / (float)baro_cnt;
 
-  // Read Initial GPS
-//  while(lat_gps_home == 0 && lon_gps_home == 0)
-//  {
-//	  HAL_Delay(1);
-//	  Read_Gps();
-//
-//	  lat_gps_home = lat_gps;
-//	  lat_gps_home = lon_gps;
-//  }
-
   // Read Battery Voltage
   batVolt = adcVal * 0.00699563f;
 
@@ -569,7 +559,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  lat_gps += lat_add;
 		  lon_gps += lon_add;
 
-		  Double_Roll_Pitch_PID_Calculation(&pitch, (iBus.RV + gps_pitch_adjust- 1500)*0.07f, BNO080_Pitch, ICM20602.gyro_x);
+		  Double_Roll_Pitch_PID_Calculation(&pitch, (iBus.RV + gps_pitch_adjust - 1500)*0.07f, BNO080_Pitch, ICM20602.gyro_x);
 		  Double_Roll_Pitch_PID_Calculation(&roll, (iBus.RH + gps_roll_adjust - 1500)*0.07f, BNO080_Roll, ICM20602.gyro_y);
 
 		  gps_pitch_adjust = 0;
@@ -583,7 +573,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  else is_yaw_middle = 0;
 
 		  flight_mode = 1;
-		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000/* && is_throttle_middle == 1*/) flight_mode = 2;
+		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 2;
 		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1) flight_mode = 3;
 
 
@@ -626,8 +616,8 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  Double_GPS_PID_Calculation(&lon, lon_waypoint, lon_gps);
 
 			  //Because the correction is calculated as if the nose was facing north, we need to convert it for the current heading.
-			  gps_roll_adjust = ((float)lon.out.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) + ((float)lat.out.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
-			  gps_pitch_adjust = ((float)lat.out.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) - ((float)lon.out.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
+			  gps_roll_adjust = ((float)lon.in.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) + ((float)lat.in.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
+			  gps_pitch_adjust = ((float)lat.in.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) - ((float)lon.in.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
 
 			  //Limit the maximum correction to 6000. This way we still have full controll with the pitch and roll stick on the transmitter.
 			  if (gps_roll_adjust > GPS_PD_MAX) gps_roll_adjust = GPS_PD_MAX;
@@ -703,18 +693,18 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  {
 				  yaw_heading_reference = BNO080_Yaw;
 				  Single_Yaw_Rate_PID_Calculation(&yaw_rate, (iBus.LH-1500), ICM20602.gyro_z);
-				  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 - pitch.in.pid_result + roll.in.pid_result -yaw_rate.pid_result;
-				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 + pitch.in.pid_result + roll.in.pid_result +yaw_rate.pid_result;
-				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 + pitch.in.pid_result - roll.in.pid_result -yaw_rate.pid_result;
-				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 - pitch.in.pid_result - roll.in.pid_result +yaw_rate.pid_result;
+				  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 - pitch.in.pid_result + roll.in.pid_result - yaw_rate.pid_result;
+				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 + pitch.in.pid_result + roll.in.pid_result + yaw_rate.pid_result;
+				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 + pitch.in.pid_result - roll.in.pid_result - yaw_rate.pid_result;
+				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 - pitch.in.pid_result - roll.in.pid_result + yaw_rate.pid_result;
 			  }
 			  else
 			  {
 				  Single_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference, BNO080_Yaw, ICM20602.gyro_z);
-				  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 - pitch.in.pid_result + roll.in.pid_result -yaw_heading.pid_result;
-				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 + pitch.in.pid_result + roll.in.pid_result +yaw_heading.pid_result;
-				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 + pitch.in.pid_result - roll.in.pid_result -yaw_heading.pid_result;
-				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 - pitch.in.pid_result - roll.in.pid_result +yaw_heading.pid_result;
+				  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 - pitch.in.pid_result + roll.in.pid_result - yaw_heading.pid_result;
+				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 + pitch.in.pid_result + roll.in.pid_result + yaw_heading.pid_result;
+				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 + pitch.in.pid_result - roll.in.pid_result - yaw_heading.pid_result;
+				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 - pitch.in.pid_result - roll.in.pid_result + yaw_heading.pid_result;
 			  }
 
 			  altitude_setpoint = actual_pressure_fast;
