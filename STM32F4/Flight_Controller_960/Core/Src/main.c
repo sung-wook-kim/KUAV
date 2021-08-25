@@ -952,6 +952,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 
 	  if(batVolt == 0) batVolt = adcVal * 0.00699563f;
 	  batVolt = 0.98 * batVolt_prev + 0.02 * (adcVal * 0.00699563f);
+	  if(batVolt < 20.4) batVolt = 20.4;
 	  batVolt_prev = batVolt;
 	  Calculate_Takeoff_Throttle();
   }
