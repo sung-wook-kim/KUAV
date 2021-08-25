@@ -913,7 +913,7 @@ unsigned short adcVal;
 		  else
 		  {
 			  lat_gps_actual = lat_gps_previous;
-			  lon_gps_actual = lat_gps_previous;
+			  lon_gps_actual = lon_gps_previous;
 		  }
 
 		  lat_add = (lat_gps_actual - lat_gps_previous) / 200.00;
@@ -971,6 +971,7 @@ unsigned short adcVal;
 
 	  if(batVolt == 0) batVolt = adcVal * 0.00699563f;
 	  batVolt = 0.98 * batVolt_prev + 0.02 * (adcVal * 0.00699563f);
+	  if(batVolt < 18) batVolt = 18;
 	  batVolt_prev = batVolt;
 	  Calculate_Takeoff_Throttle();
   }
