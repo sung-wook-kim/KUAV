@@ -870,13 +870,13 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  actual_pressure_fast = pressure_total_average / 5.0f;
 	  }
 
-	  if(m8n_rx_cplt_flag == 1) // GPS receive checking
+	  if(m8p_rx_cplt_flag == 1) // GPS receive checking
 	  {
-		  m8n_rx_cplt_flag = 0;
+		  m8p_rx_cplt_flag = 0;
 
-		  if(M8N_UBX_CHKSUM_Check(&m8n_rx_buf[0], 100) == 1)
+		  if(M8P_UBX_CHKSUM_Check(&m8p_rx_buf[0], 100) == 1)
 		  {
-			  M8N_UBX_NAV_PVT_Parsing(&m8n_rx_buf[0], &pvt);
+			  M8P_UBX_NAV_PVT_Parsing(&m8p_rx_buf[0], &pvt);
 
 			  if(lat_gps_previous == 0 || lon_gps_previous == 0)
 			  {
@@ -889,9 +889,8 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 				  lon_gps_previous = lon_gps_actual;
 			  }
 
-			  lat_gps_actual = (double)pvt.lat;
-			  lon_gps_actual = (double)pvt.lon;
-
+			  lat_gps_actual = (double)M8P_pvt.lat;
+			  lon_gps_actual = (double)M8P_pvt.lon;
 		  }
 		  else
 		  {

@@ -54,6 +54,9 @@ uint8_t uart6_rx_data = 0;
 uint8_t m8n_rx_buf[100];
 uint8_t m8n_rx_cplt_flag = 0;
 
+uint8_t m8p_rx_buf[100];
+uint8_t m8p_rx_cplt_flag = 0;
+
 uint8_t ibus_rx_buf[32];
 uint8_t ibus_rx_cplt_flag = 0;
 
@@ -265,14 +268,14 @@ void UART4_IRQHandler(void)
 			case 0:
 				if(uart4_rx_data == 0xb5)
 				{
-					m8n_rx_buf[cnt] = uart4_rx_data;
+					m8p_rx_buf[cnt] = uart4_rx_data;
 					cnt++;
 				}
 				break;
 			case 1:
 				if(uart4_rx_data == 0x62)
 				{
-					m8n_rx_buf[cnt] = uart4_rx_data;
+					m8p_rx_buf[cnt] = uart4_rx_data;
 					cnt++;
 				}
 				else
@@ -280,12 +283,12 @@ void UART4_IRQHandler(void)
 				break;
 
 			case 99:
-				m8n_rx_buf[cnt] = uart4_rx_data;
+				m8p_rx_buf[cnt] = uart4_rx_data;
 				cnt = 0;
-				m8n_rx_cplt_flag = 1;
+				m8p_rx_cplt_flag = 1;
 				break;
 			default:
-				m8n_rx_buf[cnt] = uart4_rx_data;
+				m8p_rx_buf[cnt] = uart4_rx_data;
 				cnt++;
 				break;
 			}
