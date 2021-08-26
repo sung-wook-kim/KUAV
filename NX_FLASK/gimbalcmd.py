@@ -23,7 +23,8 @@ WIP to do list
 
 ######################Global variable declaration(User Specific)#######################
 baud = 115200  # Having the wrong value here will cause serial communication issues.
-com = '/dev/ttyACM0'  # Change this value to your COM port
+# com = '/dev/ttyACM0'  # Change this value to your COM port
+com = 'COM5'
 crc = '3334'  # Non-mavlink CRC dummy value. Should not need to change!
 sleeptime = [None, .001]  # In seconds. [Movement CMD delay, Non-movement CMD delay]
 
@@ -59,11 +60,11 @@ sleep = [False]
 #######################################################################################
 
 # Initializes Serial
-def serialinit():
+def serialinit(ser_port = com):
     global ser
     try:
         ser = (serial.Serial(
-            port=com,
+            port=ser_port,
             baudrate=baud,
             parity=serial.PARITY_NONE,
             stopbits=serial.STOPBITS_ONE,
@@ -384,13 +385,15 @@ def main():
 
     # datalog(safemode)
     # array = ['helloworld']
-    for i in range(3):
-        setpitchrollyaw(0, 0, i * 60)
+    # for i in range(3):
+    #     setpitchrollyaw(0, 0, i * 60)
+    setpitchrollyaw(0, 0, 0)
 
-# if __name__=="__main__":
-#     main()	 
-# else: 
-#     main()
+
+if __name__=="__main__":
+    main()
+else:
+    main()
 
 # Test script here
 # setpitch(10)
