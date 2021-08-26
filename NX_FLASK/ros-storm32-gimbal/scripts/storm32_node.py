@@ -9,7 +9,7 @@ import diagnostic_updater
 import diagnostic_msgs.msg
 from storm32_gimbal.msg import GimbalOrientation
 from std_srvs.srv import Trigger, TriggerResponse
-from geometry_msgs.msg import QuaternionStamped, Quaternion
+from geometry_msgs.msg import QuaternionStamped
 
 
 def restart_shutdown_callback(event):

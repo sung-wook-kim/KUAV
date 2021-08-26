@@ -125,7 +125,6 @@ def rotationMatrixToEulerAngles(R):
 
     return np.array([x, y, z])
 
-
 def quaternion_rotation_matrix(orientation):
     """
     Covert a quaternion into a full three-dimensional rotation matrix.
@@ -155,6 +154,44 @@ def quaternion_rotation_matrix(orientation):
     r20 = 2 * (q1 * q3 - q0 * q2)
     r21 = 2 * (q2 * q3 + q0 * q1)
     r22 = 2 * (q0 * q0 + q3 * q3) - 1
+
+    # 3x3 rotation matrix
+    rot_matrix = np.array([[r00, r01, r02],
+                           [r10, r11, r12],
+                           [r20, r21, r22]])
+
+    return rot_matrix
+
+
+def euler_rotation_matrix(roll, pitch, yaw):
+    """
+    Generate a full three-dimensional rotation matrix from euler angles
+
+    Input
+    :param roll: The roll angle (radians) - Rotation around the x-axis
+    :param pitch: The pitch angle (radians) - Rotation around the y-axis
+    :param yaw: The yaw angle (radians) - Rotation around the z-axis
+
+    Output
+    :return: A 3x3 element matix containing the rotation matrix.
+             This rotation matrix converts a point in the local reference
+             frame to a point in the global reference frame.
+
+    """
+    # First row of the rotation matrix
+    r00 = np.cos(yaw) * np.cos(pitch)
+    r01 = np.cos(yaw) * np.sin(pitch) * np.sin(roll) - np.sin(yaw) * np.cos(roll)
+    r02 = np.cos(yaw) * np.sin(pitch) * np.cos(roll) + np.sin(yaw) * np.sin(roll)
+
+    # Second row of the rotation matrix
+    r10 = np.sin(yaw) * np.cos(pitch)
+    r11 = np.sin(yaw) * np.sin(pitch) * np.sin(roll) + np.cos(yaw) * np.cos(roll)
+    r12 = np.sin(yaw) * np.sin(pitch) * np.cos(roll) - np.cos(yaw) * np.sin(roll)
+
+    # Third row of the rotation matrix
+    r20 = -np.sin(pitch)
+    r21 = np.cos(pitch) * np.sin(roll)
+    r22 = np.cos(pitch) * np.cos(roll)
 
     # 3x3 rotation matrix
     rot_matrix = np.array([[r00, r01, r02],
