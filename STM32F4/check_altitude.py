@@ -18,7 +18,7 @@ throttle = 0
 d_result = 0
 voltage = 0
 
-ser = serial.Serial('COM7', 115200)
+ser = serial.Serial('COM4', 115200)
 ser.flush()
 
 
@@ -101,7 +101,7 @@ def connect():
                 if throttle_sign == 1: throttle = (throttle & 0x7fffffff) - 2 ** 31
                 if pid_sign == 1: pid_result = (pid_result & 0x7fffffff) - 2 ** 31
                 print(
-                    f'temp = {temp} , alt = {alt} , target = {target} , error = {error} , pid_result = {pid_result} , voltage : {voltage / 1000}')
+                    f'throttle = {throttle} , alt = {alt} , target = {target} , error = {error} , pid_result = {pid_result} , voltage : {voltage / 1000}')
                 alt_li.append(alt)
                 target_li.append(target)
                 error_li.append(error)

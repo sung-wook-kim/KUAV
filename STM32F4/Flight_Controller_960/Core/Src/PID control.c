@@ -220,7 +220,7 @@ void Single_Altitude_Rate_PID_Calculation(PIDSingle* axis, float set_point_rate,
 
 void Double_Altitude_PID_Calculation(PIDDouble* axis, float set_point_altitude, float current_altitude)
 {
-#define ALT_ERR_SUM_MAX 2000
+#define ALT_ERR_SUM_MAX 3000
 #define ALT_ERR_SUM_MIN -ALT_ERR_SUM_MAX
 	/*********** Double PID Outer Begin (Roll and Pitch Angular Position Control) *************/
 	axis->out.reference = set_point_altitude;	//Set point of outer PID control
@@ -266,7 +266,7 @@ void Double_Altitude_PID_Calculation(PIDDouble* axis, float set_point_altitude, 
 
 	axis->in.pid_result = axis->in.p_result + axis->in.i_result + axis->in.d_result; //Calculate PID result of inner loop
 	/****************************************************************************************/
-#define ALT_PID_MAX 3000
+#define ALT_PID_MAX 5000
 #define ALT_PID_MIN -ALT_PID_MAX / 2
 	if (axis->in.pid_result < ALT_PID_MIN) axis->in.pid_result = ALT_PID_MIN;
 	if (axis->in.pid_result > ALT_PID_MAX) axis->in.pid_result = ALT_PID_MAX;

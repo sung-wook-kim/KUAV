@@ -5,7 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import threading
 import struct
-ser = serial.Serial('COM7', 115200)
+ser = serial.Serial('COM4', 115200)
 ser.flush()
 
 global yaw, lat_gps , lon_gps , lat_waypoint , lon_waypoint , my_checksum , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li
