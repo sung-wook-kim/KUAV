@@ -6,8 +6,9 @@ import matplotlib.pyplot as plt
 import threading
 import struct
 ser = serial.Serial('COM7', 115200)
+rtk = serial.Serial('COM8', 115200)
 ser.flush()
-
+rtk.flush()
 global yaw, lat_gps , lon_gps , lat_waypoint , lon_waypoint , my_checksum , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li
 
 yaw = 0
@@ -57,6 +58,9 @@ def receive_data(byte, sign = True):
 
     return data
 
+def RTKfn():
+    while True:
+        ser.write(rtk.read(1))
 def connect():
     global my_checksum ,yaw, lat_gps , lon_gps , lat_waypoint , lon_waypoint , i , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li
     while True:
@@ -121,6 +125,8 @@ def connect():
 thread1 = threading.Thread(target = connect)
 thread1.start()
 
+thread2 = threading.Thread(target = RTKfn)
+thread2.start()
 j = 0
 time.sleep(3)
 while True:
