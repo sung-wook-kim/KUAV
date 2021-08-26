@@ -63,7 +63,7 @@ def receive_data(byte, sign = True):
     return data
 
 def connect():
-    global my_checksum, yaw, numSV, fixtype lat_gps , lon_gps , lat_waypoint , lon_waypoint , i , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li, numSV_li, fixtype_li
+    global my_checksum, yaw, numSV, fixtype, lat_gps , lon_gps , lat_waypoint , lon_waypoint , i , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li, numSV_li, fixtype_li
     while True:
         i+=1
         if i % 100 == 0:

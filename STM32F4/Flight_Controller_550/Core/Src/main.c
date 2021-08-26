@@ -442,6 +442,10 @@ unsigned short adcVal;
   Encode_Msg_PID_Gain(&telemetry_tx_buf[0], 11, lon.out.kp, lon.out.ki, lon.out.kd);
   HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 
+  EP_PIDGain_Read(12, &batVolt, &dummy, &dummy);
+  Encode_Msg_BatVolt(&telemetry_tx_buf[0], 12, batVolt);
+  HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 7, 10);
+
 
 /*Receiver Detection*/
   while(Is_iBus_Received() == 0)
@@ -599,6 +603,7 @@ unsigned short adcVal;
 		  flight_mode = 1;
 		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 2;
 		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1 && (pvt.fixType == 2 || pvt.fixType == 3)) flight_mode = 3;
+//		  else if(iBus.SwA == 2000 && iBus.VrB > 1900 && is_throttle_middle == 1) flight_mode = 4;
 
 
 		  if(flight_mode == 2) //Altitude Holding Mode
@@ -1002,6 +1007,9 @@ unsigned short adcVal;
 //	  batVolt = 0.98 * batVolt_prev + 0.02 * (adcVal * 0.00699563f);
 //	  if(batVolt < 18) batVolt = 18;
 //	  batVolt_prev = batVolt;
+	  if(batVolt < 18) batVolt = 18;
+	  else if(batVolt > 22) batVolt = 22;
+
 	  Calculate_Takeoff_Throttle();
   }
   /* USER CODE END 3 */
