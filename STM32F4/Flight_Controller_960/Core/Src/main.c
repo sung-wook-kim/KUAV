@@ -192,8 +192,8 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 #define MOTOR_FREQ_ADJUST 1.0f
-#define BNO080_PITCH_OFFSET 0.0f
-#define BNO080_ROLL_OFFSET 2.0f
+#define BNO080_PITCH_OFFSET -1.8f
+#define BNO080_ROLL_OFFSET 3.5f
 
 float q[4];
 float quatRadianAccuracy;
@@ -352,7 +352,7 @@ unsigned short adcVal;
     }
 
   /*GNSS Initialization*/
-  M8N_Initialization();
+  M8P_Initialization();
 
   // Correct ICM20602 bias
   ICM20602_Writebyte(0x13, (gyro_x_offset*-2)>>8);
@@ -870,13 +870,13 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  actual_pressure_fast = pressure_total_average / 5.0f;
 	  }
 
-	  if(m8n_rx_cplt_flag == 1) // GPS receive checking
+	  if(m8p_rx_cplt_flag == 1) // GPS receive checking
 	  {
-		  m8n_rx_cplt_flag = 0;
+		  m8p_rx_cplt_flag = 0;
 
-		  if(M8N_UBX_CHKSUM_Check(&m8n_rx_buf[0], 100) == 1)
+		  if(M8P_UBX_CHKSUM_Check(&m8p_rx_buf[0], 100) == 1)
 		  {
-			  M8N_UBX_NAV_PVT_Parsing(&m8n_rx_buf[0], &pvt);
+			  M8P_UBX_NAV_PVT_Parsing(&m8p_rx_buf[0], &pvt);
 
 			  if(lat_gps_previous == 0 || lon_gps_previous == 0)
 			  {
@@ -889,9 +889,8 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 				  lon_gps_previous = lon_gps_actual;
 			  }
 
-			  lat_gps_actual = (double)pvt.lat;
-			  lon_gps_actual = (double)pvt.lon;
-
+			  lat_gps_actual = (double)M8P_pvt.lat;
+			  lon_gps_actual = (double)M8P_pvt.lon;
 		  }
 		  else
 		  {
@@ -1188,6 +1187,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		if(huart->Instance == USART1)
 		{
 			HAL_UART_Receive_IT(&huart1, &uart1_rx_data, 1);
+			LL_USART_TransmitData8(UART4, &uart1_rx_data);
 
 			switch(cnt_1)
 					{
