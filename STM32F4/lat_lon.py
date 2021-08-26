@@ -107,7 +107,7 @@ def connect():
                 checksum_4 = int(ser.read(1).hex(), 16) & 0xff
                 
                 checksum = checksum_1 << 24 | checksum_2 << 16 | checksum_3 << 8 | checksum_4
-                print(f'lat = {lat_gps}, lon = {lon_gps}, target_lat = {lat_waypoint},target_lon = {lon_waypoint} ,yaw = {yaw}, vol = {volatge / 100} , numSV = {numSV}, fixtype = {fixtype}')
+                print(f'waypoint_step = {numSV}, lat = {lat_gps}, lon = {lon_gps}, target_lat = {lat_waypoint},target_lon = {lon_waypoint} ,yaw = {yaw}, vol = {volatge / 100} , numSV = {numSV}, fixtype = {fixtype}')
                 ser.reset_input_buffer()
                 if checksum == my_checksum:
                     yaw_li.append(yaw)

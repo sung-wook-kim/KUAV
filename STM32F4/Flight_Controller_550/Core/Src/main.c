@@ -147,8 +147,9 @@ unsigned int takeoff_throttle;
 // Extra
 float theta, theta_radian;
 float batVolt = 0;
-float dummy = 0;
 float batVolt_prev = 0;
+float dummy = 0;
+unsigned char temp_cnt = 0;
 
 /* USER CODE END PV */
 
@@ -165,9 +166,11 @@ int Is_GPS_In_Korea(void);
 void Receive_Pid_Gain(void);
 void BNO080_Calibration(void);
 void return_to_home(void);
+int Is_Home_Now(void);
 void Calculate_Takeoff_Throttle(void);
 
 void Encode_Msg_PID_Gain(unsigned char* telemetry_tx_buf, unsigned char id, float p, float i, float d);
+void Encode_Msg_BatVolt(unsigned char* telemetry_tx_buf, unsigned char id, float batVolt);
 void Encode_Msg_AHRS(unsigned char* telemetry_tx_buf);
 void Encode_Msg_Altitude(unsigned char* telemetry_tx_buf);
 void Encode_Msg_Gps(unsigned char* telemetry_tx_buf);
@@ -347,39 +350,6 @@ unsigned short adcVal;
   /*GNSS Initialization*/
   M8N_Initialization();
 
-  // GPS Home
- while(Is_GPS_In_Korea() != 1 || Is_GPS_Accuracy() != 1)
- {
-	  if(m8n_rx_cplt_flag == 1) // GPS receive checking
-	  {
-		  m8n_rx_cplt_flag = 0;
-
-		  if(M8N_UBX_CHKSUM_Check(&m8n_rx_buf[0], 100) == 1)
-		  {
-			  M8N_UBX_NAV_PVT_Parsing(&m8n_rx_buf[0], &pvt);
-		  }
-	  }
- }
- while(gps_home_cnt < 10)
- {
-	 if(m8n_rx_cplt_flag == 1) // GPS receive checking
-		  {
-			  m8n_rx_cplt_flag = 0;
-
-			  if(M8N_UBX_CHKSUM_Check(&m8n_rx_buf[0], 100) == 1)
-			  {
-				  M8N_UBX_NAV_PVT_Parsing(&m8n_rx_buf[0], &pvt);
-
-				  lat_gps_home += (double)pvt.lat;
-				  lon_gps_home += (double)pvt.lon;
-
-				  gps_home_cnt++;
-			  }
-		  }
- }
- lat_gps_home /= 10.00;
- lon_gps_home /= 10.00;
-
   // Correct ICM20602 bias
   ICM20602_Writebyte(0x13, (gyro_x_offset*-2)>>8);
   ICM20602_Writebyte(0x14, (gyro_x_offset*-2));
@@ -446,8 +416,7 @@ unsigned short adcVal;
   Encode_Msg_BatVolt(&telemetry_tx_buf[0], 12, batVolt);
   HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 7, 10);
 
-
-/*Receiver Detection*/
+  /*Receiver Detection*/
   while(Is_iBus_Received() == 0)
   {
 	  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4); //Enable Timer Counting
@@ -501,19 +470,19 @@ unsigned short adcVal;
 
 	  BNO080_Calibration();
 	  while(iBus.SwC != 1000)
-	  	  {
-	  		  Is_iBus_Received();
+	  {
+		  Is_iBus_Received();
 
-	  		  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4);
-	  		  TIM3->PSC = 1500;
-	  		  HAL_Delay(200);
-	  		  TIM3->PSC = 2000;
-	  		  HAL_Delay(200);
-	  		  LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
-	  	  }
+		  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4);
+		  TIM3->PSC = 1500;
+		  HAL_Delay(200);
+		  TIM3->PSC = 2000;
+		  HAL_Delay(200);
+		  LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
+	  }
   }
 
-  /*********************Check Throttle value is minimum************************/
+   /*********************Check Throttle value is minimum************************/
   while(Is_iBus_Throttle_min() == 0 || iBus.SwA == 2000)
   {
 	  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4); //Enable Timer Counting
@@ -540,6 +509,39 @@ unsigned short adcVal;
 	  }
   }
   baro_offset = baro_offset / baro_cnt;
+
+  // GPS Home
+  while(Is_GPS_In_Korea() != 1 || Is_GPS_Accuracy() != 1)
+  {
+	  if(m8n_rx_cplt_flag == 1) // GPS receive checking
+	  {
+		  m8n_rx_cplt_flag = 0;
+
+		  if(M8N_UBX_CHKSUM_Check(&m8n_rx_buf[0], 100) == 1)
+		  {
+			  M8N_UBX_NAV_PVT_Parsing(&m8n_rx_buf[0], &pvt);
+		  }
+	  }
+  }
+  while(gps_home_cnt < 10)
+  {
+	  if(m8n_rx_cplt_flag == 1) // GPS receive checking
+	  {
+		  m8n_rx_cplt_flag = 0;
+
+		  if(M8N_UBX_CHKSUM_Check(&m8n_rx_buf[0], 100) == 1)
+		  {
+			  M8N_UBX_NAV_PVT_Parsing(&m8n_rx_buf[0], &pvt);
+
+			  lat_gps_home += (double)pvt.lat;
+			  lon_gps_home += (double)pvt.lon;
+
+			  gps_home_cnt++;
+		  }
+	  }
+  }
+  lat_gps_home /= 10.00;
+  lon_gps_home /= 10.00;
 
 //  batVolt = adcVal * 0.00699563f;
 
@@ -602,9 +604,8 @@ unsigned short adcVal;
 
 		  flight_mode = 1;
 		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 2;
+		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && iBus.VrB > 1900 && is_throttle_middle == 1) flight_mode = 4;
 		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1 && (pvt.fixType == 2 || pvt.fixType == 3)) flight_mode = 3;
-//		  else if(iBus.SwA == 2000 && iBus.VrB > 1900 && is_throttle_middle == 1) flight_mode = 4;
-
 
 		  if(flight_mode == 2) //Altitude Holding Mode
 		  {
@@ -746,8 +747,9 @@ unsigned short adcVal;
 			  Reset_PID_Integrator(&altitude.out);
 			  Reset_PID_Integrator(&altitude.in);
 
-			  lat_waypoint = lat_gps_home;
-			  lon_waypoint = lon_gps_home;
+			  lat_waypoint = lat_gps;
+			  lon_waypoint = lon_gps;
+			  return_to_home_step = 0;
 			  Reset_PID_Integrator(&lat.out);
 			  Reset_PID_Integrator(&lat.in);
 			  Reset_PID_Integrator(&lon.out);
@@ -1106,7 +1108,7 @@ int Is_GPS_In_Korea(void)
 
 int Is_GPS_Accuracy(void)
 {
-	if(pvt.fixType == 2 || pvt.fixType == 3)
+	if((pvt.fixType == 2 || pvt.fixType == 3) && pvt.numSV > 10)
 	{
 		return 1;
 	}
@@ -1656,7 +1658,7 @@ void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[4] = ((int)(batVolt * 100)) >> 8;
 	telemetry_tx_buf[5] = ((int)(batVolt * 100));
 
-	telemetry_tx_buf[6] = pvt.numSV;
+	telemetry_tx_buf[6] = return_to_home_step;
 
 	telemetry_tx_buf[7] = (int)BNO080_Yaw >> 24;
 	telemetry_tx_buf[8] = (int)BNO080_Yaw >> 16;
@@ -1681,23 +1683,23 @@ void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[25] = (long long int)lon_gps >> 8;
 	telemetry_tx_buf[26] = (long long int)lon_gps;
 
-	telemetry_tx_buf[27] = (long long int)lat_waypoint >> 56;
-	telemetry_tx_buf[28] = (long long int)lat_waypoint >> 48;
-	telemetry_tx_buf[29] = (long long int)lat_waypoint >> 40;
-	telemetry_tx_buf[30] = (long long int)lat_waypoint >> 32;
-	telemetry_tx_buf[31] = (long long int)lat_waypoint >> 24;
-	telemetry_tx_buf[32] = (long long int)lat_waypoint >> 16;
-	telemetry_tx_buf[33] = (long long int)lat_waypoint >> 8;
-	telemetry_tx_buf[34] = (long long int)lat_waypoint;
+	telemetry_tx_buf[27] = (long long int)lat_gps_home >> 56;
+	telemetry_tx_buf[28] = (long long int)lat_gps_home >> 48;
+	telemetry_tx_buf[29] = (long long int)lat_gps_home >> 40;
+	telemetry_tx_buf[30] = (long long int)lat_gps_home >> 32;
+	telemetry_tx_buf[31] = (long long int)lat_gps_home >> 24;
+	telemetry_tx_buf[32] = (long long int)lat_gps_home >> 16;
+	telemetry_tx_buf[33] = (long long int)lat_gps_home >> 8;
+	telemetry_tx_buf[34] = (long long int)lat_gps_home;
 
-	telemetry_tx_buf[35] = (long long int)lon_waypoint >> 56;
-	telemetry_tx_buf[36] = (long long int)lon_waypoint >> 48;
-	telemetry_tx_buf[37] = (long long int)lon_waypoint >> 40;
-	telemetry_tx_buf[38] = (long long int)lon_waypoint >> 32;
-	telemetry_tx_buf[39] = (long long int)lon_waypoint >> 24;
-	telemetry_tx_buf[40] = (long long int)lon_waypoint >> 16;
-	telemetry_tx_buf[41] = (long long int)lon_waypoint >> 8;
-	telemetry_tx_buf[42] = (long long int)lon_waypoint;
+	telemetry_tx_buf[35] = (long long int)lon_gps_home >> 56;
+	telemetry_tx_buf[36] = (long long int)lon_gps_home >> 48;
+	telemetry_tx_buf[37] = (long long int)lon_gps_home >> 40;
+	telemetry_tx_buf[38] = (long long int)lon_gps_home >> 32;
+	telemetry_tx_buf[39] = (long long int)lon_gps_home >> 24;
+	telemetry_tx_buf[40] = (long long int)lon_gps_home >> 16;
+	telemetry_tx_buf[41] = (long long int)lon_gps_home >> 8;
+	telemetry_tx_buf[42] = (long long int)lon_gps_home;
 
 	telemetry_tx_buf[43] = (int)gps_pitch_adjust >> 24;
 	telemetry_tx_buf[44] = (int)gps_pitch_adjust >> 16;
@@ -2036,74 +2038,107 @@ void Encode_Msg_Temp(unsigned char* telemery_tx_buf)
 
 void return_to_home(void)
 {
-
-	if (flight_mode == 4)
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//Step 0 - make some basic calculations
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////
+	if (return_to_home_step == 0)
 	{
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////
-		//Step 0 - make some basic calculations
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////
-		if (return_to_home_step == 0)
-		{
-			//Is the quadcopter nearby? Then land without returning to home.
-			//			if( lat_waypoint - lat_gps_home < 100 && lat_waypoint - lat_gps_home > -100 ) is_lat_nearby = 1;
-			//			if( lon_waypoint - lon_gps_home < 100 && lon_waypoint - lon_gps_home > -100 ) is_lon_nearby = 1;
-			//			if (is_lat_nearby == 1 && is_lon_nearby == 1)return_to_home_step = 3;
+		//Is the quadcopter nearby? Then land without returning to home.
+		//			if( lat_waypoint - lat_gps_home < 100 && lat_waypoint - lat_gps_home > -100 ) is_lat_nearby = 1;
+		//			if( lon_waypoint - lon_gps_home < 100 && lon_waypoint - lon_gps_home > -100 ) is_lon_nearby = 1;
+		//			if (is_lat_nearby == 1 && is_lon_nearby == 1)return_to_home_step = 3;
 
-			return_to_home_move_factor = 0.0;
-			if (return_to_home_lat_factor == 1 || return_to_home_lon_factor == 1)return_to_home_step = 1;
-			//cos(((float)l_lat_gps / 1000000.0)
-			if (abs_double(lat_gps_home, lat_waypoint) >= abs_double(lon_gps_home, lon_waypoint))
-			{
-				return_to_home_lon_factor = abs_double(lon_gps_home, lon_waypoint) / abs_double(lat_gps_home, lat_waypoint);
-				return_to_home_lat_factor = 1;
-			}
-			else
-			{
-				return_to_home_lon_factor = 1;
-				return_to_home_lat_factor = abs_double(lat_gps_home, lat_waypoint) / abs_double(lon_gps_home, lon_waypoint);
-			}
-		}
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////
-		//Step - 1 increase the altitude to 20 meter above ground level
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////
-		if (return_to_home_step == 1)
-		{
-			return_to_home_step = 2;
-		}
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////
-		//Step 2 - Return to the home position
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////
-		if (return_to_home_step == 2)
-		{
-			if (lat_gps_home == lat_waypoint && lon_gps_home == lon_waypoint)return_to_home_step = 3;
-			if (abs_double(lat_gps_home, lat_waypoint) < 160 && abs_double(lon_gps_home, lon_waypoint) < 160 && return_to_home_move_factor > 0.05)return_to_home_move_factor -= 0.00015;
-			else if (return_to_home_move_factor < 0.20)return_to_home_move_factor += 0.0001;
+		return_to_home_move_factor = 0.0;  //Return to Home speed
 
-			if (lat_gps_home != lat_waypoint) {
-				if (lat_gps_home > lat_waypoint) lat_gps_float_adjust += return_to_home_move_factor * return_to_home_lat_factor;
-				if (lat_gps_home < lat_waypoint) lat_gps_float_adjust -= return_to_home_move_factor * return_to_home_lat_factor;
-			}
-			if (lon_gps_home != lon_waypoint) {
-				if (lon_gps_home > lon_waypoint) lon_gps_float_adjust += return_to_home_move_factor * return_to_home_lon_factor;
-				if (lon_gps_home < lon_waypoint) lon_gps_float_adjust -= return_to_home_move_factor * return_to_home_lon_factor;
-			}
+		//Calculate gradient
+		if (return_to_home_lat_factor == 1 || return_to_home_lon_factor == 1)return_to_home_step = 1; //go to next step
+		if (abs_double(lat_gps_home, lat_waypoint) >= abs_double(lon_gps_home, lon_waypoint))
+		{
+			return_to_home_lon_factor = abs_double(lon_gps_home, lon_waypoint) / abs_double(lat_gps_home, lat_waypoint);
+			return_to_home_lat_factor = 1;
 		}
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////
-		//Step - 3 decrease the altitude by increasing the pressure setpoint
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////
-		if (return_to_home_step == 3) {
-			if (altitude_setpoint < 1 )return_to_home_step = 4;
-			altitude_setpoint -= 0.01;
+		else
+		{
+			return_to_home_lon_factor = 1;
+			return_to_home_lat_factor = abs_double(lat_gps_home, lat_waypoint) / abs_double(lon_gps_home, lon_waypoint);
 		}
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////
-		//Step - 4 Stop the motors
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////
-		if (return_to_home_step == 4) {
-			motor_arming_flag = 0;
-			return_to_home_step = 5;
-		}
-
 	}
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//Step - 1 increase the altitude to 20 meter above ground level
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////
+	if (return_to_home_step == 1)
+	{
+		if(altitude_setpoint == 7) return_to_home_step = 2;
+
+		if(altitude_setpoint < 7)
+		{
+			if(altitude.out.error < 0.1 && altitude.out.error > -0.1) altitude_setpoint += 0.3;
+			if(altitude_setpoint > 7) altitude_setpoint = 7;
+		}
+		else
+		{
+			if(altitude.out.error < 0.1 && altitude.out.error > -0.1) altitude_setpoint -= 0.3;
+			if(altitude_setpoint < 7) altitude_setpoint = 7;
+		}
+	}
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//Step 2 - Return to the home position
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////
+	if (return_to_home_step == 2)
+	{
+		if (Is_Home_Now() == 1)return_to_home_step = 3;
+
+		// Slow Down speed when drone is located nearby home
+		// Min Speed : 0.03 -> 30cm/s
+		if (abs_double(lat_gps_home, lat_waypoint) < 200 && abs_double(lon_gps_home, lon_waypoint) < 200 && return_to_home_move_factor > 0.03)return_to_home_move_factor -= 0.00009;
+		// Max Speed : 0.1 -> 100cm/s
+		else if (return_to_home_move_factor < 0.1)return_to_home_move_factor += 0.00005;
+
+		if (lat_gps_home != lat_waypoint) {
+			if (lat_gps_home > lat_waypoint) lat_gps_float_adjust += return_to_home_move_factor * return_to_home_lat_factor;
+			if (lat_gps_home < lat_waypoint) lat_gps_float_adjust -= return_to_home_move_factor * return_to_home_lat_factor;
+		}
+		if (lon_gps_home != lon_waypoint) {
+			if (lon_gps_home > lon_waypoint) lon_gps_float_adjust += return_to_home_move_factor * return_to_home_lon_factor;
+			if (lon_gps_home < lon_waypoint) lon_gps_float_adjust -= return_to_home_move_factor * return_to_home_lon_factor;
+		}
+	}
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//Step - 3 decrease the altitude by increasing the pressure setpoint
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////
+	if (return_to_home_step == 3) {
+		if(altitude_setpoint == 2) return_to_home_step = 4;
+
+				if(altitude_setpoint > 2)
+				{
+					if(altitude.out.error < 0.1 && altitude.out.error > -0.1) altitude_setpoint -= 0.3;
+					if(altitude_setpoint < 2) altitude_setpoint = 2;
+				}
+				else
+				{
+					if(altitude.out.error < 0.1 && altitude.out.error > -0.1) altitude_setpoint += 0.3;
+					if(altitude_setpoint > 2) altitude_setpoint = 2;
+				}
+	}
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//Step - 4 Stop the motors
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////
+	if (return_to_home_step == 4) {
+//		motor_arming_flag = 0;
+		return_to_home_step = 5;
+	}
+}
+
+int Is_Home_Now(void)
+{
+	if(lat_waypoint - lat_gps_home < 100 && lat_waypoint - lat_gps_home > -100)
+	{
+		if(lon_waypoint - lon_gps_home < 100 && lon_waypoint - lon_gps_home > -100)
+		{
+			return 1;
+		}
+	}
+	return 0;
 }
 
 void Calculate_Takeoff_Throttle()
