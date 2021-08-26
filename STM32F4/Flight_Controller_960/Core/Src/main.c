@@ -192,8 +192,8 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 #define MOTOR_FREQ_ADJUST 1.0f
-#define BNO080_PITCH_OFFSET 0.0f
-#define BNO080_ROLL_OFFSET 2.0f
+#define BNO080_PITCH_OFFSET -1.8f
+#define BNO080_ROLL_OFFSET 3.5f
 
 float q[4];
 float quatRadianAccuracy;
@@ -352,7 +352,7 @@ unsigned short adcVal;
     }
 
   /*GNSS Initialization*/
-  M8N_Initialization();
+  M8P_Initialization();
 
   // Correct ICM20602 bias
   ICM20602_Writebyte(0x13, (gyro_x_offset*-2)>>8);
@@ -1188,6 +1188,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		if(huart->Instance == USART1)
 		{
 			HAL_UART_Receive_IT(&huart1, &uart1_rx_data, 1);
+			LL_USART_TransmitData8(UART4, &uart1_rx_data);
 
 			switch(cnt_1)
 					{
