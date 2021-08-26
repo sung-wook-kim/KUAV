@@ -37,7 +37,7 @@
 #include <string.h>
 #include "AT24C08.h"
 #include "lps22hh.h"
-#include "M8N.h"
+//#include "M8N.h"
 #include "M8P.h"
 #include "XAVIER.h"
 /* USER CODE END Includes */
@@ -197,7 +197,7 @@ int main(void)
 
 float q[4];
 float quatRadianAccuracy;
-unsigned short iBus_SwA_Prev = 0;
+ unsigned short iBus_SwA_Prev = 0;
 unsigned char iBus_rx_cnt = 0;
 unsigned char iBus_VrA_flag = 0;
 unsigned char iBus_VrA_Prev_flag = 0;
@@ -889,8 +889,8 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 				  lon_gps_previous = lon_gps_actual;
 			  }
 
-			  lat_gps_actual = (double)M8P_pvt.lat;
-			  lon_gps_actual = (double)M8P_pvt.lon;
+			  lat_gps_actual = (double)pvt.lat;
+			  lon_gps_actual = (double)pvt.lon;
 		  }
 		  else
 		  {

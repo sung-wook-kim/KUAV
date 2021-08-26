@@ -1,7 +1,7 @@
 #include "M8P.h"
 
-M8P_UBX_NAV_POSLLH M8P_posllh;
-M8P_UBX_NAV_PVT M8P_pvt;
+M8P_UBX_NAV_POSLLH posllh;
+M8P_UBX_NAV_PVT pvt;
 
 
 const unsigned char M8P_UBX_CFG_PRT[] = {
