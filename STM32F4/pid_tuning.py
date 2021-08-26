@@ -17,9 +17,6 @@ GPS :
 '''
 
 
-
-
-
 # use no arming mode
 while True:
     print("1 : 자세 roll, 2 : 자세 pitch , 3 : 자세 yaw , 4 : 고도 , 5 : lat , 1 6 : lon , 7 : 종료")
@@ -416,6 +413,25 @@ while True:
                     print("OUT : " , drone_lon_out_p , drone_lon_out_i , drone_lon_out_d )
                     ser.reset_input_buffer()
     elif key == '7':
-        print("종료")
-        break
+        print("배터리 볼트 입력")
+        e = input()
+        volt = int(float(e)*100)
+
+        volt_1 = (volt >> 24) & 0xff  
+        volt_2 = (volt >> 16) & 0xff
+        volt_3 = (volt >> 8) & 0xff
+        volt_4 =  volt & 0xff
+
+        li_in = [0x46, 0x43, 0x0c, volt_4 , volt_3, volt_2 ,volt_1 , 0x00, 0x00, 0x00, 0x00]
+        
+        ser.reset_input_buffer()
+        for _ in range(3):
+            for i in range(5):
+                ser.write(li_in)
+            if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
+                if int(ser.read(1).hex(), 16) == 0x0c:
+                    drone_volt = struct.unpack('f',ser.read(4))
+                    print("volt : " , drone_volt )
+                    ser.reset_input_buffer()
+            
  #   input("enter the PID gain : ")
