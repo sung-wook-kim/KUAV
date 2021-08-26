@@ -19,7 +19,7 @@ GPS :
 
 # use no arming mode
 while True:
-    print("1 : 자세 roll, 2 : 자세 pitch , 3 : 자세 yaw , 4 : 고도 , 5 : lat , 1 6 : lon , 7 : 종료")
+    print("1 : 자세 roll, 2 : 자세 pitch , 3 : 자세 yaw , 4 : 고도 , 5 : lat , 1 6 : lon , 7 : Bat, 8 : 값 확인")
     key = input()
     if key == '1':
         print("자세제어 roll pid 수정")
@@ -422,7 +422,7 @@ while True:
         volt_3 = (volt >> 8) & 0xff
         volt_4 =  volt & 0xff
 
-        li_in = [0x46, 0x43, 0x0c, volt_4 , volt_3, volt_2 ,volt_1 , 0x00, 0x00, 0x00, 0x00]
+        li_in = [0x46, 0x43, 0x0c, volt_4 , volt_3, volt_2 ,volt_1]
         
         ser.reset_input_buffer()
         for _ in range(3):
@@ -435,8 +435,9 @@ while True:
                     ser.reset_input_buffer()
     elif key == '8':
         print("gain 확인")
-        li_in = [0x46, 0x43, 0x0d, in_lon_p_4,  in_lon_p_3,   in_lon_p_2, in_lon_p_1, in_lon_i_4, in_lon_i_3, in_lon_i_2,
-                in_lon_i_1, in_lon_d_4, in_lon_d_3, in_lon_d_2, in_lon_d_1, 0x00, 0x00, 0x00, 0x00]
+        li_in = [0x46, 0x43, 0x0d]
+            # , in_lon_p_4,  in_lon_p_3,   in_lon_p_2, in_lon_p_1, in_lon_i_4, in_lon_i_3, in_lon_i_2,
+            #     in_lon_i_1, in_lon_d_4, in_lon_d_3, in_lon_d_2, in_lon_d_1, 0x00, 0x00, 0x00, 0x00]
         for _ in range(3):
             for i in range(5):
                 ser.write(li_in)
