@@ -12,18 +12,23 @@ import torch.nn as nn
 import torchvision
 import numpy as np
 import argparse
+import haversine
 from utils.datasets import *
 from utils.utils import *
 from gimbalcmd import *
+from util import *
+
+NO_FLY_RADIUS = 10  # 10m
+
 
 class NX(BaseCamera):
     video_source = 'test.mp4'
-    
+
     def __init__(self):
-        self.serSTM = serial.Serial('/dev/ttyUSB1' , 115200,timeout=1)
+        self.serSTM = serial.Serial('/dev/ttyUSB1', 115200, timeout=1)
         self.serSTM.flush()
         print("stm")
-        self.serLIDAR = serial.Serial('/dev/ttyUSB0', 115200 , timeout =1)  
+        self.serLIDAR = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)
         self.serLIDAR.flush()
         print("lidar")
         ##gimbalstart
@@ -33,20 +38,33 @@ class NX(BaseCamera):
         paramstore(safemode)
         sleepmultipliercalc()
         intervalcalc()
-        setpitchrollyaw(0,0,0)
+        setpitchrollyaw(0, 0, 0)
         print("gimbal init")
-        self.lidar_distance_1 = 0 ; self.lidar_distance_2 = 0
-        self.MISSION_LAT = 0 ; self.MISSION_LON = 0
-        self.plag_MISSION = False; self.plag_RTH = False
-        self.RTH_LAT = 2353 ; self.RTH_LON = 235
-        self.AVOID_LAT = 1234 ; self.AVOID_LON = 1234 
+
+        #Mission params
+        self.hovering_altitude = -30  # meters
+        self.default_gimbal_pitch = -45  # degrees, how much drone will look down at spawn
+        self.following_distance = self.hovering_altitude / math.tan(self.default_gimbal_pitch)
+
+        self.lidar_distance_1 = 0;
+        self.lidar_distance_2 = 0
+        self.MISSION_LAT = 0;
+        self.MISSION_LON = 0
+        self.plag_MISSION = False;
+        self.plag_RTH = False
+        self.RTH_LAT = 2353;
+        self.RTH_LON = 235
+        self.AVOID_LAT = 1234;
+        self.AVOID_LON = 1234
         self.mode = 0  # default = 0
-        self.plag_1 = False; self.plag_2 = False; self.plag_6 = False
+        self.plag_1 = False;
+        self.plag_2 = False;
+        self.plag_6 = False
         self.plag_9 = False
         self.AVOID = False
         self.q = [0, 0, 0]
         # NX - GCS socket , NX = server
-        #self.HOST = '223.171.80.232'
+        # self.HOST = '223.171.80.232'
         self.HOST = '172.20.10.2'
         self.PORT = 9998
         print("Waiting GCS")
@@ -56,10 +74,10 @@ class NX(BaseCamera):
         self.client_socket, self.addr = self.server_socket.accept()
         print("connected tp GCS")
         NX.set_human_init()
-        self.threadSTM = threading.Thread(target=self.connectSTM)
-        self.threadGCS = threading.Thread(target=self.connectGCS)
-        self.threadLIDAR = threading.Thread(target=self.connectLIDAR)
-        self.threadGIMBAL = threading.Thread(target=self.connectGIMBAL)
+        self.threadSTM = threading.Thread(target=self.connectSTM, daemon=True)
+        self.threadGCS = threading.Thread(target=self.connectGCS, daemon=True)
+        self.threadLIDAR = threading.Thread(target=self.connectLIDAR, daemon=True)
+        self.threadGIMBAL = threading.Thread(target=self.connectGIMBAL, daemon=True)
         self.threadSTM.start()
         self.threadGCS.start()
         self.threadLIDAR.start()
@@ -200,26 +218,26 @@ class NX(BaseCamera):
         target_pitch = 0
         target_yaw = 0
         dy_prev = 0
-        dx_prev  = 0
+        dx_prev = 0
         while True:
             if NX.gimbal_plag == True:
                 NX.gimbal_plag = False
                 pitch_gain = 0.01
                 yaw_gain = -0.02
-#                pitch_d = -0.0025 
-#                yaw_d = 0.005
-#                dy_term = NX.img_dy - dy_prev
-#                dx_term = NX.img_dx - dx_prev
-                target_pitch += round((pitch_gain * NX.img_dy ),2)#+ dy_term * pitch_d) 
-                target_yaw += -math.atan(NX.img_dx/410*math.tan(63/2))*180/math.pi #+ dx_term * yaw_d)
+                #                pitch_d = -0.0025
+                #                yaw_d = 0.005
+                #                dy_term = NX.img_dy - dy_prev
+                #                dx_term = NX.img_dx - dx_prev
+                target_pitch += round((pitch_gain * NX.img_dy), 2)  # + dy_term * pitch_d)
+                target_yaw += -math.atan(NX.img_dx / 410 * math.tan(63 / 2)) * 180 / math.pi  # + dx_term * yaw_d)
                 #   Pitch     Roll      Yaw      axislimit
                 # [Min, Max, Min, Max, Min, Max]
                 target_pitch = min(max(axislimit[0], target_pitch), axislimit[1])
                 target_yaw = min(max(axislimit[4], target_yaw), axislimit[5])
                 print(f"img_dx {NX.img_dx}, img_dy {NX.img_dy}, target_pitch {target_pitch}, target_yaw {target_yaw}")
                 setpitchrollyaw(target_pitch, 0, target_yaw)
-#                dy_prev = NX.img_dy
-#                dx_prev = NX.img_dx
+            #                dy_prev = NX.img_dy
+            #                dx_prev = NX.img_dx
             else:
                 time.sleep(0.01)
 
@@ -228,14 +246,15 @@ class NX(BaseCamera):
         time.sleep(10)
         while True:
             try:
-                sendingMsg = self.q.pop(-1)  # sendingmsg = 'mode \n lat_drone \n lon_drone \n gps_time \n lat_person \n lon_person \n altitude \n detection'
+                sendingMsg = self.q.pop(
+                    -1)  # sendingmsg = 'mode \n lat_drone \n lon_drone \n gps_time \n lat_person \n lon_person \n altitude \n detection'
                 gcs = self.client_socket.recv(1024).decode().split('\n')
-                #print("From GCS : " , gcs)
-                if gcs[0] == '1' and self.plag_1 == False:
+                # print("From GCS : " , gcs)
+                if gcs[0] == '1' and self.plag_1 == False:  # 미션 시작
                     self.mode = 1  # 임무 장소 이동 , 30M 고도 유지
                     self.plag_1 = True
-                    self.MISSION_LAT = int(gcs[1]) / 10**7
-                    self.MISSION_LON = int(gcs[2]) / 10**7
+                    self.MISSION_LAT = int(gcs[1]) / 10 ** 7
+                    self.MISSION_LON = int(gcs[2]) / 10 ** 7
                     self.plag_MISSION = True
                 elif gcs[0] == '6' and self.plag_6 == False:
                     self.mode = 6  # RTH = 착륙
@@ -246,25 +265,26 @@ class NX(BaseCamera):
                 elif gcs[0] == '9' and self.plag_9 == False:
                     self.mode = 9  # 비상 모터 정지
                     self.plag_9 = True
-                #print("mode : " ,self.mode)  # 현재 모드 확인용
+                # print("mode : " ,self.mode)  # 현재 모드 확인용
                 self.client_socket.sendall(sendingMsg.encode())
             except Exception as e:
                 # GCS connection off , connection waiting
                 print("connection error")
                 self.client_socket.close()
                 self.client_socket, self.addr = self.server_socket.accept()
+
     # 10hz time.sleep(0.1)
     def connectLIDAR(self):
         while True:
-            count = self.serLIDAR.in_waiting 
-            if count > 8: # 버퍼에 9바이트 이상 쌓이면 
-                recv = self.serLIDAR.read(9) # read
-                self.serLIDAR.reset_input_buffer() # 리셋
+            count = self.serLIDAR.in_waiting
+            if count > 8:  # 버퍼에 9바이트 이상 쌓이면
+                recv = self.serLIDAR.read(9)  # read
+                self.serLIDAR.reset_input_buffer()  # 리셋
                 if recv[0] == 0x59 and recv[1] == 0x59:  # python3
-                    self.lidar_distance_1 = recv[2] # np.int16(recv[2] + np.int16(recv[3] << 8))
+                    self.lidar_distance_1 = recv[2]  # np.int16(recv[2] + np.int16(recv[3] << 8))
                     self.lidar_distance_2 = recv[3]
                     time.sleep(0.1)
-                    #print("LIDAR  : ",self.lidar_distance_1)
+                    # print("LIDAR  : ",self.lidar_distance_1)
                     self.serLIDAR.reset_input_buffer()
 
     # 5hz because STM transmit is 5hz
@@ -272,41 +292,73 @@ class NX(BaseCamera):
     def connectSTM(self):
         header_1 = 0x88
         header_2 = 0x18
-        lat_drone = 1 ; lon_drone =1 ; gps_time = 1 ;
-        roll = 1 ; pitch = 1 ; heading_angle = 1 ; altitude = 1 ; voltage = 1 ; lat_person = 1 ; lon_person = 1
+        lat_drone = 1;
+        lon_drone = 1;
+        gps_time = 1;
+        roll = 1;
+        pitch = 1;
+        heading_angle = 1;
+        altitude = 1;
+        voltage = 1;
+        lat_person = 1;
+        lon_person = 1
+
+        # Coordination description
+        # Front(if heading angle is zero, it is same with North) -> X -> roll direction
+        # Left(if heading angle is zero, it is same with East) -> Y -> pitch direction
+        # Down(if roll pitch is zero, it is same with Downward) -> Z -> yaw direction
+
         mode_echo = 0
-        lat_prev = 0 ; lon_prev = 0
+        lat_prev = 0;
+        lon_prev = 0
+
         while True:
             countSTM = self.serSTM.in_waiting
             if countSTM > 34:
                 recvSTM = self.serSTM.read(35)
-                self.serSTM.reset_input_buffer() 
+                self.serSTM.reset_input_buffer()
                 if recvSTM[0] == 0x88 and recvSTM[1] == 0x18:
                     mode_echo = np.int16(recvSTM[2])
 
-                    lat_drone = np.int32(np.int32(recvSTM[3] << 24) + np.int32(recvSTM[4] << 16) + np.int32(recvSTM[5] << 8 ) + recvSTM[6]) / 10**7
-                    lon_drone = np.int32(np.int32(recvSTM[7] << 24) + np.int32(recvSTM[8] << 16) + np.int32(recvSTM[9] << 8 ) + recvSTM[10]) / 10**7
-                    gps_time = np.int32(np.int32(recvSTM[11] << 24) + np.int32(recvSTM[12] << 16) + np.int32(recvSTM[13] << 8 ) + recvSTM[14])
+                    lat_drone = np.int32(
+                        np.int32(recvSTM[3] << 24) + np.int32(recvSTM[4] << 16) + np.int32(recvSTM[5] << 8) + recvSTM[
+                            6]) / 10 ** 7
+                    lon_drone = np.int32(
+                        np.int32(recvSTM[7] << 24) + np.int32(recvSTM[8] << 16) + np.int32(recvSTM[9] << 8) + recvSTM[
+                            10]) / 10 ** 7
+                    gps_time = np.int32(
+                        np.int32(recvSTM[11] << 24) + np.int32(recvSTM[12] << 16) + np.int32(recvSTM[13] << 8) +
+                        recvSTM[14])
 
-                    roll = np.int32(np.int32(recvSTM[15] << 24) + np.int32(recvSTM[16] << 16) + np.int32(recvSTM[17] << 8 ) + recvSTM[18])
-                    pitch = np.int32(np.int32(recvSTM[19] << 24) + np.int32(recvSTM[20] << 16) + np.int32(recvSTM[21] << 8 ) + recvSTM[22])
-                    heading_angle = np.int32(np.int32(recvSTM[23] << 24) + np.int32(recvSTM[24] << 16) + np.int32(recvSTM[25] << 8 ) + recvSTM[26])
+                    roll = np.int32(
+                        np.int32(recvSTM[15] << 24) + np.int32(recvSTM[16] << 16) + np.int32(recvSTM[17] << 8) +
+                        recvSTM[18])
+                    pitch = np.int32(
+                        np.int32(recvSTM[19] << 24) + np.int32(recvSTM[20] << 16) + np.int32(recvSTM[21] << 8) +
+                        recvSTM[22])
+                    heading_angle = np.int32(
+                        np.int32(recvSTM[23] << 24) + np.int32(recvSTM[24] << 16) + np.int32(recvSTM[25] << 8) +
+                        recvSTM[26])
 
-                    altitude = np.int32(np.int32(recvSTM[27] << 24) + np.int32(recvSTM[28] << 16) + np.int32(recvSTM[29] << 8 ) + recvSTM[30])
-                    voltage = np.int32(np.int32(recvSTM[31] << 24) + np.int32(recvSTM[32] << 16) + np.int32(recvSTM[33] << 8 ) + recvSTM[34])
-                    #print("From STM : " , mode_echo , lat_drone , lon_drone , gps_time , roll , pitch , heading_angle , altitude , voltage)
-                    
+                    altitude = np.int32(
+                        np.int32(recvSTM[27] << 24) + np.int32(recvSTM[28] << 16) + np.int32(recvSTM[29] << 8) +
+                        recvSTM[30])
+                    voltage = np.int32(
+                        np.int32(recvSTM[31] << 24) + np.int32(recvSTM[32] << 16) + np.int32(recvSTM[33] << 8) +
+                        recvSTM[34])
+                    # print("From STM : " , mode_echo , lat_drone , lon_drone , gps_time , roll , pitch , heading_angle , altitude , voltage)
+
                     self.serSTM.reset_input_buffer()
                 # 특정 범위에 드론이 들어가면 , AVOID 모드 AVOID on ,off 이므로 확실히 구분 된 조건문
                 # tracking circle + 10m // now 20m
-                if abs(lat_person - self.AVOID_LAT) <= 0.0001851  or abs(lon_person - self.AVOID_LON) <= 0.0001851:
+                if (10 >= haversine.haversine((lat_drone,lon_drone),(self.AVOID_LAT,self.AVOID_LON))):
                     self.AVOID = True
                 # 벗어나면 , 일반 추적
                 else:
-                    self.AVOID = False  
-                # 미션 좌표에 도착하면 모드를 2로 변경 ( 그전까지는 1임 )
+                    self.AVOID = False
+                    # 미션 좌표에 도착하면 모드를 2로 변경 ( 그전까지는 1임 )
                 # 0.0000462 -> 2m
-                if self.plag_2 == False and  (lat_drone - self.MISSION_LAT) <= 0.0000185 and (lon_drone - self.MISSION_LON) <= 0.0000185:
+                if (self.plag_2 == False) and (1 >= haversine.haversine((lat_drone,lon_drone),(self.MISSION_LAT,self.MISSION_LON))):  # 10 은 tracking distance인데 다르게 해야할듯
                     self.mode = 2  # yaw를 회전하며 탐색 모드
                     self.plag_2 = True
                     self.plag_MISSION = False
@@ -315,38 +367,38 @@ class NX(BaseCamera):
                 if self.mode == 2 and NX.human_detect == False:
                     new_gps_lat = lat_drone
                     new_gps_lon = lon_drone
-                    yaw_error = 20 
+                    yaw_error = 20
 
-                # 금지구역 모드 X 
+                    # 금지구역 모드 X
                 if self.AVOID == False:
                     if NX.human_detect == True:
-                        self.mode = 3 # 추적모드
-                        new_gps_lat = lat_drone + 1 # 계산필요
-                        new_gps_lon = lon_drone + 1 # 계산필요
-                        
-                        lat_person = 500000 # 계산필요
-                        lon_person = 500000 # 계산필요
-                        
+                        self.mode = 3  # 추적모드
+                        new_gps_lat = lat_drone + 1  # 계산필요
+                        new_gps_lon = lon_drone + 1  # 계산필요
+
+                        lat_person = 500000  # 계산필요
+                        lon_person = 500000  # 계산필요
+
                         yaw_error = NX.img_dy  # yolo를 통해 인식
-                        #print("mode 3 : " , self.mode)
-                    else: 
-                        self.mode = 5 # 사람이 추적되지않는 대기모드 일 경우 마지막 추적값을 유지
+                        # print("mode 3 : " , self.mode)
+                    else:
+                        self.mode = 5  # 사람이 추적되지않는 대기모드 일 경우 마지막 추적값을 유지
                         new_gps_lat = lat_drone if lat_prev == 0 else lat_prev
                         new_gps_lon = lon_drone if lon_prev == 0 else lon_prev
                         yaw_error = 0
-                        #print("mode 5 : " , self.mode)
+                        # print("mode 5 : " , self.mode)
 
                 # 금지구역 모드
                 else:
                     self.mode = 4
-                    new_gps_lat = lat_drone + 1 # 계산필요
-                    new_gps_lon = lon_drone + 1 # 계산필요
-                    
-                    lat_person = 500000 # 계산필요            # time.sleep(0.2)
-                    lon_person = 500000 # 계산필요
-        
-                    yaw_error = NX.img_dy # yolo를 통해 인식
-                
+                    new_gps_lat = lat_drone + 1  # 계산필요
+                    new_gps_lon = lon_drone + 1  # 계산필요
+
+                    lat_person = 500000  # 계산필요            # time.sleep(0.2)
+                    lon_person = 500000  # 계산필요
+
+                    yaw_error = NX.img_dy  # yolo를 통해 인식
+
                 new_gps_lat = 371231245
                 new_gps_lon = 1271232131
                 ## 1번 , 6번 수행중이라면
@@ -359,7 +411,7 @@ class NX(BaseCamera):
 
                 if self.plag_RTH == True:
                     new_gps_lat = self.RTH_LAT
-                    new_gps_lon = self.RTH_LON 
+                    new_gps_lon = self.RTH_LON
                     yaw_error = 0
                     self.mode = 6
                 # if yaw_error <= 20: # 안전범위 이내라고 판단된다면
@@ -367,25 +419,30 @@ class NX(BaseCamera):
                 # 통신을 위한 변경 코드
                 lat_prev = new_gps_lat
                 lon_prev = new_gps_lon
-                new_lat_first = (new_gps_lat >> 24) & 0xff ; new_lat_second = (new_gps_lat >> 16) & 0xff
-                new_lat_third = (new_gps_lat >> 8) & 0xff  ; new_lat_fourth = new_gps_lat & 0xff
+                new_lat_first = (new_gps_lat >> 24) & 0xff;
+                new_lat_second = (new_gps_lat >> 16) & 0xff
+                new_lat_third = (new_gps_lat >> 8) & 0xff;
+                new_lat_fourth = new_gps_lat & 0xff
 
-                new_lon_first = (new_gps_lon >> 24) & 0xff ; new_lon_second = (new_gps_lon >> 16) & 0xff
-                new_lon_third = (new_gps_lon >> 8) & 0xff  ; new_lon_fourth = new_gps_lon & 0xff
-                
+                new_lon_first = (new_gps_lon >> 24) & 0xff;
+                new_lon_second = (new_gps_lon >> 16) & 0xff
+                new_lon_third = (new_gps_lon >> 8) & 0xff;
+                new_lon_fourth = new_gps_lon & 0xff
+
                 # self.mission_lat / self.mission_lon / roll pitch heading_angle 
-                lat_person = lat_drone + 1  
-                lon_person = lon_drone + 1         
-                #print(NX.human_detect)
-                #print(" calculate next gps ")
-                read = str(mode_echo) + '\n' + str(lat_drone) + '\n' + str(lon_drone) + '\n' + str(gps_time) +'\n' +  str(lat_drone+1) + '\n' + str(
-                        lon_drone+1) + '\n' + str(altitude)
+                lat_person = lat_drone + 1
+                lon_person = lon_drone + 1
+                # print(NX.human_detect)
+                # print(" calculate next gps ")
+                read = str(mode_echo) + '\n' + str(lat_drone) + '\n' + str(lon_drone) + '\n' + str(
+                    gps_time) + '\n' + str(lat_drone + 1) + '\n' + str(
+                    lon_drone + 1) + '\n' + str(altitude)
                 self.q.append(read)
                 # 연산 후 바로 next_gps 전달
                 yaw_error = 20
                 self.serSTM.write(
-                    [header_1,header_2,self.mode,\
-                    new_lat_first,new_lat_second,new_lat_third,new_lat_fourth,\
-                    new_lon_first,new_lon_second,new_lon_third,new_lon_fourth,\
-                    yaw_error , self.lidar_distance_1 , self.lidar_distance_2]
+                    [header_1, header_2, self.mode, \
+                     new_lat_first, new_lat_second, new_lat_third, new_lat_fourth, \
+                     new_lon_first, new_lon_second, new_lon_third, new_lon_fourth, \
+                     yaw_error, self.lidar_distance_1, self.lidar_distance_2]
                 )
