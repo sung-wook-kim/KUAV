@@ -792,21 +792,16 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 
 
 	  /********************* Telemetry Communication ************************/
-	  if(tim7_20ms_flag == 1 && tim7_100ms_flag == 0)
+	  if(tim7_200ms_flag == 1)
 	  {
-		  tim7_20ms_flag = 0;
-		  if(motor_arming_flag == 1)
-		  {
-			  Encode_Msg_Gps(&telemetry_tx_buf[0]);
-			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 57); // altitude : 26, gps : 57, pid : 75
-		  }
+		  tim7_200ms_flag = 0;
 //		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 20);
 	  }
-	  else if(tim7_20ms_flag == 1 && tim7_100ms_flag == 1)
-	  {
-		  tim7_20ms_flag = 0;
-		  tim7_100ms_flag = 0;
+//	  else if(tim7_200ms_flag == 1 && tim7_100ms_flag == 1)
+//	  {
+//		  tim7_200ms_flag = 0;
+//		  tim7_100ms_flag = 0;
 //		  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], roll.in.kp, roll.in.ki, roll.in.kd);
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
 //		  Encode_Msg_Temp(&telemetry_tx_buf[0]);
@@ -816,7 +811,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 //		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
 //		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
 //		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35, pid : 75
-	  }
+//	  }
 
 	  /***********************************************************************************************
 	----------------------------Check BNO080 Sensor Value(current Angle Data)-----------------------
@@ -938,6 +933,12 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  failsafe_flag = 2;
 		  }
 		  iBus_rx_cnt = 0;
+
+		  if(motor_arming_flag == 1)
+		  {
+			  Encode_Msg_Gps(&telemetry_tx_buf[0]);
+			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 57); // altitude : 26, gps : 57, pid : 75
+		  }
 	  }
 
 	  if(failsafe_flag == 1 || failsafe_flag ==2 || low_bat_flag == 1)
@@ -1187,7 +1188,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		if(huart->Instance == USART1)
 		{
 			HAL_UART_Receive_IT(&huart1, &uart1_rx_data, 1);
-			LL_USART_TransmitData8(UART4, &uart1_rx_data);
+			LL_USART_TransmitData8(UART4, uart1_rx_data);
 
 			switch(cnt_1)
 					{

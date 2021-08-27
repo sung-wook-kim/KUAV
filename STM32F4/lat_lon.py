@@ -61,9 +61,11 @@ def receive_data(byte, sign = True):
 
 def RTKfn():
     while True:
-        a = rtk.read(1)
-        ser.write(a)
-        print(a)
+        a = rtk.in_waiting
+        if a > 200:
+            ser.write(rtk.read(a))
+        time.sleep(0.2)
+
 def connect():
     global my_checksum ,yaw, lat_gps , lon_gps , lat_waypoint , lon_waypoint , i , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li
     while True:
@@ -132,16 +134,16 @@ thread1 = threading.Thread(target = connect)
 thread1.start()
 thread2 = threading.Thread(target = RTKfn)
 thread2.start()
-# j = 0
-# time.sleep(3)
-# while True:
-#     if lat_gps_li[-1] != 0 and lon_gps_li[-1] !=0:
-#         plt.scatter(lon_gps_li[-1],lat_gps_li[-1])
-#         if (lat_waypoint_li[-1] != lat_gps_li[-1]) or(lon_waypoint_li[-1] != lon_gps_li[-1]):
-#             plt.scatter(lon_waypoint_li[-1] , lat_waypoint_li[-1] , c= 'k' , s = 100)
-#         plt.xlabel('lat')
-#         plt.ylabel('lon')
-#         plt.pause(0.05)
-#         j+=1
-#         #print("one scatter", lat , lon , target_lat , target_lon)
-# plt.show()
+j = 0
+time.sleep(3)
+while True:
+    if lat_gps_li[-1] != 0 and lon_gps_li[-1] !=0:
+        plt.scatter(lon_gps_li[-1],lat_gps_li[-1])
+        # if (lat_waypoint_li[-1] != lat_gps_li[-1]) or(lon_waypoint_li[-1] != lon_gps_li[-1]):
+        #     plt.scatter(lon_waypoint_li[-1] , lat_waypoint_li[-1] , c= 'k' , s = 100)
+        plt.xlabel('lat')
+        plt.ylabel('lon')
+        plt.pause(0.05)
+        j+=1
+        #print("one scatter", lat , lon , target_lat , target_lon)
+plt.show()
