@@ -797,8 +797,8 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  tim7_20ms_flag = 0;
 		  if(motor_arming_flag == 1)
 		  {
-			  Encode_Msg_Temp(&telemetry_tx_buf[0]);
-			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 28); // altitude : 26, gps : 35, pid : 75
+			  Encode_Msg_Gps(&telemetry_tx_buf[0]);
+			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 57); // altitude : 26, gps : 57, pid : 75
 		  }
 //		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 20);
@@ -1606,35 +1606,67 @@ void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[9] = (int)BNO080_Yaw >> 8;
 	telemetry_tx_buf[10] = (int)BNO080_Yaw;
 
-	telemetry_tx_buf[11] = (int)lat_gps >> 24;
-	telemetry_tx_buf[12] = (int)lat_gps >> 16;
-	telemetry_tx_buf[13] = (int)lat_gps >> 8;
-	telemetry_tx_buf[14] = (int)lat_gps;
+	telemetry_tx_buf[11] = (long long int)pvt.lat >> 56;
+	telemetry_tx_buf[12] = (long long int)pvt.lat >> 48;
+	telemetry_tx_buf[13] = (long long int)pvt.lat >> 40;
+	telemetry_tx_buf[14] = (long long int)pvt.lat >> 32;
+	telemetry_tx_buf[15] = (long long int)pvt.lat >> 24;
+	telemetry_tx_buf[16] = (long long int)pvt.lat >> 16;
+	telemetry_tx_buf[17] = (long long int)pvt.lat >> 8;
+	telemetry_tx_buf[18] = (long long int)pvt.lat;
 
-	telemetry_tx_buf[15] = (int)lon_gps >> 24;
-	telemetry_tx_buf[16] = (int)lon_gps >> 16;
-	telemetry_tx_buf[17] = (int)lon_gps >> 8;
-	telemetry_tx_buf[18] = (int)lon_gps;
+	telemetry_tx_buf[19] = (long long int)pvt.lon >> 56;
+	telemetry_tx_buf[20] = (long long int)pvt.lon >> 48;
+	telemetry_tx_buf[21] = (long long int)pvt.lon >> 40;
+	telemetry_tx_buf[22] = (long long int)pvt.lon >> 32;
+	telemetry_tx_buf[23] = (long long int)pvt.lon >> 24;
+	telemetry_tx_buf[24] = (long long int)pvt.lon >> 16;
+	telemetry_tx_buf[25] = (long long int)pvt.lon >> 8;
+	telemetry_tx_buf[26] = (long long int)pvt.lon;
 
-	telemetry_tx_buf[19] = (int)lat_waypoint >> 24;
-	telemetry_tx_buf[20] = (int)lat_waypoint >> 16;
-	telemetry_tx_buf[21] = (int)lat_waypoint >> 8;
-	telemetry_tx_buf[22] = (int)lat_waypoint;
+	telemetry_tx_buf[27] = (long long int)lat_waypoint >> 56;
+	telemetry_tx_buf[28] = (long long int)lat_waypoint >> 48;
+	telemetry_tx_buf[29] = (long long int)lat_waypoint >> 40;
+	telemetry_tx_buf[30] = (long long int)lat_waypoint >> 32;
+	telemetry_tx_buf[31] = (long long int)lat_waypoint >> 24;
+	telemetry_tx_buf[32] = (long long int)lat_waypoint >> 16;
+	telemetry_tx_buf[33] = (long long int)lat_waypoint >> 8;
+	telemetry_tx_buf[34] = (long long int)lat_waypoint;
 
-	telemetry_tx_buf[23] = (int)lon_waypoint >> 24;
-	telemetry_tx_buf[24] = (int)lon_waypoint >> 16;
-	telemetry_tx_buf[25] = (int)lon_waypoint >> 8;
-	telemetry_tx_buf[26] = (int)lon_waypoint;
+	telemetry_tx_buf[35] = (long long int)lon_waypoint >> 56;
+	telemetry_tx_buf[36] = (long long int)lon_waypoint >> 48;
+	telemetry_tx_buf[37] = (long long int)lon_waypoint >> 40;
+	telemetry_tx_buf[38] = (long long int)lon_waypoint >> 32;
+	telemetry_tx_buf[39] = (long long int)lon_waypoint >> 24;
+	telemetry_tx_buf[40] = (long long int)lon_waypoint >> 16;
+	telemetry_tx_buf[41] = (long long int)lon_waypoint >> 8;
+	telemetry_tx_buf[42] = (long long int)lon_waypoint;
 
-	telemetry_tx_buf[27] = (int)gps_pitch_adjust >> 24;
-	telemetry_tx_buf[28] = (int)gps_pitch_adjust >> 16;
-	telemetry_tx_buf[29] = (int)gps_pitch_adjust >> 8;
-	telemetry_tx_buf[30] = (int)gps_pitch_adjust;
+	telemetry_tx_buf[43] = (int)gps_pitch_adjust >> 24;
+	telemetry_tx_buf[44] = (int)gps_pitch_adjust >> 16;
+	telemetry_tx_buf[45] = (int)gps_pitch_adjust >> 8;
+	telemetry_tx_buf[46] = (int)gps_pitch_adjust;
 
-	telemetry_tx_buf[31] = (int)gps_roll_adjust >> 24;
-	telemetry_tx_buf[32] = (int)gps_roll_adjust >> 16;
-	telemetry_tx_buf[33] = (int)gps_roll_adjust >> 8;
-	telemetry_tx_buf[34] = (int)gps_roll_adjust;
+	telemetry_tx_buf[47] = (int)gps_roll_adjust >> 24;
+	telemetry_tx_buf[48] = (int)gps_roll_adjust >> 16;
+	telemetry_tx_buf[49] = (int)gps_roll_adjust >> 8;
+	telemetry_tx_buf[50] = (int)gps_roll_adjust;
+
+	telemetry_tx_buf[51] = pvt.flags >> 6;
+	telemetry_tx_buf[52] = pvt.fixType;
+
+	chksum_pid = 0xffffffff;
+
+	for(int i=0; i<53; i++)
+	{
+
+		chksum_pid = chksum_pid - telemetry_tx_buf[i];
+	}
+
+	telemetry_tx_buf[53] = chksum_pid >> 24;
+	telemetry_tx_buf[54] = chksum_pid >> 16;
+	telemetry_tx_buf[55] = chksum_pid >> 8;
+	telemetry_tx_buf[56] = chksum_pid;
 }
 
 void Encode_Msg_Nx(unsigned char* nx_tx_buf)

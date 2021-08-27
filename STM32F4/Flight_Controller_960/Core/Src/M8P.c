@@ -132,8 +132,6 @@ void M8P_Initialization(void)
 	M8P_UART4_Initialization();
 	M8P_TransmitData(&M8P_UBX_CFG_PRT[0], sizeof(M8P_UBX_CFG_PRT));
 	HAL_Delay(100);
-	M8P_UART4_Baud_Change;
-	HAL_Delay(100);
 	M8P_TransmitData(&M8P_UBX_CFG_TMODE3[0], sizeof(M8P_UBX_CFG_TMODE3));
 	HAL_Delay(100);
 	M8P_TransmitData(&M8P_UBX_CFG_MSGPVT[0], sizeof(M8P_UBX_CFG_MSGPVT));

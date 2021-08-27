@@ -7,6 +7,8 @@ import threading
 import struct
 ser = serial.Serial('COM4', 115200)
 ser.flush()
+rtk = serial.Serial('COM9', 115200)
+rtk.flush()
 
 global yaw, lat_gps , lon_gps , lat_waypoint , lon_waypoint , my_checksum , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li
 
@@ -57,6 +59,11 @@ def receive_data(byte, sign = True):
 
     return data
 
+def RTKfn():
+    while True:
+        a = rtk.read(1)
+        ser.write(a)
+        print(a)
 def connect():
     global my_checksum ,yaw, lat_gps , lon_gps , lat_waypoint , lon_waypoint , i , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li
     while True:
@@ -92,45 +99,49 @@ def connect():
                 lon_waypoint = receive_data(8)
                 pitch_adjust = receive_data(4)
                 roll_adjust = receive_data(4)
-                
-                checksum_1 = int(ser.read(1).hex(), 16) & 0xff
-                checksum_2 = int(ser.read(1).hex(), 16) & 0xff
-                checksum_3 = int(ser.read(1).hex(), 16) & 0xff
-                checksum_4 = int(ser.read(1).hex(), 16) & 0xff
-                
-                checksum = checksum_1 << 24 | checksum_2 << 16 | checksum_3 << 8 | checksum_4
-                print(f'lat = {lat_gps}, lon = {lon_gps}, target_lat = {lat_waypoint},target_lon = {lon_waypoint} ,yaw = {yaw}, vol = {volatge / 100}')
+
+                flag = receive_data(1 , sign=False)
+                fixtype = receive_data(1, sign = False)
+                #
+                # checksum_1 = int(ser.read(1).hex(), 16) & 0xff
+                # checksum_2 = int(ser.read(1).hex(), 16) & 0xff
+                # checksum_3 = int(ser.read(1).hex(), 16) & 0xff
+                # checksum_4 = int(ser.read(1).hex(), 16) & 0xff
+                #
+                # checksum = checksum_1 << 24 | checksum_2 << 16 | checksum_3 << 8 | checksum_4
+                print(f'flag = {flag}, fixtype = {fixtype},  lat = {lat_gps}, lon = {lon_gps}, target_lat = {lat_waypoint},target_lon = {lon_waypoint} ,yaw = {yaw}, vol = {volatge / 100}')
                 ser.reset_input_buffer()
-                if checksum == my_checksum:
-                    yaw_li.append(yaw)
-                    lat_gps_li.append(lat_gps)
-                    lon_gps_li.append(lon_gps)
-                    lat_waypoint_li.append(lat_waypoint)
-                    lon_waypoint_li.append(lon_waypoint)
-                    pitch_li.append(pitch_adjust)
-                    roll_li.append(roll_adjust)
+                # if checksum == my_checksum:
+                yaw_li.append(yaw)
+                lat_gps_li.append(lat_gps)
+                lon_gps_li.append(lon_gps)
+                lat_waypoint_li.append(lat_waypoint)
+                lon_waypoint_li.append(lon_waypoint)
+                pitch_li.append(pitch_adjust)
+                roll_li.append(roll_adjust)
 
                     # print(f'reference\tmeas_value\terror\terror_deriv\terror_sum\tp_result\ti_result\td_result\tpid_result\n')
                     # print(f'-------------------------------------------------------------------------------------------------\n')
-                    # print(f'{pvt_lat} {lat_gps}\t{out_reference}\t{out_meas_value}\t{out_error}\t{out_error_deriv}\t{out_error_sum}\t{out_p_result}\t{out_i_result}\t{out_d_result}\t{out_pid_result}')
+                # print(f'{pvt_lat} {lat_gps}\t{out_reference}\t{out_meas_value}\t{out_error}\t{out_error_deriv}\t{out_error_sum}\t{out_p_result}\t{out_i_result}\t{out_d_result}\t{out_pid_result}')
                     # print(f'{in_reference}\t{in_meas_value}\t{in_error}\t{in_error_deriv}\t{in_error_sum}\t{in_p_result}\t{in_i_result}\t{in_d_result}\t{in_pid_result}')
                     # print(f'{in_reference}\t{in_meas_value}\t{in_error}\t{in_error_deriv}\t{in_error_sum}\t{in_p_result}\
                     # print("check")
-                    ser.reset_input_buffer()
+                ser.reset_input_buffer()
 
 thread1 = threading.Thread(target = connect)
 thread1.start()
-
-j = 0
-time.sleep(3)
-while True:
-    if lat_gps_li[-1] != 0 and lon_gps_li[-1] !=0:
-        plt.scatter(lon_gps_li[-1],lat_gps_li[-1])
-        if (lat_waypoint_li[-1] != lat_gps_li[-1]) or(lon_waypoint_li[-1] != lon_gps_li[-1]):
-            plt.scatter(lon_waypoint_li[-1] , lat_waypoint_li[-1] , c= 'k' , s = 100)
-        plt.xlabel('lat')
-        plt.ylabel('lon')
-        plt.pause(0.05)
-        j+=1
-        #print("one scatter", lat , lon , target_lat , target_lon)
-plt.show()
+thread2 = threading.Thread(target = RTKfn)
+thread2.start()
+# j = 0
+# time.sleep(3)
+# while True:
+#     if lat_gps_li[-1] != 0 and lon_gps_li[-1] !=0:
+#         plt.scatter(lon_gps_li[-1],lat_gps_li[-1])
+#         if (lat_waypoint_li[-1] != lat_gps_li[-1]) or(lon_waypoint_li[-1] != lon_gps_li[-1]):
+#             plt.scatter(lon_waypoint_li[-1] , lat_waypoint_li[-1] , c= 'k' , s = 100)
+#         plt.xlabel('lat')
+#         plt.ylabel('lon')
+#         plt.pause(0.05)
+#         j+=1
+#         #print("one scatter", lat , lon , target_lat , target_lon)
+# plt.show()
