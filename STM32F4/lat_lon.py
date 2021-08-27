@@ -5,9 +5,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import threading
 import struct
-ser = serial.Serial('COM4', 115200)
+ser = serial.Serial('COM1', 115200)
 ser.flush()
-rtk = serial.Serial('COM9', 115200)
+rtk = serial.Serial('COM14', 115200)
 rtk.flush()
 
 global yaw, lat_gps , lon_gps , lat_waypoint , lon_waypoint , my_checksum , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li
@@ -62,9 +62,11 @@ def receive_data(byte, sign = True):
 def RTKfn():
     while True:
         a = rtk.in_waiting
-        if a > 200:
+        if a > 230:
             ser.write(rtk.read(a))
-        time.sleep(0.2)
+            print(a)
+        
+        
 
 def connect():
     global my_checksum ,yaw, lat_gps , lon_gps , lat_waypoint , lon_waypoint , i , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li
@@ -104,6 +106,9 @@ def connect():
 
                 flag = receive_data(1 , sign=False)
                 fixtype = receive_data(1, sign = False)
+
+                alt = receive_data(4)
+                temp = receive_data(2 , sign=False)
                 #
                 # checksum_1 = int(ser.read(1).hex(), 16) & 0xff
                 # checksum_2 = int(ser.read(1).hex(), 16) & 0xff
@@ -111,7 +116,7 @@ def connect():
                 # checksum_4 = int(ser.read(1).hex(), 16) & 0xff
                 #
                 # checksum = checksum_1 << 24 | checksum_2 << 16 | checksum_3 << 8 | checksum_4
-                print(f'flag = {flag}, fixtype = {fixtype},  lat = {lat_gps}, lon = {lon_gps}, target_lat = {lat_waypoint},target_lon = {lon_waypoint} ,yaw = {yaw}, vol = {volatge / 100}')
+                print(f'flag = {flag}, fixtype = {fixtype},  lat = {lat_gps}, lon = {lon_gps}, target_lat = {lat_waypoint},target_lon = {lon_waypoint} ,alt ={alt} , temp = {temp/100}, vol = {volatge / 100} ')
                 ser.reset_input_buffer()
                 # if checksum == my_checksum:
                 yaw_li.append(yaw)

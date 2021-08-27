@@ -9,7 +9,7 @@
   * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
+  * This software component is licensed by ST under BSD 3-Cl0sause license,
   * the "License"; You may not use this file except in compliance with the
   * License. You may obtain a copy of the License at:
   *                        opensource.org/licenses/BSD-3-Clause
@@ -96,6 +96,7 @@ extern uint8_t tim7_1ms_flag;
 extern uint8_t tim7_20ms_flag;
 extern uint8_t tim7_100ms_flag;
 extern uint8_t tim7_200ms_flag;
+extern uint8_t tim7_500ms_flag;
 extern uint8_t tim7_1000ms_flag;
 
 // System flag
@@ -795,13 +796,23 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 
 
 	  /********************* Telemetry Communication ************************/
-	  if(tim7_200ms_flag == 1)
+	  if(motor_arming_flag == 1)
 	  {
-		  tim7_200ms_flag = 0;
-//		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
-//		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 20);
+//		  if(tim7_20ms_flag == 1)
+//		  {
+//			  tim7_20ms_flag = 0;
+//			  Encode_Msg_Temp(&telemetry_tx_buf[0]);
+//			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 26);
+//		  }
+
+		  if(tim7_200ms_flag == 1)
+		  {
+			  tim7_200ms_flag = 0;
+			  Encode_Msg_Gps(&telemetry_tx_buf[0]);
+			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 63); // altitude : 26, gps : 57, pid : 75
+		  }
 	  }
-//	  else if(tim7_200ms_flag == 1 && tim7_100ms_flag == 1)
+
 //	  {
 //		  tim7_200ms_flag = 0;
 //		  tim7_100ms_flag = 0;
@@ -945,12 +956,6 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  failsafe_flag = 2;
 		  }
 		  iBus_rx_cnt = 0;
-
-		  if(motor_arming_flag == 1)
-		  {
-			  Encode_Msg_Gps(&telemetry_tx_buf[0]);
-			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 57); // altitude : 26, gps : 57, pid : 75
-		  }
 	  }
 
 	  if(failsafe_flag == 1 || failsafe_flag ==2 || low_bat_flag == 1)
@@ -1668,6 +1673,14 @@ void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[51] = pvt.flags >> 6;
 	telemetry_tx_buf[52] = pvt.fixType;
 
+	telemetry_tx_buf[53] = (int)(actual_pressure_fast * 100) >> 24;
+	telemetry_tx_buf[54] = (int)(actual_pressure_fast * 100) >> 16;
+	telemetry_tx_buf[55] = (int)(actual_pressure_fast * 100) >> 8;
+	telemetry_tx_buf[56] = (int)(actual_pressure_fast * 100);
+
+	telemetry_tx_buf[57] = (int)LPS22HH.temperature_raw >> 8;
+	telemetry_tx_buf[58] = (int)LPS22HH.temperature_raw;
+
 	chksum_pid = 0xffffffff;
 
 	for(int i=0; i<53; i++)
@@ -1676,10 +1689,10 @@ void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
 		chksum_pid = chksum_pid - telemetry_tx_buf[i];
 	}
 
-	telemetry_tx_buf[53] = chksum_pid >> 24;
-	telemetry_tx_buf[54] = chksum_pid >> 16;
-	telemetry_tx_buf[55] = chksum_pid >> 8;
-	telemetry_tx_buf[56] = chksum_pid;
+	telemetry_tx_buf[59] = chksum_pid >> 24;
+	telemetry_tx_buf[60] = chksum_pid >> 16;
+	telemetry_tx_buf[61] = chksum_pid >> 8;
+	telemetry_tx_buf[62] = chksum_pid;
 }
 
 void Encode_Msg_Nx(unsigned char* nx_tx_buf)

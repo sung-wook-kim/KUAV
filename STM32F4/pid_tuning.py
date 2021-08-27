@@ -2,7 +2,7 @@ import serial
 import time
 import numpy as np
 import struct
-ser = serial.Serial('COM4', 115200, timeout=1)
+ser = serial.Serial('COM1', 115200, timeout=1)
 '''
 ---------------550---------------
 Roll Pitch : 10 3 2.5 35 0 11
@@ -12,8 +12,8 @@ GPS : 2.2 0.01 0.01 0.35  0 0
 ---------------960---------------
 Roll Pitch : 5 0 2 40 0 15
 Yaw : 200 0 60 20 0 1.5
-altitude : 1700 10 0 1.9 0 0.04
-GPS :
+altitude : 1500 10 0 1.9 0 0.03
+GPS : 1.1   0.01   0.01   0.35  0   0
 '''
 
 

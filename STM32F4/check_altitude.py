@@ -18,7 +18,7 @@ throttle = 0
 d_result = 0
 voltage = 0
 
-ser = serial.Serial('COM4', 115200)
+ser = serial.Serial('COM1', 115200)
 ser.flush()
 
 
