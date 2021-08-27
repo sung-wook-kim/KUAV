@@ -117,6 +117,7 @@ float actual_pressure_fast = 0, actual_pressure_slow = 0;
 float actual_pressure;
 
 // Gps Value
+#define DECLINATION 8.5F
 double lat_gps_previous;
 double lon_gps_previous;
 double lat_gps_actual;
@@ -127,6 +128,8 @@ double lat_gps;
 double lon_gps;
 double lat_waypoint;
 double lon_waypoint;
+double lat_diff;
+double lon_diff;
 float gps_roll_adjust;
 float gps_pitch_adjust;
 #define GPS_PD_MAX 200
@@ -574,7 +577,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 
 		  flight_mode = 1;
 		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 2;
-		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1) flight_mode = 3;
+		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1 && (pvt.fixType == 2 || pvt.fixType == 3)) flight_mode = 3;
 
 
 		  if(flight_mode == 2) //Altitude Holding Mode
@@ -830,6 +833,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  BNO080_Roll -= BNO080_ROLL_OFFSET;
 		  BNO080_Pitch = -BNO080_Pitch;
 		  BNO080_Pitch -= BNO080_PITCH_OFFSET;
+		  BNO080_Yaw -= DECLINATION;
 	  }
 
 	  /***********************************************************************************************
@@ -873,24 +877,32 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  {
 			  M8P_UBX_NAV_PVT_Parsing(&m8p_rx_buf[0], &pvt);
 
-			  if(lat_gps_previous == 0 || lon_gps_previous == 0)
+			  if(pvt.fixType == 2 || pvt.fixType == 3)
 			  {
-				  lat_gps_previous = (double)pvt.lat;
-				  lon_gps_previous = (double)pvt.lon;
-			  }
-			  else
-			  {
-				  lat_gps_previous = lat_gps_actual;
-				  lon_gps_previous = lon_gps_actual;
-			  }
+				  if(lat_gps_previous == 0 || lon_gps_previous == 0)
+				  {
+					  lat_gps_previous = (double)pvt.lat;
+					  lon_gps_previous = (double)pvt.lon;
+				  }
+				  else
+				  {
+					  lat_gps_previous = lat_gps_actual;
+					  lon_gps_previous = lon_gps_actual;
+				  }
 
-			  lat_gps_actual = (double)pvt.lat;
-			  lon_gps_actual = (double)pvt.lon;
+				  if((double)pvt.lat > lat_gps_previous)lat_diff = (double)pvt.lat - lat_gps_previous;
+				  else lat_diff = lat_gps_previous - (double)pvt.lat;
+				  if((double)pvt.lon > lon_gps_previous)lon_diff = (double)pvt.lon - lon_gps_previous;
+				  else lon_diff = lon_gps_previous - (double)pvt.lon;
+
+				  if(lat_diff < 10000) lat_gps_actual = (double)pvt.lat;
+				  if(lon_diff < 10000) lon_gps_actual = (double)pvt.lon;
+			  }
 		  }
 		  else
 		  {
 			  lat_gps_actual = lat_gps_previous;
-			  lon_gps_actual = lat_gps_previous;
+			  lon_gps_actual = lon_gps_previous;
 		  }
 
 		  lat_add = (lat_gps_actual - lat_gps_previous) / 200.00;
