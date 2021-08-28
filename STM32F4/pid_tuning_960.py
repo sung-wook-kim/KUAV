@@ -414,25 +414,40 @@ while True:
                     ser.reset_input_buffer()
     elif key == '7':
         print("yaw rate gain 입력")
-        e = input()
-        volt = int(float(e)*100)
-
-        volt_1 = (volt >> 24) & 0xff  
-        volt_2 = (volt >> 16) & 0xff
-        volt_3 = (volt >> 8) & 0xff
-        volt_4 =  volt & 0xff
-
-        li_in = [0x46, 0x43, 0x0c, volt_4 , volt_3, volt_2 ,volt_1]
+        e = input().split(' ')
+        yaw_rate_p_in = int(float(e[0])*100)
+        yaw_rate_i_in = int(float(e[1])*100)
+        yaw_rate_d_in = int(float(e[2])*100)
         
+        yaw_rate_p_1 = (yaw_rate_p_in >> 24) & 0xff  
+        yaw_rate_p_2 = (yaw_rate_p_in >> 16) & 0xff
+        yaw_rate_p_3 = (yaw_rate_p_in >> 8) & 0xff
+        yaw_rate_p_4 =  yaw_rate_p_in & 0xff
+
+        yaw_rate_i_1 = (yaw_rate_i_in >> 24) & 0xff  
+        yaw_rate_i_2 = (yaw_rate_i_in >> 16) & 0xff
+        yaw_rate_i_3 = (yaw_rate_i_in >> 8) & 0xff
+        yaw_rate_i_4 =  yaw_rate_i_in & 0xff
+        
+        yaw_rate_d_1 = (yaw_rate_d_in >> 24) & 0xff  
+        yaw_rate_d_2 = (yaw_rate_d_in >> 16) & 0xff
+        yaw_rate_d_3 = (yaw_rate_d_in >> 8) & 0xff
+        yaw_rate_d_4 =  yaw_rate_d_in & 0xff
+
+        li_in = [0x46, 0x43, 0x0a, yaw_rate_p_4,  yaw_rate_p_3,   yaw_rate_p_2, yaw_rate_p_1, yaw_rate_i_4, yaw_rate_i_3, yaw_rate_i_2,
+                yaw_rate_i_1, yaw_rate_d_4, yaw_rate_d_3, yaw_rate_d_2, yaw_rate_d_1, 0x00, 0x00, 0x00, 0x00]
         ser.reset_input_buffer()
         for _ in range(3):
             for i in range(5):
                 ser.write(li_in)
             if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
-                if int(ser.read(1).hex(), 16) == 0x0c:
-                    drone_volt = struct.unpack('f',ser.read(4))
-                    print("volt : " , drone_volt )
+                if int(ser.read(1).hex(), 16) == 0x0a:
+                    yaw_rate_in_p = struct.unpack('f',ser.read(4))
+                    yaw_rate_in_i = struct.unpack('f',ser.read(4))
+                    yaw_rate_in_d = struct.unpack('f',ser.read(4))
+                    print("YAW RATE : " , yaw_rate_in_p , yaw_rate_in_i , yaw_rate_in_d )
                     ser.reset_input_buffer()
+        
     elif key == '8':
         print("gain 확인")
         li_in = [0x46, 0x43, 0x0d]
