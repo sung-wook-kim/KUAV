@@ -5,11 +5,18 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import threading
 import struct
+<<<<<<< HEAD
+ser = serial.Serial('COM7', 115200)
+rtk = serial.Serial('COM8', 115200)
+ser.flush()
+rtk.flush()
+=======
 ser = serial.Serial('COM1', 115200)
 ser.flush()
 rtk = serial.Serial('COM14', 115200)
 rtk.flush()
 
+>>>>>>> 86f73ecb08bbd8a26f79c63a247e42119b007c36
 global yaw, lat_gps , lon_gps , lat_waypoint , lon_waypoint , my_checksum , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li
 
 yaw = 0
@@ -61,6 +68,10 @@ def receive_data(byte, sign = True):
 
 def RTKfn():
     while True:
+<<<<<<< HEAD
+        s = rtk.read(1)
+        ser.write(s)
+=======
         a = rtk.in_waiting
         if a > 230:
             ser.write(rtk.read(a))
@@ -68,6 +79,7 @@ def RTKfn():
         
         
 
+>>>>>>> 86f73ecb08bbd8a26f79c63a247e42119b007c36
 def connect():
     global my_checksum ,yaw, lat_gps , lon_gps , lat_waypoint , lon_waypoint , i , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li
     while True:
@@ -137,6 +149,10 @@ def connect():
 
 thread1 = threading.Thread(target = connect)
 thread1.start()
+<<<<<<< HEAD
+
+=======
+>>>>>>> 86f73ecb08bbd8a26f79c63a247e42119b007c36
 thread2 = threading.Thread(target = RTKfn)
 thread2.start()
 j = 0

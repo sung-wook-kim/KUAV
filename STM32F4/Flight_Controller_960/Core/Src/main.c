@@ -9,7 +9,7 @@
   * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
+  * This software component is licensed by ST under BSD 3-Cl0sause license,
   * the "License"; You may not use this file except in compliance with the
   * License. You may obtain a copy of the License at:
   *                        opensource.org/licenses/BSD-3-Clause
@@ -37,7 +37,7 @@
 #include <string.h>
 #include "AT24C08.h"
 #include "lps22hh.h"
-#include "M8N.h"
+//#include "M8N.h"
 #include "M8P.h"
 #include "XAVIER.h"
 /* USER CODE END Includes */
@@ -96,6 +96,7 @@ extern uint8_t tim7_1ms_flag;
 extern uint8_t tim7_20ms_flag;
 extern uint8_t tim7_100ms_flag;
 extern uint8_t tim7_200ms_flag;
+extern uint8_t tim7_500ms_flag;
 extern uint8_t tim7_1000ms_flag;
 
 // System flag
@@ -117,6 +118,7 @@ float actual_pressure_fast = 0, actual_pressure_slow = 0;
 float actual_pressure;
 
 // Gps Value
+#define DECLINATION 8.5F
 double lat_gps_previous;
 double lon_gps_previous;
 double lat_gps_actual;
@@ -127,6 +129,8 @@ double lat_gps;
 double lon_gps;
 double lat_waypoint;
 double lon_waypoint;
+double lat_diff;
+double lon_diff;
 float gps_roll_adjust;
 float gps_pitch_adjust;
 #define GPS_PD_MAX 200
@@ -192,12 +196,12 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 #define MOTOR_FREQ_ADJUST 1.0f
-#define BNO080_PITCH_OFFSET 0.0f
-#define BNO080_ROLL_OFFSET 2.0f
+#define BNO080_PITCH_OFFSET -1.8f
+#define BNO080_ROLL_OFFSET 3.5f
 
 float q[4];
 float quatRadianAccuracy;
-unsigned short iBus_SwA_Prev = 0;
+ unsigned short iBus_SwA_Prev = 0;
 unsigned char iBus_rx_cnt = 0;
 unsigned char iBus_VrA_flag = 0;
 unsigned char iBus_VrA_Prev_flag = 0;
@@ -352,7 +356,7 @@ unsigned short adcVal;
     }
 
   /*GNSS Initialization*/
-  M8N_Initialization();
+  M8P_Initialization();
 
   // Correct ICM20602 bias
   ICM20602_Writebyte(0x13, (gyro_x_offset*-2)>>8);
@@ -574,7 +578,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 
 		  flight_mode = 1;
 		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 2;
-		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1) flight_mode = 3;
+		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1 && (pvt.fixType == 2 || pvt.fixType == 3)) flight_mode = 3;
 
 
 		  if(flight_mode == 2) //Altitude Holding Mode
@@ -693,18 +697,18 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  {
 				  yaw_heading_reference = BNO080_Yaw;
 				  Single_Yaw_Rate_PID_Calculation(&yaw_rate, (iBus.LH-1500), ICM20602.gyro_z);
-				  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 - pitch.in.pid_result + roll.in.pid_result - yaw_rate.pid_result;
-				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 + pitch.in.pid_result + roll.in.pid_result + yaw_rate.pid_result;
-				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 + pitch.in.pid_result - roll.in.pid_result - yaw_rate.pid_result;
-				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 - pitch.in.pid_result - roll.in.pid_result + yaw_rate.pid_result;
+				  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result + roll.in.pid_result - yaw_rate.pid_result;
+				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result + roll.in.pid_result + yaw_rate.pid_result;
+				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result - roll.in.pid_result - yaw_rate.pid_result;
+				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result - roll.in.pid_result + yaw_rate.pid_result;
 			  }
 			  else
 			  {
 				  Single_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference, BNO080_Yaw, ICM20602.gyro_z);
-				  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 - pitch.in.pid_result + roll.in.pid_result - yaw_heading.pid_result;
-				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 + pitch.in.pid_result + roll.in.pid_result + yaw_heading.pid_result;
-				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 + pitch.in.pid_result - roll.in.pid_result - yaw_heading.pid_result;
-				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 * 0.7 - pitch.in.pid_result - roll.in.pid_result + yaw_heading.pid_result;
+				  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result + roll.in.pid_result - yaw_heading.pid_result;
+				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result + roll.in.pid_result + yaw_heading.pid_result;
+				  ccr3 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result - roll.in.pid_result - yaw_heading.pid_result;
+				  ccr4 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result - roll.in.pid_result + yaw_heading.pid_result;
 			  }
 
 			  altitude_setpoint = actual_pressure_fast;
@@ -792,21 +796,26 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 
 
 	  /********************* Telemetry Communication ************************/
-	  if(tim7_20ms_flag == 1 && tim7_100ms_flag == 0)
+	  if(motor_arming_flag == 1)
 	  {
-		  tim7_20ms_flag = 0;
-		  if(motor_arming_flag == 1)
+//		  if(tim7_20ms_flag == 1)
+//		  {
+//			  tim7_20ms_flag = 0;
+//			  Encode_Msg_Temp(&telemetry_tx_buf[0]);
+//			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 26);
+//		  }
+
+		  if(tim7_200ms_flag == 1)
 		  {
-			  Encode_Msg_Temp(&telemetry_tx_buf[0]);
-			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 28); // altitude : 26, gps : 35, pid : 75
+			  tim7_200ms_flag = 0;
+			  Encode_Msg_Gps(&telemetry_tx_buf[0]);
+			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 63); // altitude : 26, gps : 57, pid : 75
 		  }
-//		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);
-//		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 20);
 	  }
-	  else if(tim7_20ms_flag == 1 && tim7_100ms_flag == 1)
-	  {
-		  tim7_20ms_flag = 0;
-		  tim7_100ms_flag = 0;
+
+//	  {
+//		  tim7_200ms_flag = 0;
+//		  tim7_100ms_flag = 0;
 //		  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], roll.in.kp, roll.in.ki, roll.in.kd);
 //		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
 //		  Encode_Msg_Temp(&telemetry_tx_buf[0]);
@@ -816,7 +825,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 //		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
 //		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
 //		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35, pid : 75
-	  }
+//	  }
 
 	  /***********************************************************************************************
 	----------------------------Check BNO080 Sensor Value(current Angle Data)-----------------------
@@ -835,6 +844,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  BNO080_Roll -= BNO080_ROLL_OFFSET;
 		  BNO080_Pitch = -BNO080_Pitch;
 		  BNO080_Pitch -= BNO080_PITCH_OFFSET;
+		  BNO080_Yaw -= DECLINATION;
 	  }
 
 	  /***********************************************************************************************
@@ -870,33 +880,40 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  actual_pressure_fast = pressure_total_average / 5.0f;
 	  }
 
-	  if(m8n_rx_cplt_flag == 1) // GPS receive checking
+	  if(m8p_rx_cplt_flag == 1) // GPS receive checking
 	  {
-		  m8n_rx_cplt_flag = 0;
+		  m8p_rx_cplt_flag = 0;
 
-		  if(M8N_UBX_CHKSUM_Check(&m8n_rx_buf[0], 100) == 1)
+		  if(M8P_UBX_CHKSUM_Check(&m8p_rx_buf[0], 100) == 1)
 		  {
-			  M8N_UBX_NAV_PVT_Parsing(&m8n_rx_buf[0], &pvt);
+			  M8P_UBX_NAV_PVT_Parsing(&m8p_rx_buf[0], &pvt);
 
-			  if(lat_gps_previous == 0 || lon_gps_previous == 0)
+			  if(pvt.fixType == 2 || pvt.fixType == 3)
 			  {
-				  lat_gps_previous = (double)pvt.lat;
-				  lon_gps_previous = (double)pvt.lon;
-			  }
-			  else
-			  {
-				  lat_gps_previous = lat_gps_actual;
-				  lon_gps_previous = lon_gps_actual;
-			  }
+				  if(lat_gps_previous == 0 || lon_gps_previous == 0)
+				  {
+					  lat_gps_previous = (double)pvt.lat;
+					  lon_gps_previous = (double)pvt.lon;
+				  }
+				  else
+				  {
+					  lat_gps_previous = lat_gps_actual;
+					  lon_gps_previous = lon_gps_actual;
+				  }
 
-			  lat_gps_actual = (double)pvt.lat;
-			  lon_gps_actual = (double)pvt.lon;
+				  if((double)pvt.lat > lat_gps_previous)lat_diff = (double)pvt.lat - lat_gps_previous;
+				  else lat_diff = lat_gps_previous - (double)pvt.lat;
+				  if((double)pvt.lon > lon_gps_previous)lon_diff = (double)pvt.lon - lon_gps_previous;
+				  else lon_diff = lon_gps_previous - (double)pvt.lon;
 
+				  if(lat_diff < 10000) lat_gps_actual = (double)pvt.lat;
+				  if(lon_diff < 10000) lon_gps_actual = (double)pvt.lon;
+			  }
 		  }
 		  else
 		  {
 			  lat_gps_actual = lat_gps_previous;
-			  lon_gps_actual = lat_gps_previous;
+			  lon_gps_actual = lon_gps_previous;
 		  }
 
 		  lat_add = (lat_gps_actual - lat_gps_previous) / 200.00;
@@ -1188,6 +1205,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		if(huart->Instance == USART1)
 		{
 			HAL_UART_Receive_IT(&huart1, &uart1_rx_data, 1);
+			LL_USART_TransmitData8(UART4, uart1_rx_data);
 
 			switch(cnt_1)
 					{
@@ -1606,35 +1624,75 @@ void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[9] = (int)BNO080_Yaw >> 8;
 	telemetry_tx_buf[10] = (int)BNO080_Yaw;
 
-	telemetry_tx_buf[11] = (int)lat_gps >> 24;
-	telemetry_tx_buf[12] = (int)lat_gps >> 16;
-	telemetry_tx_buf[13] = (int)lat_gps >> 8;
-	telemetry_tx_buf[14] = (int)lat_gps;
+	telemetry_tx_buf[11] = (long long int)pvt.lat >> 56;
+	telemetry_tx_buf[12] = (long long int)pvt.lat >> 48;
+	telemetry_tx_buf[13] = (long long int)pvt.lat >> 40;
+	telemetry_tx_buf[14] = (long long int)pvt.lat >> 32;
+	telemetry_tx_buf[15] = (long long int)pvt.lat >> 24;
+	telemetry_tx_buf[16] = (long long int)pvt.lat >> 16;
+	telemetry_tx_buf[17] = (long long int)pvt.lat >> 8;
+	telemetry_tx_buf[18] = (long long int)pvt.lat;
 
-	telemetry_tx_buf[15] = (int)lon_gps >> 24;
-	telemetry_tx_buf[16] = (int)lon_gps >> 16;
-	telemetry_tx_buf[17] = (int)lon_gps >> 8;
-	telemetry_tx_buf[18] = (int)lon_gps;
+	telemetry_tx_buf[19] = (long long int)pvt.lon >> 56;
+	telemetry_tx_buf[20] = (long long int)pvt.lon >> 48;
+	telemetry_tx_buf[21] = (long long int)pvt.lon >> 40;
+	telemetry_tx_buf[22] = (long long int)pvt.lon >> 32;
+	telemetry_tx_buf[23] = (long long int)pvt.lon >> 24;
+	telemetry_tx_buf[24] = (long long int)pvt.lon >> 16;
+	telemetry_tx_buf[25] = (long long int)pvt.lon >> 8;
+	telemetry_tx_buf[26] = (long long int)pvt.lon;
 
-	telemetry_tx_buf[19] = (int)lat_waypoint >> 24;
-	telemetry_tx_buf[20] = (int)lat_waypoint >> 16;
-	telemetry_tx_buf[21] = (int)lat_waypoint >> 8;
-	telemetry_tx_buf[22] = (int)lat_waypoint;
+	telemetry_tx_buf[27] = (long long int)lat_waypoint >> 56;
+	telemetry_tx_buf[28] = (long long int)lat_waypoint >> 48;
+	telemetry_tx_buf[29] = (long long int)lat_waypoint >> 40;
+	telemetry_tx_buf[30] = (long long int)lat_waypoint >> 32;
+	telemetry_tx_buf[31] = (long long int)lat_waypoint >> 24;
+	telemetry_tx_buf[32] = (long long int)lat_waypoint >> 16;
+	telemetry_tx_buf[33] = (long long int)lat_waypoint >> 8;
+	telemetry_tx_buf[34] = (long long int)lat_waypoint;
 
-	telemetry_tx_buf[23] = (int)lon_waypoint >> 24;
-	telemetry_tx_buf[24] = (int)lon_waypoint >> 16;
-	telemetry_tx_buf[25] = (int)lon_waypoint >> 8;
-	telemetry_tx_buf[26] = (int)lon_waypoint;
+	telemetry_tx_buf[35] = (long long int)lon_waypoint >> 56;
+	telemetry_tx_buf[36] = (long long int)lon_waypoint >> 48;
+	telemetry_tx_buf[37] = (long long int)lon_waypoint >> 40;
+	telemetry_tx_buf[38] = (long long int)lon_waypoint >> 32;
+	telemetry_tx_buf[39] = (long long int)lon_waypoint >> 24;
+	telemetry_tx_buf[40] = (long long int)lon_waypoint >> 16;
+	telemetry_tx_buf[41] = (long long int)lon_waypoint >> 8;
+	telemetry_tx_buf[42] = (long long int)lon_waypoint;
 
-	telemetry_tx_buf[27] = (int)gps_pitch_adjust >> 24;
-	telemetry_tx_buf[28] = (int)gps_pitch_adjust >> 16;
-	telemetry_tx_buf[29] = (int)gps_pitch_adjust >> 8;
-	telemetry_tx_buf[30] = (int)gps_pitch_adjust;
+	telemetry_tx_buf[43] = (int)gps_pitch_adjust >> 24;
+	telemetry_tx_buf[44] = (int)gps_pitch_adjust >> 16;
+	telemetry_tx_buf[45] = (int)gps_pitch_adjust >> 8;
+	telemetry_tx_buf[46] = (int)gps_pitch_adjust;
 
-	telemetry_tx_buf[31] = (int)gps_roll_adjust >> 24;
-	telemetry_tx_buf[32] = (int)gps_roll_adjust >> 16;
-	telemetry_tx_buf[33] = (int)gps_roll_adjust >> 8;
-	telemetry_tx_buf[34] = (int)gps_roll_adjust;
+	telemetry_tx_buf[47] = (int)gps_roll_adjust >> 24;
+	telemetry_tx_buf[48] = (int)gps_roll_adjust >> 16;
+	telemetry_tx_buf[49] = (int)gps_roll_adjust >> 8;
+	telemetry_tx_buf[50] = (int)gps_roll_adjust;
+
+	telemetry_tx_buf[51] = pvt.flags >> 6;
+	telemetry_tx_buf[52] = pvt.fixType;
+
+	telemetry_tx_buf[53] = (int)(actual_pressure_fast * 100) >> 24;
+	telemetry_tx_buf[54] = (int)(actual_pressure_fast * 100) >> 16;
+	telemetry_tx_buf[55] = (int)(actual_pressure_fast * 100) >> 8;
+	telemetry_tx_buf[56] = (int)(actual_pressure_fast * 100);
+
+	telemetry_tx_buf[57] = (int)LPS22HH.temperature_raw >> 8;
+	telemetry_tx_buf[58] = (int)LPS22HH.temperature_raw;
+
+	chksum_pid = 0xffffffff;
+
+	for(int i=0; i<53; i++)
+	{
+
+		chksum_pid = chksum_pid - telemetry_tx_buf[i];
+	}
+
+	telemetry_tx_buf[59] = chksum_pid >> 24;
+	telemetry_tx_buf[60] = chksum_pid >> 16;
+	telemetry_tx_buf[61] = chksum_pid >> 8;
+	telemetry_tx_buf[62] = chksum_pid;
 }
 
 void Encode_Msg_Nx(unsigned char* nx_tx_buf)
@@ -2071,7 +2129,8 @@ void return_to_home(void) {
 
 void Calculate_Takeoff_Throttle()
 {
-	takeoff_throttle = 83.9 * 0.7 * ( batVolt * (-17.158) + 1910.4 - 1000);
+	takeoff_throttle = (2 - cos(BNO080_Roll * 0.017453) * cos(BNO080_Pitch * 0.017453)) *  83.9 * ( batVolt * (-5.9603) + 1586 - 1000);
+
 }
 /* USER CODE END 4 */
 

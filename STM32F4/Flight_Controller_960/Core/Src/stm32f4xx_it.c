@@ -54,6 +54,9 @@ uint8_t uart6_rx_data = 0;
 uint8_t m8n_rx_buf[100];
 uint8_t m8n_rx_cplt_flag = 0;
 
+uint8_t m8p_rx_buf[100];
+uint8_t m8p_rx_cplt_flag = 0;
+
 uint8_t ibus_rx_buf[32];
 uint8_t ibus_rx_cplt_flag = 0;
 
@@ -63,6 +66,7 @@ uint8_t tim7_1ms_flag = 0;
 uint8_t tim7_20ms_flag = 0;
 uint8_t tim7_100ms_flag = 0;
 uint8_t tim7_200ms_flag = 0;
+uint8_t tim7_500ms_flag = 0;
 uint8_t tim7_1000ms_flag = 0;
 
 uint8_t nx_rx_buf[20];
@@ -84,6 +88,7 @@ uint8_t nx_rx_cplt_flag;
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_adc1;
 extern DMA_HandleTypeDef hdma_usart1_tx;
+extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart6_tx;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart6;
@@ -264,14 +269,14 @@ void UART4_IRQHandler(void)
 			case 0:
 				if(uart4_rx_data == 0xb5)
 				{
-					m8n_rx_buf[cnt] = uart4_rx_data;
+					m8p_rx_buf[cnt] = uart4_rx_data;
 					cnt++;
 				}
 				break;
 			case 1:
 				if(uart4_rx_data == 0x62)
 				{
-					m8n_rx_buf[cnt] = uart4_rx_data;
+					m8p_rx_buf[cnt] = uart4_rx_data;
 					cnt++;
 				}
 				else
@@ -279,12 +284,12 @@ void UART4_IRQHandler(void)
 				break;
 
 			case 99:
-				m8n_rx_buf[cnt] = uart4_rx_data;
+				m8p_rx_buf[cnt] = uart4_rx_data;
 				cnt = 0;
-				m8n_rx_cplt_flag = 1;
+				m8p_rx_cplt_flag = 1;
 				break;
 			default:
-				m8n_rx_buf[cnt] = uart4_rx_data;
+				m8p_rx_buf[cnt] = uart4_rx_data;
 				cnt++;
 				break;
 			}
@@ -357,6 +362,7 @@ void TIM7_IRQHandler(void)
 	static unsigned char tim7_20ms_count = 0;
 	static unsigned char tim7_100ms_count = 0;
 	static unsigned char tim7_200ms_count = 0;
+	static unsigned char tim7_500ms_count = 0;
 	static unsigned short tim7_1000ms_count = 0;
 	if(LL_TIM_IsActiveFlag_UPDATE(TIM7))
 	{
@@ -386,6 +392,12 @@ void TIM7_IRQHandler(void)
 			tim7_200ms_count = 0;
 			tim7_200ms_flag = 1;
 		}
+		tim7_500ms_count++;
+		if(tim7_500ms_count == 500)
+		{
+			tim7_500ms_count = 0;
+			tim7_500ms_flag = 1;
+		}
 		tim7_1000ms_count++;
 		if(tim7_1000ms_count ==1000)
 		{
@@ -411,6 +423,20 @@ void DMA2_Stream0_IRQHandler(void)
   /* USER CODE BEGIN DMA2_Stream0_IRQn 1 */
 
   /* USER CODE END DMA2_Stream0_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DMA2 stream2 global interrupt.
+  */
+void DMA2_Stream2_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream2_IRQn 0 */
+
+  /* USER CODE END DMA2_Stream2_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart1_rx);
+  /* USER CODE BEGIN DMA2_Stream2_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream2_IRQn 1 */
 }
 
 /**

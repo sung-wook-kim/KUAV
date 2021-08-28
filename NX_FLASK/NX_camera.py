@@ -73,7 +73,11 @@ class NX(BaseCamera):
         self.server_socket.listen()
         self.client_socket, self.addr = self.server_socket.accept()
         print("connected tp GCS")
-        NX.set_human_init()
+        self.human_detect = False
+        self.img_dx = 0
+        self.img_dy = 0
+        self.gimbal_plag = False
+
         self.threadSTM = threading.Thread(target=self.connectSTM, daemon=True)
         self.threadGCS = threading.Thread(target=self.connectGCS, daemon=True)
         self.threadLIDAR = threading.Thread(target=self.connectLIDAR, daemon=True)
@@ -82,23 +86,9 @@ class NX(BaseCamera):
         self.threadGCS.start()
         self.threadLIDAR.start()
         self.threadGIMBAL.start()
-        if os.environ.get('OPENCV_CAMERA_SOURCE'):
-            NX.set_video_source(int(os.environ['OPENCV_CAMERA_SOURCE']))
         super(NX, self).__init__()
 
-    @staticmethod
-    def set_human_init():
-        NX.human_detect = False
-        NX.img_dx = 0
-        NX.img_dy = 0
-        NX.gimbal_plag = False
-
-    @staticmethod
-    def set_video_source(source):
-        NX.video_source = source
-
-    @staticmethod
-    def frames():
+    def frames(self):
         out, weights, imgsz, stride = \
             'inference/output', '/home/drone/kuav/NX_FLASK/weights/yolov5s.pt', 640, 32
         # source = 'test.mp4'
@@ -138,12 +128,12 @@ class NX(BaseCamera):
         _ = model(img.half() if half else img) if device.type != 'cpu' else None  # run once
 
         # to check the detection
-        NX.human_detect = False  # if the model do detect
+        self.human_detect = False  # if the model do detect
         w, h = int(dataset.imgs[0].shape[1]), int(dataset.imgs[0].shape[0])
-        NX.img_human_center = (int(w / 2), int(h / 2))
-        NX.img_human_foot = NX.img_human_center
-        NX.img_dx = 0
-        NX.img_dy = 0
+        self.img_human_center = (int(w / 2), int(h / 2))
+        self.img_human_foot = self.img_human_center
+        self.img_dx = 0
+        self.img_dy = 0
         n = 0  # the number of detect iteration
         conf_thres = 0.4
         fontFace = cv2.FONT_HERSHEY_SIMPLEX
@@ -185,32 +175,32 @@ class NX(BaseCamera):
                         s += '%g %s, ' % (n, names[int(c)])  # add to string
 
                     # write result of crop version
-                    NX.human_detect = False
+                    self.human_detect = False
                     # write result of original version
                     for *xyxy, conf, cls in det:
                         label = '%s %.2f' % (names[int(cls)], conf)
                         center, foot = plot_one_box2(xyxy, im0, label=label, color=colors[int(cls)],
                                                      line_thickness=1)
                         if int(cls) == 0:
-                            NX.img_human_center = center
-                            NX.img_human_foot = foot
-                            NX.human_detect = True
-                            NX.img_dx = NX.img_human_center[0] - w / 2
-                            NX.img_dy = NX.img_human_center[1] - h / 2
-                            NX.gimbal_plag = True
+                            self.img_human_center = center
+                            self.img_human_foot = foot
+                            self.human_detect = True
+                            self.img_dx = self.img_human_center[0] - w / 2
+                            self.img_dy = self.img_human_center[1] - h / 2
+                            self.gimbal_plag = True
                     cv2.line(im0,
-                             (int(NX.img_dx + im0.shape[1] / 2), int(im0.shape[0] / 2)),
+                             (int(self.img_dx + im0.shape[1] / 2), int(im0.shape[0] / 2)),
                              (int(im0.shape[1] / 2), int(im0.shape[0] / 2)), (0, 0, 255),
                              thickness=1, lineType=cv2.LINE_AA)
                     cv2.line(im0,
-                             (int(im0.shape[1] / 2), int(NX.img_dy + im0.shape[0] / 2)),
+                             (int(im0.shape[1] / 2), int(self.img_dy + im0.shape[0] / 2)),
                              (int(im0.shape[1] / 2), int(im0.shape[0] / 2)), (0, 0, 255),
                              thickness=1, lineType=cv2.LINE_AA)
-                    cv2.putText(im0, 'Human Detection ' + str(NX.human_detect), (10, 10 + textSize[1]), fontFace,
+                    cv2.putText(im0, 'Human Detection ' + str(self.human_detect), (10, 10 + textSize[1]), fontFace,
                                 fontScale,
                                 (255, 0, 255), thickness)
 
-                print('%sDone. (%.3fs)' % (s, t2 - t1), NX.img_human_center)
+                print('%sDone. (%.3fs)' % (s, t2 - t1), self.img_human_center)
 
             yield cv2.imencode('.jpg', im0)[1].tobytes()
 
@@ -220,24 +210,24 @@ class NX(BaseCamera):
         dy_prev = 0
         dx_prev = 0
         while True:
-            if NX.gimbal_plag == True:
-                NX.gimbal_plag = False
+            if self.gimbal_plag == True:
+                self.gimbal_plag = False
                 pitch_gain = 0.01
                 yaw_gain = -0.02
                 #                pitch_d = -0.0025
                 #                yaw_d = 0.005
-                #                dy_term = NX.img_dy - dy_prev
-                #                dx_term = NX.img_dx - dx_prev
-                target_pitch += round((pitch_gain * NX.img_dy), 2)  # + dy_term * pitch_d)
-                target_yaw += -math.atan(NX.img_dx / 410 * math.tan(63 / 2)) * 180 / math.pi  # + dx_term * yaw_d)
+                #                dy_term = self.img_dy - dy_prev
+                #                dx_term = self.img_dx - dx_prev
+                target_pitch += round((pitch_gain * self.img_dy), 2)  # + dy_term * pitch_d)
+                target_yaw += -math.atan(self.img_dx / 410 * math.tan(63 / 2)) * 180 / math.pi  # + dx_term * yaw_d)
                 #   Pitch     Roll      Yaw      axislimit
                 # [Min, Max, Min, Max, Min, Max]
                 target_pitch = min(max(axislimit[0], target_pitch), axislimit[1])
                 target_yaw = min(max(axislimit[4], target_yaw), axislimit[5])
-                print(f"img_dx {NX.img_dx}, img_dy {NX.img_dy}, target_pitch {target_pitch}, target_yaw {target_yaw}")
+                print(f"img_dx {self.img_dx}, img_dy {self.img_dy}, target_pitch {target_pitch}, target_yaw {target_yaw}")
                 setpitchrollyaw(target_pitch, 0, target_yaw)
-            #                dy_prev = NX.img_dy
-            #                dx_prev = NX.img_dx
+            #                dy_prev = self.img_dy
+            #                dx_prev = self.img_dx
             else:
                 time.sleep(0.01)
 
@@ -364,14 +354,14 @@ class NX(BaseCamera):
                     self.plag_MISSION = False
 
                 # 2번 임무 , 사람이 detect 되지 않았으면 임의의 angle을 통해 회전 
-                if self.mode == 2 and NX.human_detect == False:
+                if self.mode == 2 and self.human_detect == False:
                     new_gps_lat = lat_drone
                     new_gps_lon = lon_drone
                     yaw_error = 20
 
                     # 금지구역 모드 X
                 if self.AVOID == False:
-                    if NX.human_detect == True:
+                    if self.human_detect == True:
                         self.mode = 3  # 추적모드
                         new_gps_lat = lat_drone + 1  # 계산필요
                         new_gps_lon = lon_drone + 1  # 계산필요
@@ -379,7 +369,7 @@ class NX(BaseCamera):
                         lat_person = 500000  # 계산필요
                         lon_person = 500000  # 계산필요
 
-                        yaw_error = NX.img_dy  # yolo를 통해 인식
+                        yaw_error = self.img_dy  # yolo를 통해 인식
                         # print("mode 3 : " , self.mode)
                     else:
                         self.mode = 5  # 사람이 추적되지않는 대기모드 일 경우 마지막 추적값을 유지
@@ -397,7 +387,7 @@ class NX(BaseCamera):
                     lat_person = 500000  # 계산필요            # time.sleep(0.2)
                     lon_person = 500000  # 계산필요
 
-                    yaw_error = NX.img_dy  # yolo를 통해 인식
+                    yaw_error = self.img_dy  # yolo를 통해 인식
 
                 new_gps_lat = 371231245
                 new_gps_lon = 1271232131
@@ -432,7 +422,7 @@ class NX(BaseCamera):
                 # self.mission_lat / self.mission_lon / roll pitch heading_angle 
                 lat_person = lat_drone + 1
                 lon_person = lon_drone + 1
-                # print(NX.human_detect)
+                # print(self.human_detect)
                 # print(" calculate next gps ")
                 read = str(mode_echo) + '\n' + str(lat_drone) + '\n' + str(lon_drone) + '\n' + str(
                     gps_time) + '\n' + str(lat_drone + 1) + '\n' + str(

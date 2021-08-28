@@ -12,18 +12,10 @@ from utils.utils import *
 
 class Camera(BaseCamera):
     video_source = 'test.mp4'
-
     def __init__(self):
-        if os.environ.get('OPENCV_CAMERA_SOURCE'):
-            Camera.set_video_source(int(os.environ['OPENCV_CAMERA_SOURCE']))
         super(Camera, self).__init__()
 
-    @staticmethod
-    def set_video_source(source):
-        Camera.video_source = source
-
-    @staticmethod
-    def frames():
+    def frames(self):
         out, weights, imgsz = \
             'inference/output', 'weights/yolov5s.pt', 640
         # source = 'test.mp4'

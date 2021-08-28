@@ -1,13 +1,13 @@
 #include "M8P.h"
 
-M8P_UBX_NAV_POSLLH M8P_posllh;
-M8P_UBX_NAV_PVT M8P_pvt;
+M8P_UBX_NAV_POSLLH posllh;
+M8P_UBX_NAV_PVT pvt;
 
 
 const unsigned char M8P_UBX_CFG_PRT[] = {
-0xB5, 0x62, 0x06, 0x00, 0x14, 0x00, 0x01, 0x00, 0x00, 0x00, 0xD0, 0x08, 0x00, 0x00, 0x00, 0xE1, 0x00,
-0x00, 0x23, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF8, 0x9D
-}; //UBX+NMEA+RTCM3 Protocol In, UBX Out, UART1, 8N1-57600
+0xB5, 0x62, 0x06, 0x00, 0x14, 0x00, 0x01, 0x00, 0x00, 0x00, 0xD0, 0x08, 0x00, 0x00, 0x00, 0xC2, 0x01,
+0x00, 0x23, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0xDA, 0x52
+}; //UBX+NMEA+RTCM3 Protocol In, UBX Out, UART1, 8N1-115200
 
 const unsigned char M8P_UBX_CFG_MSG[] = {
 0xB5, 0x62, 0x06, 0x01, 0x08, 0x00, 0x01, 0x02, 0x00, 0x01,
@@ -115,7 +115,7 @@ void M8P_UART4_Baud_Change(void)
 	  /* USER CODE BEGIN UART4_Init 1 */
 
 	  /* USER CODE END UART4_Init 1 */
-	  USART_InitStruct.BaudRate = 57600;
+	  USART_InitStruct.BaudRate = 115200;
 	  USART_InitStruct.DataWidth = LL_USART_DATAWIDTH_8B;
 	  USART_InitStruct.StopBits = LL_USART_STOPBITS_1;
 	  USART_InitStruct.Parity = LL_USART_PARITY_NONE;
@@ -131,8 +131,6 @@ void M8P_Initialization(void)
 {
 	M8P_UART4_Initialization();
 	M8P_TransmitData(&M8P_UBX_CFG_PRT[0], sizeof(M8P_UBX_CFG_PRT));
-	HAL_Delay(100);
-	M8P_UART4_Baud_Change;
 	HAL_Delay(100);
 	M8P_TransmitData(&M8P_UBX_CFG_TMODE3[0], sizeof(M8P_UBX_CFG_TMODE3));
 	HAL_Delay(100);

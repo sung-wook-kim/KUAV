@@ -2,24 +2,24 @@ import serial
 import time
 import numpy as np
 import struct
-ser = serial.Serial('COM7', 115200, timeout=1)
+ser = serial.Serial('COM1', 115200, timeout=1)
 '''
 ---------------550---------------
 Roll Pitch : 10 3 2.5 35 0 11
 YAW : 400 5 120 50 0 4
 altitude : 1050 10 0 2 0 0.01
-GPS : 0 0 0 0.2  0 0.05
+GPS : 2.2 0.01 0.01 0.35  0 0
 ---------------960---------------
-Roll Pitch : 5 0 2 30 0 26
+Roll Pitch : 5 0 2 40 0 15
 Yaw : 200 0 60 20 0 1.5
-altitude : 525 5 0 1 0 0.01
-GPS :
+altitude : 1500 10 0 1.9 0 0.03
+GPS : 1.1   0.01   0.01   0.35  0   0
 '''
 
 
 # use no arming mode
 while True:
-    print("1 : 자세 roll, 2 : 자세 pitch , 3 : 자세 yaw , 4 : 고도 , 5 : lat , 1 6 : lon , 7 : 종료")
+    print("1 : 자세 roll, 2 : 자세 pitch , 3 : 자세 yaw , 4 : 고도 , 5 : lat , 1 6 : lon , 7 : Bat, 8 : 값 확인")
     key = input()
     if key == '1':
         print("자세제어 roll pid 수정")
@@ -422,7 +422,7 @@ while True:
         volt_3 = (volt >> 8) & 0xff
         volt_4 =  volt & 0xff
 
-        li_in = [0x46, 0x43, 0x0c, volt_4 , volt_3, volt_2 ,volt_1 , 0x00, 0x00, 0x00, 0x00]
+        li_in = [0x46, 0x43, 0x0c, volt_4 , volt_3, volt_2 ,volt_1]
         
         ser.reset_input_buffer()
         for _ in range(3):
@@ -435,8 +435,9 @@ while True:
                     ser.reset_input_buffer()
     elif key == '8':
         print("gain 확인")
-        li_in = [0x46, 0x43, 0x0d, in_lon_p_4,  in_lon_p_3,   in_lon_p_2, in_lon_p_1, in_lon_i_4, in_lon_i_3, in_lon_i_2,
-                in_lon_i_1, in_lon_d_4, in_lon_d_3, in_lon_d_2, in_lon_d_1, 0x00, 0x00, 0x00, 0x00]
+        li_in = [0x46, 0x43, 0x0d]
+            # , in_lon_p_4,  in_lon_p_3,   in_lon_p_2, in_lon_p_1, in_lon_i_4, in_lon_i_3, in_lon_i_2,
+            #     in_lon_i_1, in_lon_d_4, in_lon_d_3, in_lon_d_2, in_lon_d_1, 0x00, 0x00, 0x00, 0x00]
         for _ in range(3):
             for i in range(5):
                 ser.write(li_in)
