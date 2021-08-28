@@ -60,7 +60,8 @@ def receive_data(byte, sign = True):
 
 def RTKfn():
     while True:
-        ser.write(rtk.read(1))
+        s = rtk.read(1)
+        ser.write(s)
 def connect():
     global my_checksum ,yaw, lat_gps , lon_gps , lat_waypoint , lon_waypoint , i , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li
     while True:
