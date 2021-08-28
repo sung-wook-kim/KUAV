@@ -16,14 +16,16 @@ class window(QtWidgets.QMainWindow):
         super(window,self).__init__()
         self.centralwid=QtWidgets.QWidget(self)
         self.vlayout_main=QtWidgets.QVBoxLayout()
+
         self.btnSerial = QtWidgets.QPushButton('connect : STM32',self) ; self.btnSocket = QtWidgets.QPushButton('connect : NX',self)
+        self.btnAVOID = QtWidgets.QPushButton('assign avoid ',self)
         self.btnTakeoff = QtWidgets.QPushButton('takeoff',self) ; self.btnRTH = QtWidgets.QPushButton('return to home',self)
         self.btnFT = QtWidgets.QPushButton('force termination : motor stop',self)
         self.btnDataSave = QtWidgets.QPushButton('data save',self)
         
         # streaming
         self.webview=QtWebEngineWidgets.QWebEngineView()
-        #self.webview.setUrl(QUrl("http://223.171.80.232:5001"))
+        self.webview.setUrl(QUrl("http://223.171.80.232:5001"))
         #self.webview.setUrl(QUrl("http://192.168.43.185:5001"))
         self.webview.setUrl(QUrl("http://127.0.0.1"))
 
@@ -33,20 +35,24 @@ class window(QtWidgets.QMainWindow):
         self.m.save(self.data, close_file=False)
 
         self.statuslayout = QtWidgets.QHBoxLayout()
+        self.lat = QtWidgets.QLabel("위도 : ",self)
+        self.lon = QtWidgets.QLabel("경도 : ",self)
         self.altstatus = QtWidgets.QLabel("고도 : ",self)
         self.mission_lat = QtWidgets.QLineEdit("Mission lat",self)
         self.mission_lon = QtWidgets.QLineEdit("Mission lon",self)
-        self.RTH_lat = QtWidgets.QLineEdit("RTH lat",self)
-        self.RTH_lon = QtWidgets.QLineEdit("RTH lon",self)
+        self.AVOID_lat = QtWidgets.QLineEdit("AVOID lat",self)
+        self.AVOID_lon = QtWidgets.QLineEdit("AVOID lon",self)
         self.mission_lat.returnPressed.connect(self.missionlatFunction)
         self.mission_lon.returnPressed.connect(self.missionlonFunction)
-        self.RTH_lat.returnPressed.connect(self.RTHlatFunction)
-        self.RTH_lon.returnPressed.connect(self.RTHlonFunction)
+        self.AVOID_lat.returnPressed.connect(self.AVOIDlatFunction)
+        self.AVOID_lon.returnPressed.connect(self.AVOIDlonFunction)
+        self.statuslayout.addWidget(self.lat)
+        self.statuslayout.addWidget(self.lon)
         self.statuslayout.addWidget(self.altstatus)
         self.statuslayout.addWidget(self.mission_lat)
         self.statuslayout.addWidget(self.mission_lon)
-        self.statuslayout.addWidget(self.RTH_lat)
-        self.statuslayout.addWidget(self.RTH_lon)
+        self.statuslayout.addWidget(self.AVOID_lat)
+        self.statuslayout.addWidget(self.AVOID_lon)
 
         self.webview2=QtWebEngineWidgets.QWebEngineView()
         self.webview2.setHtml(self.data.getvalue().decode())
@@ -54,7 +60,7 @@ class window(QtWidgets.QMainWindow):
         self.weblayout.addWidget(self.webview)
         self.weblayout.addWidget(self.webview2)
         self.btnlayout=QtWidgets.QHBoxLayout()
-        self.btnlayout.addWidget(self.btnSerial) ; self.btnlayout.addWidget(self.btnSocket)
+        self.btnlayout.addWidget(self.btnSerial) ; self.btnlayout.addWidget(self.btnSocket) ; self.btnlayout.addWidget(self.btnAVOID)
         self.btnlayout.addWidget(self.btnTakeoff) ; self.btnlayout.addWidget(self.btnRTH)
         self.btnlayout.addWidget(self.btnFT)      ; self.btnlayout.addWidget(self.btnDataSave)
         self.vlayout_main.addLayout(self.statuslayout)
@@ -73,7 +79,7 @@ class window(QtWidgets.QMainWindow):
         self.server_socket = 0 ; self.client_socket = 0 ; self.addr = 0;
         self.NX_data = b'0'
         self.btnSerial.clicked.connect(self.connectSerial) ; self.btnSocket.clicked.connect(self.connectSocket)
-        self.btnTakeoff.clicked.connect(self.takeoff) ; self.btnRTH.clicked.connect(self.RTH)
+        self.btnAVOID.clicked.connect(self.avoid) ; self.btnTakeoff.clicked.connect(self.takeoff) ; self.btnRTH.clicked.connect(self.RTH)
         self.btnDataSave.clicked.connect(self.datasave) ; self.btnFT.clicked.connect(self.forceTerminate)
         self.serBase = 0
         self.serTele = 0
@@ -90,7 +96,6 @@ class window(QtWidgets.QMainWindow):
         self.automatic_li = []
         self.GPStime = []
 
-
     def missionlatFunction(self):
         self.MISSION_LAT = int(float(self.mission_lat.text())*10**7)
         print(self.MISSION_LAT)
@@ -99,13 +104,13 @@ class window(QtWidgets.QMainWindow):
         self.MISSION_LON = int(float(self.mission_lon.text())*10**7)
         print(self.MISSION_LON)
         
-    def RTHlatFunction(self):
-        self.RTH_LAT = int(self.lat_drone)
-        print(self.RTH_LAT)
+    def AVOIDlatFunction(self):
+        self.AVOID_LAT = int(float(self.AVOID_lat.text())*10**7)
+        print(self.AVOID_LAT)
 
-    def RTHlonFunction(self):
-        self.RTH_LON = int(self.lon_drone)
-        print(self.RTH_LON)
+    def AVOIDlonFunction(self):
+        self.AVOID_LON = int(float(self.AVOID_lon.text())*10**7)
+        print(self.AVOID_LON)
 
     # GCS - STM32 serial ( telemetry maybe)
     def connectSerial(self):
@@ -125,6 +130,7 @@ class window(QtWidgets.QMainWindow):
         self.client_socket.connect((self.HOST, self.port))
         self.timer.timeout.connect(self.update_gps)
         self.btnSocket.setText("connect FCC with Socket ")
+
     # Socket을 통해 NX에서 GPS 데이터 받아온 후 저장 및 지도에 그리기    
     def update_gps(self):
         self.client_socket.sendall(self.NX_data)
@@ -148,6 +154,8 @@ class window(QtWidgets.QMainWindow):
             self.webview2.setHtml(self.data.getvalue().decode())
 
         self.rad +=1
+        self.lat.setText(f"위도 : {self.lat_drone / 10 ** 7}")
+        self.lon.setText(f"경도 : {self.lon_drone / 10 ** 7}")
         self.altstatus.setText(f"고도 : {altitude}m")
     # 이륙 명령 -> NX한테 이륙 명령 코드를 보낸다.
     def takeoff(self):
@@ -161,7 +169,11 @@ class window(QtWidgets.QMainWindow):
         msgR = f"6\n{self.RTH_LAT}\n{self.RTH_LON}"
         self.client_socket.sendall(msgR.encode())
         _ = self.client_socket.recv(512)
-        
+    
+    def avoid(self):
+        msgA = f"7\n{self.AVOID_LAT}\n{self.AVOID_LON}"
+        self.client_socket.sendall(msgA.encode())
+        _ = self.client_socket.recv(512)    
     # 강제종료
     def forceTerminate(self):
         self.client_socket.sendall(b"9\n")
