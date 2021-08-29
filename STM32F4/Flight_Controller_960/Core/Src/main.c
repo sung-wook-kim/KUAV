@@ -202,7 +202,7 @@ int main(void)
   /* USER CODE BEGIN 1 */
 #define MOTOR_FREQ_ADJUST 1.0f
 #define BNO080_PITCH_OFFSET -1.8f
-#define BNO080_ROLL_OFFSET 3.5f
+#define BNO080_ROLL_OFFSET 2.0f
 
 float q[4];
 float quatRadianAccuracy;
@@ -529,37 +529,37 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
   batVolt = adcVal * 0.00699563f;
 
   // GPS Home
-    while(Is_GPS_In_Korea() != 1 || Is_GPS_Accuracy() != 1)
-    {
-  	  if(m8n_rx_cplt_flag == 1) // GPS receive checking
-  	  {
-  		  m8n_rx_cplt_flag = 0;
-
-  		  if(M8N_UBX_CHKSUM_Check(&m8n_rx_buf[0], 100) == 1)
-  		  {
-  			  M8N_UBX_NAV_PVT_Parsing(&m8n_rx_buf[0], &pvt);
-  		  }
-  	  }
-    }
-    while(gps_home_cnt < 10)
-    {
-  	  if(m8n_rx_cplt_flag == 1) // GPS receive checking
-  	  {
-  		  m8n_rx_cplt_flag = 0;
-
-  		  if(M8N_UBX_CHKSUM_Check(&m8n_rx_buf[0], 100) == 1)
-  		  {
-  			  M8N_UBX_NAV_PVT_Parsing(&m8n_rx_buf[0], &pvt);
-
-  			  lat_gps_home += (double)pvt.lat;
-  			  lon_gps_home += (double)pvt.lon;
-
-  			  gps_home_cnt++;
-  		  }
-  	  }
-    }
-    lat_gps_home /= 10.00;
-    lon_gps_home /= 10.00;
+//    while(Is_GPS_In_Korea() != 1 || Is_GPS_Accuracy() != 1)
+//    {
+//  	  if(m8p_rx_cplt_flag == 1) // GPS receive checking
+//  	  {
+//  		  m8p_rx_cplt_flag = 0;
+//
+//  		  if(M8P_UBX_CHKSUM_Check(&m8p_rx_buf[0], 100) == 1)
+//  		  {
+//  			  M8P_UBX_NAV_PVT_Parsing(&m8p_rx_buf[0], &pvt);
+//  		  }
+//  	  }
+//    }
+//    while(gps_home_cnt < 10)
+//    {
+//  	  if(m8p_rx_cplt_flag == 1) // GPS receive checking
+//  	  {
+//  		  m8p_rx_cplt_flag = 0;
+//
+//  		  if(M8P_UBX_CHKSUM_Check(&m8p_rx_buf[0], 100) == 1)
+//  		  {
+//  			  M8P_UBX_NAV_PVT_Parsing(&m8p_rx_buf[0], &pvt);
+//
+//  			  lat_gps_home += (double)pvt.lat;
+//  			  lon_gps_home += (double)pvt.lon;
+//
+//  			  gps_home_cnt++;
+//  		  }
+//  	  }
+//    }
+//    lat_gps_home /= 10.00;
+//    lon_gps_home /= 10.00;
 
   /********************* FC Ready to Fly ************************/
 
@@ -1521,8 +1521,8 @@ void Receive_Pid_Gain(void)
 		  					  break;
 		  				  case 12:
 		  					  yaw_rate.kp = *(int*)&telemetry_rx_buf[3] / 100.f;
-		  					yaw_rate.ki = *(int*)&telemetry_rx_buf[7] / 100.f;
-		  					yaw_rate.kd = *(int*)&telemetry_rx_buf[11] / 100.f;
+		  					  yaw_rate.ki = *(int*)&telemetry_rx_buf[7] / 100.f;
+		  					  yaw_rate.kd = *(int*)&telemetry_rx_buf[11] / 100.f;
 		  					  EP_PIDGain_Write(telemetry_rx_buf[2], yaw_rate.kp, yaw_rate.ki, yaw_rate.kd);
 		  					  EP_PIDGain_Read(telemetry_rx_buf[2], &yaw_rate.kp, &yaw_rate.ki, &yaw_rate.kd);
 		  					  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], yaw_rate.kp, yaw_rate.ki, yaw_rate.kd);

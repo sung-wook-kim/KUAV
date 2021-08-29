@@ -2,24 +2,21 @@ import serial
 import time
 import numpy as np
 import struct
-ser = serial.Serial('COM1', 115200, timeout=1)
+ser = serial.Serial('COM4', 115200, timeout=1)
 '''
----------------550---------------
-Roll Pitch : 10 3 2.5 35 0 11
-YAW : 400 5 120 50 0 4
-altitude : 1050 10 0 2 0 0.01
-GPS : 2.2 0.01 0.01 0.35  0 0
 ---------------960---------------
 Roll Pitch : 5 0 2 40 0 15
-Yaw : 200 0 60 20 0 1.5
+(참고)80 0.5 0.1 12 0 0.1
+Yaw : 40 0.5 0.1 10 0 0.1
 altitude : 1500 10 0 1.9 0 0.03
 GPS : 1.1   0.01   0.01   0.35  0   0
+Yaw Rate : 20 0 1.5
 '''
 
 
 # use no arming mode
 while True:
-    print("1 : 자세 roll, 2 : 자세 pitch , 3 : 자세 yaw , 4 : 고도 , 5 : lat , 1 6 : lon , 7 : Bat, 8 : 값 확인")
+    print("1 : 자세 roll, 2 : 자세 pitch , 3 : 자세 yaw , 4 : 고도 , 5 : lat , 1 6 : lon , 7 : Yaw Rate, 8 : 값 확인")
     key = input()
     if key == '1':
         print("자세제어 roll pid 수정")
@@ -434,14 +431,14 @@ while True:
         yaw_rate_d_3 = (yaw_rate_d_in >> 8) & 0xff
         yaw_rate_d_4 =  yaw_rate_d_in & 0xff
 
-        li_in = [0x46, 0x43, 0x0a, yaw_rate_p_4,  yaw_rate_p_3,   yaw_rate_p_2, yaw_rate_p_1, yaw_rate_i_4, yaw_rate_i_3, yaw_rate_i_2,
+        li_in = [0x46, 0x43, 0x0c, yaw_rate_p_4,  yaw_rate_p_3,   yaw_rate_p_2, yaw_rate_p_1, yaw_rate_i_4, yaw_rate_i_3, yaw_rate_i_2,
                 yaw_rate_i_1, yaw_rate_d_4, yaw_rate_d_3, yaw_rate_d_2, yaw_rate_d_1, 0x00, 0x00, 0x00, 0x00]
         ser.reset_input_buffer()
         for _ in range(3):
             for i in range(5):
                 ser.write(li_in)
             if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
-                if int(ser.read(1).hex(), 16) == 0x0a:
+                if int(ser.read(1).hex(), 16) == 0x0c:
                     yaw_rate_in_p = struct.unpack('f',ser.read(4))
                     yaw_rate_in_i = struct.unpack('f',ser.read(4))
                     yaw_rate_in_d = struct.unpack('f',ser.read(4))
