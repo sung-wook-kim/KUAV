@@ -748,6 +748,18 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  }
 			  else
 			  {
+				  if(iBus.VrA < 1100) iBus_VrA_flag = 0;
+				  else if(iBus.VrA > 1900) iBus_VrA_flag = 2;
+				  else iBus_VrA_flag = 1;
+
+				  if(iBus_VrA_flag==0 && iBus_VrA_Prev_flag==1) yaw_heading_reference -= 10.f;
+				  else if(iBus_VrA_flag==2 && iBus_VrA_Prev_flag==1) yaw_heading_reference += 10.f;
+
+				  if(yaw_heading_reference > 360) yaw_heading_reference -= 360;
+				  else if(yaw_heading_reference < 0) yaw_heading_reference += 360;
+
+				  iBus_VrA_Prev_flag = iBus_VrA_flag;
+
 				  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference, BNO080_Yaw, ICM20602.gyro_z);
 				  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result + roll.in.pid_result - yaw_heading.in.pid_result;
 				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result + roll.in.pid_result + yaw_heading.in.pid_result;
@@ -846,15 +858,15 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 //		  if(tim7_20ms_flag == 1)
 //		  {
 //			  tim7_20ms_flag = 0;
-//			  Encode_Msg_Temp(&telemetry_tx_buf[0]);
-//			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 26);
+			  Encode_Msg_Temp(&telemetry_tx_buf[0]);
+			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 26);
 //		  }
 
 		  if(tim7_200ms_flag == 1)
 		  {
 			  tim7_200ms_flag = 0;
-			  Encode_Msg_Gps(&telemetry_tx_buf[0]);
-			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 64); // altitude : 26, gps : 57, pid : 75
+//			  Encode_Msg_Gps(&telemetry_tx_buf[0]);
+//			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 64); // altitude : 26, gps : 57, pid : 75
 		  }
 	  }
 
@@ -2207,7 +2219,7 @@ void return_to_home(void)
 }
 void Calculate_Takeoff_Throttle()
 {
-	takeoff_throttle = (2 - cos(BNO080_Roll * 0.017453) * cos(BNO080_Pitch * 0.017453)) *  83.9 * ( batVolt * (-5.9603) + 1586 - 1000);
+	takeoff_throttle = (2 - cos(BNO080_Roll * 0.017453) * cos(BNO080_Pitch * 0.017453)) *  83.9 * ( batVolt * (-12.161) + 1710.3 - 1000);
 
 }
 
