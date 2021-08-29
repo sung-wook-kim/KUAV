@@ -10,13 +10,15 @@ ser.flush()
 rtk = serial.Serial('COM14', 115200)
 rtk.flush()
 
-global yaw, lat_gps , lon_gps , lat_waypoint , lon_waypoint , my_checksum , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li
+global yaw, lat_gps , lon_gps , lat_waypoint , lon_waypoint , my_checksum , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li,alt, alt_li, height, height_li
 
 yaw = 0
 lat_gps = 0 
 lat_waypoint = 0
 lon_gps = 0 
 lon_waypoint = 0
+alt = 0
+height = 0
 my_checksum = 0xffffffff
 i = 0
 
@@ -27,6 +29,8 @@ lat_waypoint_li = []
 lon_waypoint_li = []
 pitch_li = []
 roll_li = []
+alt_li = []
+height_li = []
 
 def receive_data(byte, sign = True):
     global my_checksum
@@ -69,7 +73,7 @@ def RTKfn():
         
 
 def connect():
-    global my_checksum ,yaw, lat_gps , lon_gps , lat_waypoint , lon_waypoint , i , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li
+    global my_checksum ,yaw, lat_gps , lon_gps , lat_waypoint , lon_waypoint , i , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li, alt, alt_li, height, height_li
     while True:
         i+=1
         if i % 100 == 0:
@@ -84,6 +88,8 @@ def connect():
             df['lon_waypoint'] = lon_waypoint_li
             df['pitch'] = pitch_li
             df['roll'] = roll_li
+            df['alt'] = alt_li
+            df['height'] = height_li
             df.to_csv(f"pid_data_{timevar}.csv")
             print("Data is saved in data folder")
         
@@ -108,7 +114,7 @@ def connect():
                 fixtype = receive_data(1, sign = False)
 
                 alt = receive_data(4)
-                temp = receive_data(2 , sign=False)
+                height = receive_data(4)
                 #
                 # checksum_1 = int(ser.read(1).hex(), 16) & 0xff
                 # checksum_2 = int(ser.read(1).hex(), 16) & 0xff
@@ -116,7 +122,7 @@ def connect():
                 # checksum_4 = int(ser.read(1).hex(), 16) & 0xff
                 #
                 # checksum = checksum_1 << 24 | checksum_2 << 16 | checksum_3 << 8 | checksum_4
-                print(f'flag = {flag}, fixtype = {fixtype},  lat = {lat_gps}, lon = {lon_gps}, target_lat = {lat_waypoint},target_lon = {lon_waypoint} ,alt ={alt} , temp = {temp/100}, vol = {volatge / 100} ')
+                print(f'flag = {flag}, fixtype = {fixtype},  lat = {lat_gps}, lon = {lon_gps}, target_lat = {lat_waypoint},target_lon = {lon_waypoint} ,alt ={alt} , temp = {height}, vol = {volatge / 100} ')
                 ser.reset_input_buffer()
                 # if checksum == my_checksum:
                 yaw_li.append(yaw)
@@ -126,6 +132,8 @@ def connect():
                 lon_waypoint_li.append(lon_waypoint)
                 pitch_li.append(pitch_adjust)
                 roll_li.append(roll_adjust)
+                alt_li.append(alt)
+                height_li.append(height)
 
                     # print(f'reference\tmeas_value\terror\terror_deriv\terror_sum\tp_result\ti_result\td_result\tpid_result\n')
                     # print(f'-------------------------------------------------------------------------------------------------\n')

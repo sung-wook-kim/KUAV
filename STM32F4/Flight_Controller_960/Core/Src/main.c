@@ -854,7 +854,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  {
 			  tim7_200ms_flag = 0;
 			  Encode_Msg_Gps(&telemetry_tx_buf[0]);
-			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 63); // altitude : 26, gps : 57, pid : 75
+			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 64); // altitude : 26, gps : 57, pid : 75
 		  }
 	  }
 
@@ -1738,21 +1738,23 @@ void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[55] = (int)(actual_pressure_fast * 100) >> 8;
 	telemetry_tx_buf[56] = (int)(actual_pressure_fast * 100);
 
-	telemetry_tx_buf[57] = (int)LPS22HH.temperature_raw >> 8;
-	telemetry_tx_buf[58] = (int)LPS22HH.temperature_raw;
+	telemetry_tx_buf[57] = pvt.height >> 24;
+	telemetry_tx_buf[58] = pvt.height >> 16;
+	telemetry_tx_buf[59] = pvt.height >> 8;
+	telemetry_tx_buf[59] = pvt.height;
 
 	chksum_pid = 0xffffffff;
 
-	for(int i=0; i<53; i++)
+	for(int i=0; i<60; i++)
 	{
 
 		chksum_pid = chksum_pid - telemetry_tx_buf[i];
 	}
 
-	telemetry_tx_buf[59] = chksum_pid >> 24;
-	telemetry_tx_buf[60] = chksum_pid >> 16;
-	telemetry_tx_buf[61] = chksum_pid >> 8;
-	telemetry_tx_buf[62] = chksum_pid;
+	telemetry_tx_buf[60] = chksum_pid >> 24;
+	telemetry_tx_buf[61] = chksum_pid >> 16;
+	telemetry_tx_buf[62] = chksum_pid >> 8;
+	telemetry_tx_buf[63] = chksum_pid;
 }
 
 void Encode_Msg_Nx(unsigned char* nx_tx_buf)
