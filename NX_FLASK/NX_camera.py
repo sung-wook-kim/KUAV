@@ -52,10 +52,8 @@ class NX(BaseCamera):
         self.MISSION_LON = 0
         self.plag_MISSION = False;
         self.plag_RTH = False
-        self.RTH_LAT = 2353;
-        self.RTH_LON = 235
-        self.AVOID_LAT = 1234;
-        self.AVOID_LON = 1234
+        self.RTH_LAT = 2353; self.RTH_LON = 235
+        self.AVOID_LAT = 1234; self.AVOID_LON = 1234
         self.mode = 0  # default = 0
         self.plag_1 = False;
         self.plag_2 = False;
@@ -250,8 +248,17 @@ class NX(BaseCamera):
                     self.mode = 6  # RTH = 착륙
                     self.plag_6 = True
                     self.RTH_LAT = int(gcs[1]) / 10 ** 7
+<<<<<<< HEAD
                     self.RTH_LAT = int(gcs[2]) / 10 ** 7
+=======
+                    self.RTH_LON = int(gcs[2]) / 10 ** 7
+>>>>>>> 8eec77a22128c9b17780ef56d8eaf7c8acb182ce
                     self.plag_RTH = True
+                elif gcs[0] == '7' and self.plag_7 == False:
+                    self.plag_7 = True
+                    self.AVOID_LAT = int(gcs[1]) / 10 ** 7
+                    self.AVOID_LON = int(gcs[2]) / 10 ** 7
+                    
                 elif gcs[0] == '9' and self.plag_9 == False:
                     self.mode = 9  # 비상 모터 정지
                     self.plag_9 = True
