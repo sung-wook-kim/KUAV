@@ -118,7 +118,7 @@ float actual_pressure_fast = 0, actual_pressure_slow = 0;
 float actual_pressure;
 
 // Gps Value
-#define DECLINATION 8.5F
+#define DECLINATION 8.88F
 double lat_gps_previous;
 double lon_gps_previous;
 double lat_gps_actual;
@@ -620,9 +620,8 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  else is_yaw_middle = 0;
 
 		  flight_mode = 1;
-		  if(iBus.SwA == 2000 && iBus.SwB == 1000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 2;
-		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && iBus.VrB > 1900 && is_throttle_middle == 1) flight_mode = 4;
-		  else if(iBus.SwA == 2000 && iBus.SwB == 2000 && is_throttle_middle == 1) flight_mode = 3;
+		  if(iBus.SwA == 2000 && iBus.SwD == 2000 && iBus.VrB > 1900 && is_throttle_middle == 1) flight_mode = 4;
+		  else if(iBus.SwA == 2000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 3;
 
 
 		  if(flight_mode == 2) //Altitude Holding Mode
@@ -858,15 +857,15 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 //		  if(tim7_20ms_flag == 1)
 //		  {
 //			  tim7_20ms_flag = 0;
-			  Encode_Msg_Temp(&telemetry_tx_buf[0]);
-			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 26);
+//			  Encode_Msg_Temp(&telemetry_tx_buf[0]);
+//			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 26);
 //		  }
 
 		  if(tim7_200ms_flag == 1)
 		  {
 			  tim7_200ms_flag = 0;
-//			  Encode_Msg_Gps(&telemetry_tx_buf[0]);
-//			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 64); // altitude : 26, gps : 57, pid : 75
+			  Encode_Msg_Gps(&telemetry_tx_buf[0]);
+			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 64); // altitude : 26, gps : 57, pid : 75
 		  }
 	  }
 
