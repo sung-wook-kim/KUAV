@@ -121,6 +121,7 @@ float lidar_altitude;
 float lidar_altitude_previous;
 float lidar_add;
 float lidar_altitude_actual;
+float baro_lidar_offset;
 
 // Gps Value
 #define DECLINATION 8.88F
@@ -157,6 +158,7 @@ unsigned char takeoff_step = 1;
 uint8_t ccr[18];
 unsigned int ccr1 ,ccr2, ccr3, ccr4;
 unsigned int takeoff_throttle;
+unsigned int increase_throttle;
 
 // Extra
 float theta, theta_radian;
@@ -746,15 +748,21 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  if (gps_pitch_adjust < GPS_PD_MIN) gps_pitch_adjust = GPS_PD_MIN;
 
 			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference , BNO080_Yaw, ICM20602.gyro_z);
-			  ccr1 = 84000;
-			  ccr2 = 84000;
-			  ccr3 = 84000;
-			  ccr4 = 84000;
 
-//			  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
-//			  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
-//			  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
-//			  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
+			  if(takeoff_step == 0)
+			  {
+				  ccr1 = 84000 + increase_throttle  - pitch.in.pid_result + roll.in.pid_result - yaw_heading.in.pid_result;
+				  ccr2 = 84000 + increase_throttle  + pitch.in.pid_result + roll.in.pid_result + yaw_heading.in.pid_result;
+				  ccr3 = 84000 + increase_throttle  + pitch.in.pid_result - roll.in.pid_result - yaw_heading.in.pid_result;
+				  ccr4 = 84000 + increase_throttle  - pitch.in.pid_result - roll.in.pid_result + yaw_heading.in.pid_result;
+			  }
+			  else
+			  {
+				  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
+				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
+				  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
+				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
+			  }
 		  }
 		  else if(nx_flight_mode == 2 ) //GPS holding Mode
 		  {
@@ -1010,7 +1018,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  pressure_total_average += pressure_rotating_mem[pressure_rotating_mem_location];
 		  pressure_rotating_mem_location++;
 		  if(pressure_rotating_mem_location == 5) pressure_rotating_mem_location = 0;
-		  actual_pressure_fast = pressure_total_average / 5.0f;
+		  actual_pressure_fast = pressure_total_average / 5.0f - baro_lidar_offset;
 	  }
 
 	  if(m8p_rx_cplt_flag == 1) // GPS receive checking
@@ -2334,14 +2342,20 @@ int Is_Home_Now(void)
 
 void Takeoff(void)
 {
-	// step 0 - > altitude_move_factor
-	if(takeoff_step == 0)
+	if(takeoff_step == 0) // Increase motor speed
 	{
+		if((takeoff_throttle - increase_throttle) < 10) takeoff_step = 1;
+
+		increase_throttle += 1;
 		altitude_setpoint = 0.2;
 	}
 	if(takeoff_step == 1) // using Lidar, take off drone by 3m
 	{
-		if(XAVIER_rx.lidar > 300) takeoff_step = 2;
+		if(XAVIER_rx.lidar > 300)
+		{
+			takeoff_step = 2;
+			baro_lidar_offset += actual_pressure_fast - (float)XAVIER_rx.lidar / 100.f;
+		}
 
 		if(altitude.out.error < 0.1 && altitude.out.error > -0.1) altitude_setpoint += 0.3;
 	}
@@ -2363,9 +2377,9 @@ void Takeoff(void)
 	if(takeoff_step == 3) // move to mission spot
 	{
 		altitude_setpoint = 5;
-//
-//		lat_waypoint = XAVIER_rx.lat;
-//		lon_waypoint = XAVIER_rx.lon;
+
+		lat_waypoint = XAVIER_rx.lat;
+		lon_waypoint = XAVIER_rx.lon;
 	}
 }
 /* USER CODE END 4 */
