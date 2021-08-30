@@ -258,7 +258,7 @@ class NX(BaseCamera):
                     self.plag_7 = True
                     self.AVOID_LAT = int(gcs[1]) / 10 ** 7
                     self.AVOID_LON = int(gcs[2]) / 10 ** 7
-                    
+
                 elif gcs[0] == '9' and self.plag_9 == False:
                     self.mode = 9  # 비상 모터 정지
                     self.plag_9 = True
@@ -337,7 +337,7 @@ class NX(BaseCamera):
                         np.int32(recvSTM[31] << 24) + np.int32(recvSTM[32] << 16) + np.int32(recvSTM[33] << 8) +
                         recvSTM[34])
                     # print("From STM : " , mode_echo , lat_drone , lon_drone , gps_time , roll , pitch , heading_angle , altitude , voltage)
-
+    
                     self.serSTM.reset_input_buffer()
                 # 특정 범위에 드론이 들어가면 , AVOID 모드 AVOID on ,off 이므로 확실히 구분 된 조건문
                 # tracking circle + 10m // now 20m
@@ -360,7 +360,7 @@ class NX(BaseCamera):
                     yaw_error = 20
 
                     # 금지구역 모드 X
-                if self.AVOID == False:
+                elif self.AVOID == False:
                     if self.human_detect == True:
                         self.mode = 3  # 추적모드
                         new_gps_lat = lat_drone + 1  # 계산필요
