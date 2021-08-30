@@ -949,8 +949,10 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  if(tim7_200ms_flag == 1)
 		  {
 			  tim7_200ms_flag = 0;
-			  Encode_Msg_Gps(&telemetry_tx_buf[0]);
-			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 64); // altitude : 26, gps : 57, pid : 75
+//			  Encode_Msg_Gps(&telemetry_tx_buf[0]);
+//			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 64); // altitude : 26, gps : 57, pid : 75
+			  Encode_Msg_Nx(&telemetry_tx_buf[0]);
+			  HAL_UART_Transmit_DMA(&huart6, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 57, pid : 75
 		  }
 	  }
 

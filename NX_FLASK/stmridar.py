@@ -6,16 +6,16 @@ import threading
 import socket
 import numpy as np
 
-global lidar_distance_1 , lidar_distance_2  , mode
+global lidar_distance_1 , lidar_distance_2  , mode , q , client_socket
 
 lidar_distance_1 = 0
 lidar_distance_2 = 0
 mode = 8
-
-serSTM = serial.Serial('/dev/ttyUSB1', 115200, timeout=1)
+q = [5,5,5]
+serSTM = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)
 serSTM.flush()
 print("stm")
-serLIDAR = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)
+serLIDAR = serial.Serial('/dev/ttyUSB1', 115200, timeout=1)
 serLIDAR.flush()
 print("lidar")
 HOST = '223.171.80.232'
@@ -31,16 +31,9 @@ img_dx = 0
 img_dy = 0
 gimbal_plag = False
 
-threadSTM = threading.Thread(target=connectSTM, daemon=True)
-threadGCS = threading.Thread(target=connectGCS, daemon=True)
-threadLIDAR = threading.Thread(target=connectLIDAR, daemon=True)
-threadSTM.start()
-threadGCS.start()
-threadLIDAR.start()
-
 
 def connectGCS():
-    global mode
+    global mode , q , client_socket
     time.sleep(10)
     plag_1 = False
     plag_6 = False
@@ -48,8 +41,7 @@ def connectGCS():
     while True:
         try:
             print(mode)
-            sendingMsg = q.pop(
-                -1)  # sendingmsg = 'mode \n lat_drone \n lon_drone \n gps_time \n lat_person \n lon_person \n altitude \n detection'
+            sendingMsg = q.pop(-1)  # sendingmsg = 'mode \n lat_drone \n lon_drone \n gps_time \n lat_person \n lon_person \n altitude \n detection'
             gcs = client_socket.recv(1024).decode().split('\n')
             # print("From GCS : " , gcs)
             if gcs[0] == '1' and plag_1 == False:  # 미션 시작
@@ -92,14 +84,14 @@ def connectLIDAR():
                 lidar_distance_1 = recv[2]  # np.int16(recv[2] + np.int16(recv[3] << 8))
                 lidar_distance_2 = recv[3]
                 time.sleep(0.1)
-                # print("LIDAR  : ",lidar_distance_1)
+                print("LIDAR  : ",lidar_distance_1)
                 serLIDAR.reset_input_buffer()
 
 # 5hz because STM transmit is 5hz
 # next gps will be calculated when data from stm is received 
-def connectSTM(self):
+def connectSTM():
 
-    global lidar_distance_1 , lidar_distance_2
+    global lidar_distance_1 , lidar_distance_2 , q , mode
     header_1 = 0x88
     header_2 = 0x18
     lat_drone = 1;
@@ -124,6 +116,7 @@ def connectSTM(self):
 
     while True:
         countSTM = serSTM.in_waiting
+        print(countSTM)
         if countSTM > 34:
             recvSTM = serSTM.read(35)
             serSTM.reset_input_buffer()
@@ -247,6 +240,7 @@ def connectSTM(self):
             read = str(mode_echo) + '\n' + str(lat_drone) + '\n' + str(lon_drone) + '\n' + str(
                 gps_time) + '\n' + str(lat_drone + 1) + '\n' + str(
                 lon_drone + 1) + '\n' + str(altitude)
+            print(read)
             q.append(read)
             # 연산 후 바로 next_gps 전달
             yaw_error = 20
@@ -254,5 +248,14 @@ def connectSTM(self):
                 [header_1, header_2, mode, \
                     new_lat_first, new_lat_second, new_lat_third, new_lat_fourth, \
                     new_lon_first, new_lon_second, new_lon_third, new_lon_fourth, \
-                    yaw_error, lidar_distance_1, lidar_distance_2]
-            )
+                    yaw_error, lidar_distance_1, lidar_distance_2])
+            
+print("thread start")
+threadSTM = threading.Thread(target=connectSTM)
+threadGCS = threading.Thread(target=connectGCS)
+threadLIDAR = threading.Thread(target=connectLIDAR)
+threadSTM.start()
+threadGCS.start()
+threadLIDAR.start()
+
+
