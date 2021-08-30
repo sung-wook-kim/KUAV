@@ -89,7 +89,7 @@ unsigned int chksum_pid = 0xffffffff;
 
 extern uint8_t nx_rx_cplt_flag;
 extern uint8_t nx_rx_buf[20];
-extern uint8_t nx_tx_buf[40];
+extern uint8_t nx_tx_buf[400];
 
 // Timer variables
 extern uint8_t tim7_1ms_flag;
@@ -217,7 +217,8 @@ int main(void)
 
 float q[4];
 float quatRadianAccuracy;
- unsigned short iBus_SwA_Prev = 0;
+
+unsigned short iBus_SwA_Prev = 0;
 unsigned char iBus_rx_cnt = 0;
 unsigned char iBus_VrA_flag = 0;
 unsigned char iBus_VrA_Prev_flag = 0;
@@ -614,7 +615,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  lidar_altitude_previous = lidar_altitude_actual;
 		  }
 
-		  lat_gps_actual = (float)XAVIER_rx.lidar / 100.f;
+		  lidar_altitude_actual = (float)XAVIER_rx.lidar / 100.f;
 
 		  lidar_add = (lidar_altitude_actual - lidar_altitude_previous) / 200.f;
 
@@ -717,11 +718,8 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 //		  }
 		  if(nx_flight_mode == 1) // Takeoff and move to mission spot
 		  {
-			  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4); //Enable Timer Counting
 
-			  TIM3->PSC = 2000;
 
-			  LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
 
 			  Takeoff();
 
@@ -862,6 +860,8 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  Reset_PID_Integrator(&lat.out);
 			  Reset_PID_Integrator(&lon.in);
 			  Reset_PID_Integrator(&lon.out);
+
+			  LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
 		  }
 	  }
 
@@ -909,6 +909,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 				  TIM5->CCR2 = ccr2 > 167999 ? 167999 : ccr2 < 84000 ? 84000 : ccr2;
 				  TIM5->CCR3 = ccr3 > 167999 ? 167999 : ccr3 < 84000 ? 84000 : ccr3;
 				  TIM5->CCR4 = ccr4 > 167999 ? 167999 : ccr4 < 84000 ? 84000 : ccr4;
+
 			  }
 			  else
 			  {
@@ -952,7 +953,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 //			  Encode_Msg_Gps(&telemetry_tx_buf[0]);
 //			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 64); // altitude : 26, gps : 57, pid : 75
 			  Encode_Msg_Nx(&telemetry_tx_buf[0]);
-			  HAL_UART_Transmit_DMA(&huart6, &telemetry_tx_buf[0], 45); // altitude : 26, gps : 57, pid : 75
+			  HAL_UART_Transmit_DMA(&huart6, &telemetry_tx_buf[0], 47); // altitude : 26, gps : 57, pid : 75
 		  }
 	  }
 
@@ -1910,15 +1911,17 @@ void Encode_Msg_Nx(unsigned char* nx_tx_buf)
 	nx_tx_buf[41] = (int)batVolt >> 8;
 	nx_tx_buf[42] = (int)batVolt;
 
-	unsigned short chksum = 0xffff;
+	unsigned int chksum_nx = 0xffffffff;
 
 	for(int i=0; i<43; i++)
 	{
-		chksum = chksum - telemetry_tx_buf[i];
+		chksum_nx = chksum_nx - nx_tx_buf[i];
 	}
 
-	nx_tx_buf[43] = chksum << 8;
-	nx_tx_buf[44] = chksum & 0xff;
+	nx_tx_buf[43] = chksum_nx >> 24;
+	nx_tx_buf[44] = chksum_nx >> 16;
+	nx_tx_buf[45] = chksum_nx >> 8;
+	nx_tx_buf[46] = chksum_nx & 0xff;
 }
 
 void Encode_Msg_PID(unsigned char* telemery_tx_buf)
@@ -2323,7 +2326,7 @@ void return_to_home(void)
 }
 void Calculate_Takeoff_Throttle()
 {
-	takeoff_throttle = (2 - cos(BNO080_Roll * 0.017453) * cos(BNO080_Pitch * 0.017453)) *  83.9 * ( batVolt * (-12.161) + 1710.3 - 1000);
+	takeoff_throttle = (2 - cos(BNO080_Roll * 0.017453) * cos(BNO080_Pitch * 0.017453)) *  83.9 * ( batVolt * (-12.161) + 1710.3 - 1000 + 10);
 
 }
 
@@ -2362,12 +2365,20 @@ int Is_Home_Now(void)
 
 void Takeoff(void)
 {
+
+	  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4); //Enable Timer Counting
+
 	if(takeoff_step == 0) // Increase motor speed
 	{
-		if((takeoff_throttle - increase_throttle) < 10) takeoff_step = 1;
+		if( ( (takeoff_throttle) - increase_throttle ) < 10)
+		{
+			takeoff_step = 1;
+		}
 
 		increase_throttle += 1;
-		altitude_setpoint = 0.2;
+		altitude_setpoint = 2.0f;
+
+		TIM3->PSC = 1000;
 	}
 	if(takeoff_step == 1) // using Lidar, take off drone by 3m
 	{
@@ -2378,10 +2389,12 @@ void Takeoff(void)
 		}
 
 		if(altitude.out.error < 0.1 && altitude.out.error > -0.1) altitude_setpoint += 0.3;
+
+		TIM3->PSC = 1500;
 	}
 	if(takeoff_step == 2) // using barometer, takeoff drone by 5m
 	{
-		if(altitude_setpoint == 5) return_to_home_step = 3;
+		if(altitude_setpoint == 5) takeoff_step = 3;
 
 		if(altitude_setpoint < 5)
 		{
@@ -2393,13 +2406,16 @@ void Takeoff(void)
 			if(altitude.out.error < 0.1 && altitude.out.error > -0.1) altitude_setpoint -= 0.3;
 			if(altitude_setpoint < 5) altitude_setpoint = 5;
 		}
+		TIM3->PSC = 2000;
 	}
 	if(takeoff_step == 3) // move to mission spot
 	{
 		altitude_setpoint = 5;
 
-		lat_waypoint = XAVIER_rx.lat;
-		lon_waypoint = XAVIER_rx.lon;
+//		lat_waypoint = XAVIER_rx.lat;
+//		lon_waypoint = XAVIER_rx.lon;
+
+		TIM3->PSC = 1000;
 	}
 }
 /* USER CODE END 4 */
