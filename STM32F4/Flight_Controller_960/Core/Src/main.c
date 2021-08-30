@@ -104,6 +104,7 @@ unsigned char motor_arming_flag = 0;
 unsigned char failsafe_flag = 0;
 unsigned char low_bat_flag = 0;
 unsigned char flight_mode = 0; // 1 : manual, 2 : Altitude Hold, 3 : Gps Hold + Altitude hold 4 : Return to Home
+unsigned char nx_flight_mode = 10;
 
 // Altitude Value
 float altitude_setpoint;
@@ -116,6 +117,11 @@ int pressure_rotating_mem_location = 0;
 float actual_pressure_diff;
 float actual_pressure_fast = 0, actual_pressure_slow = 0;
 float actual_pressure;
+float lidar_altitude;
+float lidar_altitude_previous;
+float lidar_add;
+float lidar_altitude_actual;
+float baro_lidar_offset;
 
 // Gps Value
 #define DECLINATION 8.88F
@@ -145,10 +151,14 @@ double return_to_home_lat_factor = 0, return_to_home_lon_factor = 0,return_to_ho
 double lat_gps_float_adjust = 0, lon_gps_float_adjust = 0;
 unsigned char is_lat_nearby = 0, is_lon_nearby = 0;
 
+// takeoff
+unsigned char takeoff_step = 1;
+
 // Motor Value
 uint8_t ccr[18];
 unsigned int ccr1 ,ccr2, ccr3, ccr4;
 unsigned int takeoff_throttle;
+unsigned int increase_throttle;
 
 // Extra
 float theta, theta_radian;
@@ -177,6 +187,7 @@ void return_to_home(void);
 int Is_GPS_Accuracy(void);
 int Is_GPS_In_Korea(void);
 int Is_Home_Now(void);
+void Takeoff(void);
 
 void Calculate_Takeoff_Throttle(void);
 
@@ -582,9 +593,9 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+	  /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
+	  /* USER CODE BEGIN 3 */
 
 
 	  /********************* NX Message Parsing ************************/
@@ -593,6 +604,21 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  nx_rx_cplt_flag=0;
 
 		  XAVIER_RX_Parsing(&nx_rx_buf[0], &XAVIER_rx);
+
+		  if(lidar_altitude_previous == 0)
+		  {
+			  lidar_altitude_previous = (float)XAVIER_rx.lidar / 100.f;
+		  }
+		  else
+		  {
+			  lidar_altitude_previous = lidar_altitude_actual;
+		  }
+
+		  lat_gps_actual = (float)XAVIER_rx.lidar / 100.f;
+
+		  lidar_add = (lidar_altitude_actual - lidar_altitude_previous) / 200.f;
+
+		  lidar_altitude = lidar_altitude_previous;
 	  }
 
 	  /********************* Telemetry Communication ************************/
@@ -605,6 +631,8 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 
 		  lat_gps += lat_add;
 		  lon_gps += lon_add;
+
+		  lidar_altitude += lidar_add;
 
 		  Double_Roll_Pitch_PID_Calculation(&pitch, (iBus.RV + gps_pitch_adjust - 1500)*0.07f, BNO080_Pitch, ICM20602.gyro_x);
 		  Double_Roll_Pitch_PID_Calculation(&roll, (iBus.RH + gps_roll_adjust - 1500)*0.07f, BNO080_Roll, ICM20602.gyro_y);
@@ -619,43 +647,124 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  if(iBus.LH > 1485 && iBus.LH < 1515) is_yaw_middle = 1;
 		  else is_yaw_middle = 0;
 
-		  flight_mode = 1;
-		  if(iBus.SwA == 2000 && iBus.SwD == 2000 && iBus.VrB > 1900 && is_throttle_middle == 1) flight_mode = 4;
-		  else if(iBus.SwA == 2000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 3;
+//		  flight_mode = 1;
+//		  if(iBus.SwA == 2000 && iBus.SwD == 2000 && iBus.VrB > 1900 && is_throttle_middle == 1) flight_mode = 4;
+//		  else if(iBus.SwA == 2000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 3;
 
-
-		  if(flight_mode == 2) //Altitude Holding Mode
+		  // 0 : manual mode 1 : takeoff -> move to mission location 2&5 : gps hold  3&4 : gps waypoint 6 : move to gps_home -> landing
+		  if(iBus.SwD != 2000)
 		  {
-			  if(iBus.VrB < 1100) iBus_VrB_flag = 0;
-			  else if(iBus.VrB > 1900) iBus_VrB_flag = 2;
-			  else iBus_VrB_flag = 1;
-
-			  if(iBus_VrB_flag==0 && iBus_VrB_Prev_flag==1) altitude_setpoint -= 0.5f;
-			  else if(iBus_VrB_flag==2 && iBus_VrB_Prev_flag==1) altitude_setpoint += 0.5f;
-
-			  iBus_VrB_Prev_flag = iBus_VrB_flag;
-
-			  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, actual_pressure_fast);
-
-			  if(is_yaw_middle == 0)
+			  nx_flight_mode = 10;
+		  }
+		  else
+		  {
+			  switch(XAVIER_rx.mode)
 			  {
-				  yaw_heading_reference = BNO080_Yaw;
-				  Single_Yaw_Rate_PID_Calculation(&yaw_rate, (iBus.LH-1500), ICM20602.gyro_z);
-				  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result -yaw_rate.pid_result+altitude.in.pid_result;
-				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result +yaw_rate.pid_result+altitude.in.pid_result;
-				  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result -yaw_rate.pid_result+altitude.in.pid_result;
-				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result +yaw_rate.pid_result+altitude.in.pid_result;
+			  case 1:
+				  nx_flight_mode = 1;
+				  break;
+			  case 2:
+				  nx_flight_mode = 2;
+				  break;
+			  case 3:
+				  nx_flight_mode = 2;
+				  break;
+			  case 4:
+				  nx_flight_mode = 2;
+				  break;
+			  case 5:
+				  nx_flight_mode = 2;
+				  break;
+			  case 6:
+				  nx_flight_mode = 3;
+				  break;
+			  default :
+				  nx_flight_mode = 10;
+				  break;
+			  }
+		  }
+
+//		  if(flight_mode == 2) //Altitude Holding Mode
+//		  {
+//			  if(iBus.VrB < 1100) iBus_VrB_flag = 0;
+//			  else if(iBus.VrB > 1900) iBus_VrB_flag = 2;
+//			  else iBus_VrB_flag = 1;
+//
+//			  if(iBus_VrB_flag==0 && iBus_VrB_Prev_flag==1) altitude_setpoint -= 0.5f;
+//			  else if(iBus_VrB_flag==2 && iBus_VrB_Prev_flag==1) altitude_setpoint += 0.5f;
+//
+//			  iBus_VrB_Prev_flag = iBus_VrB_flag;
+//
+//			  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, actual_pressure_fast);
+//
+//			  if(is_yaw_middle == 0)
+//			  {
+//				  yaw_heading_reference = BNO080_Yaw;
+//				  Single_Yaw_Rate_PID_Calculation(&yaw_rate, (iBus.LH-1500), ICM20602.gyro_z);
+//				  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result -yaw_rate.pid_result+altitude.in.pid_result;
+//				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result +yaw_rate.pid_result+altitude.in.pid_result;
+//				  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result -yaw_rate.pid_result+altitude.in.pid_result;
+//				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result +yaw_rate.pid_result+altitude.in.pid_result;
+//			  }
+//			  else
+//			  {
+//				  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference, BNO080_Yaw, ICM20602.gyro_z);
+//				  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
+//				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
+//				  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
+//				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
+//			  }
+//		  }
+		  if(nx_flight_mode == 1) // Takeoff and move to mission spot
+		  {
+			  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4); //Enable Timer Counting
+
+			  TIM3->PSC = 2000;
+
+			  LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
+
+			  Takeoff();
+
+			  if(takeoff_step == 1)
+			  {
+				  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, lidar_altitude);
 			  }
 			  else
 			  {
-				  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference, BNO080_Yaw, ICM20602.gyro_z);
+				  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, actual_pressure_fast);
+			  }
+
+			  Double_GPS_PID_Calculation(&lat, lat_waypoint, lat_gps);
+			  Double_GPS_PID_Calculation(&lon, lon_waypoint, lon_gps);
+
+			  //Because the correction is calculated as if the nose was facing north, we need to convert it for the current heading.
+			  gps_roll_adjust = ((float)lon.in.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) + ((float)lat.in.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
+			  gps_pitch_adjust = ((float)lat.in.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) - ((float)lon.in.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
+
+			  //Limit the maximum correction to 6000. This way we still have full control with the pitch and roll stick on the transmitter.
+			  if (gps_roll_adjust > GPS_PD_MAX) gps_roll_adjust = GPS_PD_MAX;
+			  if (gps_roll_adjust < GPS_PD_MIN) gps_roll_adjust = GPS_PD_MIN;
+			  if (gps_pitch_adjust > GPS_PD_MAX) gps_pitch_adjust = GPS_PD_MAX;
+			  if (gps_pitch_adjust < GPS_PD_MIN) gps_pitch_adjust = GPS_PD_MIN;
+
+			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference , BNO080_Yaw, ICM20602.gyro_z);
+
+			  if(takeoff_step == 0)
+			  {
+				  ccr1 = 84000 + increase_throttle  - pitch.in.pid_result + roll.in.pid_result - yaw_heading.in.pid_result;
+				  ccr2 = 84000 + increase_throttle  + pitch.in.pid_result + roll.in.pid_result + yaw_heading.in.pid_result;
+				  ccr3 = 84000 + increase_throttle  + pitch.in.pid_result - roll.in.pid_result - yaw_heading.in.pid_result;
+				  ccr4 = 84000 + increase_throttle  - pitch.in.pid_result - roll.in.pid_result + yaw_heading.in.pid_result;
+			  }
+			  else
+			  {
 				  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
 				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
 				  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
 				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
 			  }
 		  }
-		  else if(flight_mode == 3 ) //GPS holding Mode
+		  else if(nx_flight_mode == 2 ) //GPS holding Mode
 		  {
 			  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, actual_pressure_fast);
 
@@ -666,31 +775,19 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  gps_roll_adjust = ((float)lon.in.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) + ((float)lat.in.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
 			  gps_pitch_adjust = ((float)lat.in.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) - ((float)lon.in.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
 
-			  //Limit the maximum correction to 6000. This way we still have full controll with the pitch and roll stick on the transmitter.
+			  //Limit the maximum correction to 6000. This way we still have full control with the pitch and roll stick on the transmitter.
 			  if (gps_roll_adjust > GPS_PD_MAX) gps_roll_adjust = GPS_PD_MAX;
 			  if (gps_roll_adjust < GPS_PD_MIN) gps_roll_adjust = GPS_PD_MIN;
 			  if (gps_pitch_adjust > GPS_PD_MAX) gps_pitch_adjust = GPS_PD_MAX;
 			  if (gps_pitch_adjust < GPS_PD_MIN) gps_pitch_adjust = GPS_PD_MIN;
 
-			  if(is_yaw_middle == 0)
-			  {
-				  yaw_heading_reference = BNO080_Yaw;
-				  Single_Yaw_Rate_PID_Calculation(&yaw_rate, (iBus.LH-1500), ICM20602.gyro_z);
-				  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_rate.pid_result + altitude.in.pid_result;
-				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_rate.pid_result + altitude.in.pid_result;
-				  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_rate.pid_result + altitude.in.pid_result;
-				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_rate.pid_result + altitude.in.pid_result;
-			  }
-			  else
-			  {
-				  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference , BNO080_Yaw, ICM20602.gyro_z);
-				  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
-				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
-				  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
-				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
-			  }
+			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference , BNO080_Yaw, ICM20602.gyro_z);
+			  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
+			  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
+			  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
+			  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
 		  }
-		  else if(flight_mode == 4 ) // Return to Home Mode
+		  else if(nx_flight_mode == 3 ) // Return to Home Mode
 		  {
 			  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, actual_pressure_fast);
 
@@ -747,18 +844,6 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  }
 			  else
 			  {
-				  if(iBus.VrA < 1100) iBus_VrA_flag = 0;
-				  else if(iBus.VrA > 1900) iBus_VrA_flag = 2;
-				  else iBus_VrA_flag = 1;
-
-				  if(iBus_VrA_flag==0 && iBus_VrA_Prev_flag==1) yaw_heading_reference -= 10.f;
-				  else if(iBus_VrA_flag==2 && iBus_VrA_Prev_flag==1) yaw_heading_reference += 10.f;
-
-				  if(yaw_heading_reference > 360) yaw_heading_reference -= 360;
-				  else if(yaw_heading_reference < 0) yaw_heading_reference += 360;
-
-				  iBus_VrA_Prev_flag = iBus_VrA_flag;
-
 				  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference, BNO080_Yaw, ICM20602.gyro_z);
 				  ccr1 = 84000 + (iBus.LV - 1000) * 83.9 - pitch.in.pid_result + roll.in.pid_result - yaw_heading.in.pid_result;
 				  ccr2 = 84000 + (iBus.LV - 1000) * 83.9 + pitch.in.pid_result + roll.in.pid_result + yaw_heading.in.pid_result;
@@ -933,7 +1018,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  pressure_total_average += pressure_rotating_mem[pressure_rotating_mem_location];
 		  pressure_rotating_mem_location++;
 		  if(pressure_rotating_mem_location == 5) pressure_rotating_mem_location = 0;
-		  actual_pressure_fast = pressure_total_average / 5.0f;
+		  actual_pressure_fast = pressure_total_average / 5.0f - baro_lidar_offset;
 	  }
 
 	  if(m8p_rx_cplt_flag == 1) // GPS receive checking
@@ -2253,6 +2338,49 @@ int Is_Home_Now(void)
 		}
 	}
 	return 0;
+}
+
+void Takeoff(void)
+{
+	if(takeoff_step == 0) // Increase motor speed
+	{
+		if((takeoff_throttle - increase_throttle) < 10) takeoff_step = 1;
+
+		increase_throttle += 1;
+		altitude_setpoint = 0.2;
+	}
+	if(takeoff_step == 1) // using Lidar, take off drone by 3m
+	{
+		if(XAVIER_rx.lidar > 300)
+		{
+			takeoff_step = 2;
+			baro_lidar_offset += actual_pressure_fast - (float)XAVIER_rx.lidar / 100.f;
+		}
+
+		if(altitude.out.error < 0.1 && altitude.out.error > -0.1) altitude_setpoint += 0.3;
+	}
+	if(takeoff_step == 2) // using barometer, takeoff drone by 5m
+	{
+		if(altitude_setpoint == 5) return_to_home_step = 3;
+
+		if(altitude_setpoint < 5)
+		{
+			if(altitude.out.error < 0.1 && altitude.out.error > -0.1) altitude_setpoint += 0.3;
+			if(altitude_setpoint > 5) altitude_setpoint = 5;
+		}
+		else
+		{
+			if(altitude.out.error < 0.1 && altitude.out.error > -0.1) altitude_setpoint -= 0.3;
+			if(altitude_setpoint < 5) altitude_setpoint = 5;
+		}
+	}
+	if(takeoff_step == 3) // move to mission spot
+	{
+		altitude_setpoint = 5;
+
+		lat_waypoint = XAVIER_rx.lat;
+		lon_waypoint = XAVIER_rx.lon;
+	}
 }
 /* USER CODE END 4 */
 
