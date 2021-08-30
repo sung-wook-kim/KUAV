@@ -70,7 +70,7 @@ uint8_t tim7_500ms_flag = 0;
 uint8_t tim7_1000ms_flag = 0;
 
 uint8_t nx_rx_buf[20];
-uint8_t nx_tx_buf[40];
+uint8_t nx_tx_buf[50];
 uint8_t nx_rx_cplt_flag;
 
 /* USER CODE END PV */

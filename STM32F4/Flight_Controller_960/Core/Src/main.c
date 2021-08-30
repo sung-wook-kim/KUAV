@@ -89,7 +89,7 @@ unsigned int chksum_pid = 0xffffffff;
 
 extern uint8_t nx_rx_cplt_flag;
 extern uint8_t nx_rx_buf[20];
-extern uint8_t nx_tx_buf[400];
+extern uint8_t nx_tx_buf[50];
 
 // Timer variables
 extern uint8_t tim7_1ms_flag;
@@ -152,13 +152,13 @@ double lat_gps_float_adjust = 0, lon_gps_float_adjust = 0;
 unsigned char is_lat_nearby = 0, is_lon_nearby = 0;
 
 // takeoff
-unsigned char takeoff_step = 1;
+unsigned char takeoff_step = 0;
 
 // Motor Value
 uint8_t ccr[18];
 unsigned int ccr1 ,ccr2, ccr3, ccr4;
 unsigned int takeoff_throttle;
-unsigned int increase_throttle;
+unsigned int increase_throttle = 0;
 
 // Extra
 float theta, theta_radian;
@@ -196,6 +196,7 @@ void Encode_Msg_AHRS(unsigned char* telemetry_tx_buf);
 void Encode_Msg_Altitude(unsigned char* telemetry_tx_buf);
 void Encode_Msg_Gps(unsigned char* telemetry_tx_buf);
 void Encode_Msg_Nx(unsigned char* nx_tx_buf);
+void Encode_Msg_Mission(unsigned char* telemetry_tx_buf);
 
 /* USER CODE END PFP */
 
@@ -540,38 +541,38 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
   // Read Battery Voltage
   batVolt = adcVal * 0.00699563f;
 
-  // GPS Home
-//    while(Is_GPS_In_Korea() != 1 || Is_GPS_Accuracy() != 1)
-//    {
-//  	  if(m8p_rx_cplt_flag == 1) // GPS receive checking
-//  	  {
-//  		  m8p_rx_cplt_flag = 0;
-//
-//  		  if(M8P_UBX_CHKSUM_Check(&m8p_rx_buf[0], 100) == 1)
-//  		  {
-//  			  M8P_UBX_NAV_PVT_Parsing(&m8p_rx_buf[0], &pvt);
-//  		  }
-//  	  }
-//    }
-//    while(gps_home_cnt < 10)
-//    {
-//  	  if(m8p_rx_cplt_flag == 1) // GPS receive checking
-//  	  {
-//  		  m8p_rx_cplt_flag = 0;
-//
-//  		  if(M8P_UBX_CHKSUM_Check(&m8p_rx_buf[0], 100) == 1)
-//  		  {
-//  			  M8P_UBX_NAV_PVT_Parsing(&m8p_rx_buf[0], &pvt);
-//
-//  			  lat_gps_home += (double)pvt.lat;
-//  			  lon_gps_home += (double)pvt.lon;
-//
-//  			  gps_home_cnt++;
-//  		  }
-//  	  }
-//    }
-//    lat_gps_home /= 10.00;
-//    lon_gps_home /= 10.00;
+//   GPS Home
+    while(Is_GPS_In_Korea() != 1 || Is_GPS_Accuracy() != 1)
+    {
+  	  if(m8p_rx_cplt_flag == 1) // GPS receive checking
+  	  {
+  		  m8p_rx_cplt_flag = 0;
+
+  		  if(M8P_UBX_CHKSUM_Check(&m8p_rx_buf[0], 100) == 1)
+  		  {
+  			  M8P_UBX_NAV_PVT_Parsing(&m8p_rx_buf[0], &pvt);
+  		  }
+  	  }
+    }
+    while(gps_home_cnt < 10)
+    {
+  	  if(m8p_rx_cplt_flag == 1) // GPS receive checking
+  	  {
+  		  m8p_rx_cplt_flag = 0;
+
+  		  if(M8P_UBX_CHKSUM_Check(&m8p_rx_buf[0], 100) == 1)
+  		  {
+  			  M8P_UBX_NAV_PVT_Parsing(&m8p_rx_buf[0], &pvt);
+
+  			  lat_gps_home += (double)pvt.lat;
+  			  lon_gps_home += (double)pvt.lon;
+
+  			  gps_home_cnt++;
+  		  }
+  	  }
+    }
+    lat_gps_home /= 10.00;
+    lon_gps_home /= 10.00;
 
   /********************* FC Ready to Fly ************************/
 
@@ -718,9 +719,6 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 //		  }
 		  if(nx_flight_mode == 1) // Takeoff and move to mission spot
 		  {
-
-
-
 			  Takeoff();
 
 			  if(takeoff_step == 1)
@@ -856,12 +854,11 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  lat_waypoint = lat_gps;
 			  lon_waypoint = lon_gps;
 			  return_to_home_step = 0;
+			  takeoff_step = 0;
 			  Reset_PID_Integrator(&lat.in);
 			  Reset_PID_Integrator(&lat.out);
 			  Reset_PID_Integrator(&lon.in);
 			  Reset_PID_Integrator(&lon.out);
-
-			  LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
 		  }
 	  }
 
@@ -940,36 +937,22 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 	  /********************* Telemetry Communication ************************/
 	  if(motor_arming_flag == 1)
 	  {
-//		  if(tim7_20ms_flag == 1)
-//		  {
-//			  tim7_20ms_flag = 0;
-//			  Encode_Msg_Temp(&telemetry_tx_buf[0]);
-//			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 26);
-//		  }
+		  if(tim7_20ms_flag == 1)
+		  {
+			  tim7_20ms_flag = 0;
+		  }
 
 		  if(tim7_200ms_flag == 1)
 		  {
 			  tim7_200ms_flag = 0;
-//			  Encode_Msg_Gps(&telemetry_tx_buf[0]);
-//			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 64); // altitude : 26, gps : 57, pid : 75
-			  Encode_Msg_Nx(&telemetry_tx_buf[0]);
-			  HAL_UART_Transmit_DMA(&huart6, &telemetry_tx_buf[0], 47); // altitude : 26, gps : 57, pid : 75
+
+			  Encode_Msg_Mission(&telemetry_tx_buf[0]);
+			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 44);
+
+			  Encode_Msg_Nx(&nx_tx_buf[0]);
+			  HAL_UART_Transmit_DMA(&huart6, &nx_tx_buf[0], 47);
 		  }
 	  }
-
-//	  {
-//		  tim7_200ms_flag = 0;
-//		  tim7_100ms_flag = 0;
-//		  Encode_Msg_PID_Gain(&telemetry_tx_buf[0], telemetry_rx_buf[2], roll.in.kp, roll.in.ki, roll.in.kd);
-//		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 19);
-//		  Encode_Msg_Temp(&telemetry_tx_buf[0]);
-//		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 28);
-//		  Encode_Msg_AHRS(&telemetry_tx_buf[0]);lat_gps
-//		  HAL_UART_Transmit_IT(&huart1, &telemetry_tx_buf[0], 40);
-//		  Encode_Msg_Altitude(&telemetry_tx_buf[0]);
-//		  Encode_Msg_Gps(&telemetry_tx_buf[0]);
-//		  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 35, pid : 75
-//	  }
 
 	  /***********************************************************************************************
 	----------------------------Check BNO080 Sensor Value(current Angle Data)-----------------------
@@ -1856,6 +1839,65 @@ void Encode_Msg_Gps(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[63] = chksum_pid;
 }
 
+void Encode_Msg_Mission(unsigned char* telemetry_tx_buf)
+{
+	telemetry_tx_buf[0] = 0x77;
+	telemetry_tx_buf[1] = 0x17;
+
+	telemetry_tx_buf[2] = XAVIER_rx.mode;
+
+	telemetry_tx_buf[3] = takeoff_step;
+
+	telemetry_tx_buf[4] = increase_throttle >> 24;
+	telemetry_tx_buf[5] = increase_throttle >> 16;
+	telemetry_tx_buf[6] = increase_throttle >> 8;
+	telemetry_tx_buf[7] = increase_throttle;
+
+	telemetry_tx_buf[8] = takeoff_throttle >> 24;
+	telemetry_tx_buf[9] = takeoff_throttle >> 16;
+	telemetry_tx_buf[10] = takeoff_throttle >> 8;
+	telemetry_tx_buf[11] = takeoff_throttle;
+
+
+	telemetry_tx_buf[12] = (long long int)lat_waypoint >> 56;
+	telemetry_tx_buf[13] = (long long int)lat_waypoint >> 48;
+	telemetry_tx_buf[14] = (long long int)lat_waypoint >> 40;
+	telemetry_tx_buf[15] = (long long int)lat_waypoint >> 32;
+	telemetry_tx_buf[16] = (long long int)lat_waypoint >> 24;
+	telemetry_tx_buf[17] = (long long int)lat_waypoint >> 16;
+	telemetry_tx_buf[18] = (long long int)lat_waypoint >> 8;
+	telemetry_tx_buf[19] = (long long int)lat_waypoint;
+
+	telemetry_tx_buf[20] = (long long int)lon_waypoint >> 56;
+	telemetry_tx_buf[21] = (long long int)lon_waypoint >> 48;
+	telemetry_tx_buf[22] = (long long int)lon_waypoint >> 40;
+	telemetry_tx_buf[23] = (long long int)lon_waypoint >> 32;
+	telemetry_tx_buf[24] = (long long int)lon_waypoint >> 24;
+	telemetry_tx_buf[25] = (long long int)lon_waypoint >> 16;
+	telemetry_tx_buf[26] = (long long int)lon_waypoint >> 8;
+	telemetry_tx_buf[27] = (long long int)lon_waypoint;
+
+	telemetry_tx_buf[28] = (int)(lidar_altitude * 100) >> 24;
+	telemetry_tx_buf[29] = (int)(lidar_altitude * 100) >> 16;
+	telemetry_tx_buf[30] = (int)(lidar_altitude * 100) >> 8;
+	telemetry_tx_buf[31] = (int)(lidar_altitude * 100);
+
+	telemetry_tx_buf[32] = (int)(actual_pressure_fast * 100) >> 24;
+	telemetry_tx_buf[33] = (int)(actual_pressure_fast * 100) >> 16;
+	telemetry_tx_buf[34] = (int)(actual_pressure_fast * 100) >> 8;
+	telemetry_tx_buf[35] = (int)(actual_pressure_fast * 100);
+
+	telemetry_tx_buf[36] = (int)(altitude_setpoint * 100) >> 24;
+	telemetry_tx_buf[37] = (int)(altitude_setpoint * 100) >> 16;
+	telemetry_tx_buf[38] = (int)(altitude_setpoint * 100) >> 8;
+	telemetry_tx_buf[39] = (int)(altitude_setpoint * 100);
+
+	telemetry_tx_buf[40] = (int)(altitude_setpoint * 100) >> 24;
+	telemetry_tx_buf[41] = (int)(altitude_setpoint * 100) >> 16;
+	telemetry_tx_buf[42] = (int)(altitude_setpoint * 100) >> 8;
+	telemetry_tx_buf[43] = (int)(altitude_setpoint * 100);
+}
+
 void Encode_Msg_Nx(unsigned char* nx_tx_buf)
 {
 	nx_tx_buf[0] = 0x88;
@@ -2365,32 +2407,25 @@ int Is_Home_Now(void)
 
 void Takeoff(void)
 {
-
-	  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4); //Enable Timer Counting
-
 	if(takeoff_step == 0) // Increase motor speed
 	{
-		if( ( (takeoff_throttle) - increase_throttle ) < 10)
+		if(increase_throttle > takeoff_throttle + 8400)
 		{
 			takeoff_step = 1;
 		}
 
-		increase_throttle += 1;
+		increase_throttle += 16;
 		altitude_setpoint = 2.0f;
-
-		TIM3->PSC = 1000;
 	}
 	if(takeoff_step == 1) // using Lidar, take off drone by 3m
 	{
-		if(XAVIER_rx.lidar > 300)
+		if(lidar_altitude > 3)
 		{
 			takeoff_step = 2;
-			baro_lidar_offset += actual_pressure_fast - (float)XAVIER_rx.lidar / 100.f;
+			baro_lidar_offset += actual_pressure_fast - lidar_altitude;
 		}
 
 		if(altitude.out.error < 0.1 && altitude.out.error > -0.1) altitude_setpoint += 0.3;
-
-		TIM3->PSC = 1500;
 	}
 	if(takeoff_step == 2) // using barometer, takeoff drone by 5m
 	{
@@ -2406,7 +2441,6 @@ void Takeoff(void)
 			if(altitude.out.error < 0.1 && altitude.out.error > -0.1) altitude_setpoint -= 0.3;
 			if(altitude_setpoint < 5) altitude_setpoint = 5;
 		}
-		TIM3->PSC = 2000;
 	}
 	if(takeoff_step == 3) // move to mission spot
 	{
@@ -2414,8 +2448,6 @@ void Takeoff(void)
 
 //		lat_waypoint = XAVIER_rx.lat;
 //		lon_waypoint = XAVIER_rx.lon;
-
-		TIM3->PSC = 1000;
 	}
 }
 /* USER CODE END 4 */
