@@ -952,7 +952,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 //			  Encode_Msg_Gps(&telemetry_tx_buf[0]);
 //			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 64); // altitude : 26, gps : 57, pid : 75
 			  Encode_Msg_Nx(&telemetry_tx_buf[0]);
-			  HAL_UART_Transmit_DMA(&huart6, &telemetry_tx_buf[0], 35); // altitude : 26, gps : 57, pid : 75
+			  HAL_UART_Transmit_DMA(&huart6, &telemetry_tx_buf[0], 45); // altitude : 26, gps : 57, pid : 75
 		  }
 	  }
 
@@ -1862,45 +1862,63 @@ void Encode_Msg_Nx(unsigned char* nx_tx_buf)
 
 	nx_tx_buf[2] = XAVIER_rx.mode;
 
-	nx_tx_buf[3] = (int)lat_gps >> 24;
-	nx_tx_buf[4] = (int)lat_gps >> 16;
-	nx_tx_buf[5] = (int)lat_gps >> 8;
-	nx_tx_buf[6] = (int)lat_gps;
+	nx_tx_buf[3] = (long long int)lat_gps >> 56;
+	nx_tx_buf[4] = (long long int)lat_gps >> 48;
+	nx_tx_buf[5] = (long long int)lat_gps >> 40;
+	nx_tx_buf[6] = (long long int)lat_gps >> 32;
+	nx_tx_buf[7] = (long long int)lat_gps >> 24;
+	nx_tx_buf[8] = (long long int)lat_gps >> 16;
+	nx_tx_buf[9] = (long long int)lat_gps >> 8;
+	nx_tx_buf[10] = (long long int)lat_gps;
 
-	nx_tx_buf[7] = (int)lon_gps >> 24;
-	nx_tx_buf[8] = (int)lon_gps >> 16;
-	nx_tx_buf[9] = (int)lon_gps >> 8;
-	nx_tx_buf[10] = (int)lon_gps;
+	nx_tx_buf[11] = (long long int)lon_gps >> 56;
+	nx_tx_buf[12] = (long long int)lon_gps >> 48;
+	nx_tx_buf[13] = (long long int)lon_gps >> 40;
+	nx_tx_buf[14] = (long long int)lon_gps >> 32;
+	nx_tx_buf[15] = (long long int)lon_gps >> 24;
+	nx_tx_buf[16] = (long long int)lon_gps >> 16;
+	nx_tx_buf[17] = (long long int)lon_gps >> 8;
+	nx_tx_buf[18] = (long long int)lon_gps;
 
-	nx_tx_buf[11] = pvt.iTOW >> 24;
-	nx_tx_buf[12] = pvt.iTOW >> 16;
-	nx_tx_buf[13] = pvt.iTOW >> 8;
-	nx_tx_buf[14] = pvt.iTOW;
+	nx_tx_buf[19] = pvt.iTOW >> 24;
+	nx_tx_buf[20] = pvt.iTOW >> 16;
+	nx_tx_buf[21] = pvt.iTOW >> 8;
+	nx_tx_buf[22] = pvt.iTOW;
 
-	nx_tx_buf[15] = (int)BNO080_Roll >> 24;
-	nx_tx_buf[16] = (int)BNO080_Roll >> 16;
-	nx_tx_buf[17] = (int)BNO080_Roll >> 8;
-	nx_tx_buf[18] = (int)BNO080_Roll;
+	nx_tx_buf[23] = (int)BNO080_Roll >> 24;
+	nx_tx_buf[24] = (int)BNO080_Roll >> 16;
+	nx_tx_buf[25] = (int)BNO080_Roll >> 8;
+	nx_tx_buf[26] = (int)BNO080_Roll;
 
-	nx_tx_buf[19] = (int)BNO080_Pitch >> 24;
-	nx_tx_buf[20] = (int)BNO080_Pitch >> 16;
-	nx_tx_buf[21] = (int)BNO080_Pitch >> 8;
-	nx_tx_buf[22] = (int)BNO080_Pitch;
+	nx_tx_buf[27] = (int)BNO080_Pitch >> 24;
+	nx_tx_buf[28] = (int)BNO080_Pitch >> 16;
+	nx_tx_buf[29] = (int)BNO080_Pitch >> 8;
+	nx_tx_buf[30] = (int)BNO080_Pitch;
 
-	nx_tx_buf[23] = (int)BNO080_Yaw >> 24;
-	nx_tx_buf[24] = (int)BNO080_Yaw >> 16;
-	nx_tx_buf[25] = (int)BNO080_Yaw >> 8;
-	nx_tx_buf[26] = (int)BNO080_Yaw;
+	nx_tx_buf[31] = (int)BNO080_Yaw >> 24;
+	nx_tx_buf[32] = (int)BNO080_Yaw >> 16;
+	nx_tx_buf[33] = (int)BNO080_Yaw >> 8;
+	nx_tx_buf[34] = (int)BNO080_Yaw;
 
-	nx_tx_buf[27] = (int)actual_pressure_fast >> 24;
-	nx_tx_buf[28] = (int)actual_pressure_fast >> 16;
-	nx_tx_buf[29] = (int)actual_pressure_fast >> 8;
-	nx_tx_buf[30] = (int)actual_pressure_fast;
+	nx_tx_buf[35] = (int)actual_pressure_fast >> 24;
+	nx_tx_buf[36] = (int)actual_pressure_fast >> 16;
+	nx_tx_buf[37] = (int)actual_pressure_fast >> 8;
+	nx_tx_buf[38] = (int)actual_pressure_fast;
 
-	nx_tx_buf[31] = (int)batVolt >> 24;
-	nx_tx_buf[32] = (int)batVolt >> 16;
-	nx_tx_buf[33] = (int)batVolt >> 8;
-	nx_tx_buf[34] = (int)batVolt;
+	nx_tx_buf[39] = (int)batVolt >> 24;
+	nx_tx_buf[40] = (int)batVolt >> 16;
+	nx_tx_buf[41] = (int)batVolt >> 8;
+	nx_tx_buf[42] = (int)batVolt;
+
+	unsigned short chksum = 0xffff;
+
+	for(int i=0; i<43; i++)
+	{
+		chksum = chksum - telemetry_tx_buf[i];
+	}
+
+	nx_tx_buf[43] = chksum << 8;
+	nx_tx_buf[44] = chksum & 0xff;
 }
 
 void Encode_Msg_PID(unsigned char* telemery_tx_buf)
