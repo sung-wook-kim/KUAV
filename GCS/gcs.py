@@ -72,8 +72,8 @@ class window(QtWidgets.QMainWindow):
         self.timer = QTimer(self)
         self.timer.start(1000)
         self.rad = 1
-        #self.HOST = '223.171.80.232'
-        self.HOST = '192.168.43.185'
+        self.HOST = '223.171.80.232'
+        #self.HOST = '192.168.43.185'
         self.port = 9998
         self.lat_drone_li = [] ;self.lon_drone_li = [] ; self.GPStime = [] ; self.lat_person = [] ;self.lon_person = [] ;self.altitude = []
         self.server_socket = 0 ; self.client_socket = 0 ; self.addr = 0;
@@ -154,9 +154,9 @@ class window(QtWidgets.QMainWindow):
             self.webview2.setHtml(self.data.getvalue().decode())
 
         self.rad +=1
-        self.lat.setText(f"위도 : {self.lat_drone / 10 ** 7}")
-        self.lon.setText(f"경도 : {self.lon_drone / 10 ** 7}")
-        self.altstatus.setText(f"고도 : {altitude}m")
+        self.lat.setText(f"위도 : {float(self.lat_drone) / 10 ** 7}")
+        self.lon.setText(f"경도 : {float(self.lon_drone) / 10 ** 7}")
+        self.altstatus.setText(f"고도 : {altitude}cm")
     # 이륙 명령 -> NX한테 이륙 명령 코드를 보낸다.
     def takeoff(self):
         msgT = f"1\n{self.MISSION_LAT}\n{self.MISSION_LON}"
