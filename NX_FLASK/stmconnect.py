@@ -5,7 +5,6 @@ serSTM = serial.Serial('/dev/ttyUSB0',115200)
 serSTM.flush()
 while True:
         countSTM = serSTM.in_waiting
-        print(countSTM)
         if countSTM > 34:
             recvSTM = serSTM.read(35)
             serSTM.reset_input_buffer()

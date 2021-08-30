@@ -40,7 +40,7 @@ def connectGCS():
     plag_9 = False
     while True:
         try:
-            print(mode)
+            print("MODE : " , mode)
             sendingMsg = q.pop(-1)  # sendingmsg = 'mode \n lat_drone \n lon_drone \n gps_time \n lat_person \n lon_person \n altitude \n detection'
             gcs = client_socket.recv(1024).decode().split('\n')
             # print("From GCS : " , gcs)
@@ -68,7 +68,7 @@ def connectGCS():
             client_socket.sendall(sendingMsg.encode())
         except Exception as e:
             # GCS connection off , connection waiting
-            print("connection error")
+            print("connection error" , e)
             client_socket.close()
             client_socket, addr = server_socket.accept()
 
@@ -115,41 +115,55 @@ def connectSTM():
     lon_prev = 0
 
     while True:
+        
         countSTM = serSTM.in_waiting
-        print(countSTM)
-        if countSTM > 34:
-            recvSTM = serSTM.read(35)
+        if countSTM > 46:
+            recvSTM = serSTM.read(47)
+            check = 0xffffffff
+            for i in range(0,43):
+                check -= recvSTM[i]
             serSTM.reset_input_buffer()
             if recvSTM[0] == 0x88 and recvSTM[1] == 0x18:
                 mode_echo = np.int16(recvSTM[2])
 
-                lat_drone = np.int32(
-                    np.int32(recvSTM[3] << 24) + np.int32(recvSTM[4] << 16) + np.int32(recvSTM[5] << 8) + recvSTM[
-                        6]) / 10 ** 7
-                lon_drone = np.int32(
-                    np.int32(recvSTM[7] << 24) + np.int32(recvSTM[8] << 16) + np.int32(recvSTM[9] << 8) + recvSTM[
-                        10]) / 10 ** 7
+                lat_drone = np.int32( 
+                    np.int32(recvSTM[3] << 56) + np.int32(recvSTM[4] << 48) + np.int32(recvSTM[5] << 40) + np.int32(recvSTM[6] << 32 ) +
+                    np.int32(recvSTM[7] << 24) + np.int32(recvSTM[8] << 16) + np.int32(recvSTM[9] << 8) + recvSTM[10]) / 10 ** 7
+                lon_drone = np.int32( 
+                    np.int32(recvSTM[11] << 56) + np.int32(recvSTM[12] << 48) + np.int32(recvSTM[13] << 40) + np.int32(recvSTM[14] << 32 ) +
+                    np.int32(recvSTM[15] << 24) + np.int32(recvSTM[16] << 16) + np.int32(recvSTM[17] << 8) + recvSTM[18]) / 10 ** 7
                 gps_time = np.int32(
-                    np.int32(recvSTM[11] << 24) + np.int32(recvSTM[12] << 16) + np.int32(recvSTM[13] << 8) +
-                    recvSTM[14])
-
-                roll = np.int32(
-                    np.int32(recvSTM[15] << 24) + np.int32(recvSTM[16] << 16) + np.int32(recvSTM[17] << 8) +
-                    recvSTM[18])
-                pitch = np.int32(
                     np.int32(recvSTM[19] << 24) + np.int32(recvSTM[20] << 16) + np.int32(recvSTM[21] << 8) +
                     recvSTM[22])
-                heading_angle = np.int32(
+
+                roll = np.int32(
                     np.int32(recvSTM[23] << 24) + np.int32(recvSTM[24] << 16) + np.int32(recvSTM[25] << 8) +
                     recvSTM[26])
-
-                altitude = np.int32(
+                pitch = np.int32(
                     np.int32(recvSTM[27] << 24) + np.int32(recvSTM[28] << 16) + np.int32(recvSTM[29] << 8) +
                     recvSTM[30])
-                voltage = np.int32(
+                heading_angle = np.int32(
                     np.int32(recvSTM[31] << 24) + np.int32(recvSTM[32] << 16) + np.int32(recvSTM[33] << 8) +
                     recvSTM[34])
-                # print("From STM : " , mode_echo , lat_drone , lon_drone , gps_time , roll , pitch , heading_angle , altitude , voltage)
+
+                altitude = np.int32(
+                    np.int32(recvSTM[35] << 24) + np.int32(recvSTM[36] << 16) + np.int32(recvSTM[37] << 8) +
+                    recvSTM[38])
+                voltage = np.int32(
+                    np.int32(recvSTM[39] << 24) + np.int32(recvSTM[40] << 16) + np.int32(recvSTM[41] << 8) +
+                    recvSTM[42])
+                # checksum = np.int32(
+                #     np.int32(recvSTM[43] << 24) + np.int32(recvSTM[44] << 16) + np.int32(recvSTM[45] << 8) +
+                #     recvSTM[46])
+                checksum_1 = recvSTM[43] & 0xff
+                checksum_2 = recvSTM[44] & 0xff
+                checksum_3 = recvSTM[45] & 0xff
+                checksum_4 = recvSTM[46] & 0xff
+                
+                checksum = checksum_1 << 24 | checksum_2 << 16 | checksum_3 << 8 | checksum_4
+                if checksum == check:
+
+                    print("From STM : " , mode_echo , lat_drone , lon_drone , gps_time , roll , pitch , heading_angle , altitude , voltage)
 
                 serSTM.reset_input_buffer()
             # # 특정 범위에 드론이 들어가면 , AVOID 모드 AVOID on ,off 이므로 확실히 구분 된 조건문
@@ -240,7 +254,7 @@ def connectSTM():
             read = str(mode_echo) + '\n' + str(lat_drone) + '\n' + str(lon_drone) + '\n' + str(
                 gps_time) + '\n' + str(lat_drone + 1) + '\n' + str(
                 lon_drone + 1) + '\n' + str(altitude)
-            print(read)
+            #print(read)
             q.append(read)
             # 연산 후 바로 next_gps 전달
             yaw_error = 20
