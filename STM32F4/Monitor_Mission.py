@@ -3,6 +3,9 @@ import time
 import pandas as pd
 import sys
 
+import keyboard
+import threading
+
 #initial Setting
 port = 'COM4'
 baudrate = 115200
@@ -14,31 +17,48 @@ class Monitor():
     def __init__(self):
         self.header = [0x77, 0x17]
 
-
-        #Message Protocol
+        # Message Protocol
         self.name = ['mode', 'flight_mode', 'failsafe_flag', 'takeoff_step', 'increase_throttle', 'takeoff_throttle', 'lat_setpoint', 'lon_setpoint', 'lidar', 'baro', 'altitude_setpoint']
         self.byte = [1, 1, 1, 1, 4, 4, 8, 8, 4, 4, 4]
         self.sign = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
 
+        # Check input
         if not self.is_input_right():
             print('Name & Byte & Sign data length is different')
             sys.exit()
 
+        # Data value
         self.data_length = 0
         for i in range(len(self.byte)):
             self.data_length += self.byte[i]
         self.telemetry_buf = []
         self.new_data = []
 
+        # Save Data
         self.df = pd.DataFrame(columns=self.name)
+
+        # Keyboard input
+        self.keyboard = None
+        thread = threading.Thread(target=self.read_keyboard)
+        thread.start()
+
     def run(self):
         i = 0
         while True:
-            i += 1
-            if i % 50 == 0:
+            if self.keyboard == 's':
+                self.keyboard = None
                 now = time.localtime()
                 timevar = time.strftime('%d%H%M%S', now)
                 self.df.to_csv(f"data/{timevar}_mission_data.csv")
+                print('Save Monitor Data')
+            elif self.keyboard == 'q':
+                self.keyboard = None
+                now = time.localtime()
+                timevar = time.strftime('%d%H%M%S', now)
+                self.df.to_csv(f"data/{timevar}_mission_data.csv")
+                print('Save Final Monitor Data')
+                sys.exit('quit Monitor')
+
             if self.is_header_right():
                 self.save_in_buf()
                 self.receive_data()
@@ -93,6 +113,10 @@ class Monitor():
 
     def save_data(self):
         self.df = self.df.append(pd.DataFrame([self.new_data], columns=self.name), ignore_index=True)
+
+    def read_keyboard(self):
+        while True:
+            self.keyboard = keyboard.read_key()
 
 if __name__ == "__main__" :
 
