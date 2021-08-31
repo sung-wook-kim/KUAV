@@ -2,24 +2,21 @@ import serial
 import time
 import numpy as np
 import struct
-ser = serial.Serial('COM4', 115200, timeout=1)
+ser = serial.Serial('COM1', 115200, timeout=1)
 '''
----------------550---------------
-Roll Pitch : 10 3 2.5 35 0 11
-YAW : 400 5 120 50 0 4
-altitude : 1050 10 0 2 0 0.01
-GPS : 0 0 0 0.2  0 0.05
 ---------------960---------------
 Roll Pitch : 5 0 2 40 0 15
-Yaw : 200 0 60 20 0 1.5
-altitude : 1700 10 0 1.9 0 0.04
-GPS :
+(참고)80 0.5 0.1 12 0 0.1
+Yaw : 40 0.6 0.1 10 0 0.1
+altitude : 1500 10 0 1.9 0 0.03
+GPS : 1.1   0.01   0.01   0.35  0  0.02
+Yaw Rate : 20 0 1.5
 '''
 
 
 # use no arming mode
 while True:
-    print("1 : 자세 roll, 2 : 자세 pitch , 3 : 자세 yaw , 4 : 고도 , 5 : lat , 1 6 : lon , 7 : Bat, 8 : 값 확인")
+    print("1 : 자세 roll, 2 : 자세 pitch , 3 : 자세 yaw , 4 : 고도 , 5 : lat , 1 6 : lon , 7 : Yaw Rate, 8 : 값 확인")
     key = input()
     if key == '1':
         print("자세제어 roll pid 수정")
@@ -69,6 +66,7 @@ while True:
         for _ in range(3):
             for i in range(5):
                 ser.write(li_in)
+                time.sleep(0.2)
             if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
                 if int(ser.read(1).hex(), 16) == 0x00:
                     drone_roll_in_p = struct.unpack('f',ser.read(4))
@@ -78,6 +76,7 @@ while True:
                     ser.reset_input_buffer()
             for i in range(5):
                 ser.write(li_out)
+                time.sleep(0.2)
             if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
                 if int(ser.read(1).hex(), 16) == 0x01:
                     drone_roll_out_p = struct.unpack('f',ser.read(4))
@@ -85,6 +84,7 @@ while True:
                     drone_roll_out_d = struct.unpack('f',ser.read(4))
                     print("OUT : " , drone_roll_out_p , drone_roll_out_i , drone_roll_out_d )
                     ser.reset_input_buffer()
+            
       
     elif key == '2':
         print("자세제어 pitch pid 수정")
@@ -135,6 +135,7 @@ while True:
         for _ in range(3):
             for i in range(5):
                 ser.write(li_in)
+                time.sleep(0.2)
             if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
                 if int(ser.read(1).hex(), 16) == 0x02:
                     drone_pitch_in_p = struct.unpack('f',ser.read(4))
@@ -144,6 +145,7 @@ while True:
                     ser.reset_input_buffer()
             for i in range(5):
                 ser.write(li_out)
+                time.sleep(0.2)
             if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
                 if int(ser.read(1).hex(), 16) == 0x03:
                     drone_pitch_out_p = struct.unpack('f',ser.read(4))
@@ -201,6 +203,7 @@ while True:
         for _ in range(3):
             for i in range(5):
                 ser.write(li_in)
+                time.sleep(0.2)
             if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
                 if int(ser.read(1).hex(), 16) == 0x04:
                     drone_yaw_in_p = struct.unpack('f',ser.read(4))
@@ -210,6 +213,7 @@ while True:
                     ser.reset_input_buffer()
             for i in range(5):
                 ser.write(li_out)
+                time.sleep(0.2)
             if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
                 if int(ser.read(1).hex(), 16) == 0x05:
                     drone_yaw_out_p = struct.unpack('f',ser.read(4))
@@ -265,6 +269,7 @@ while True:
         for _ in range(3):
             for i in range(5):
                 ser.write(alt_li_in)
+                time.sleep(0.2)
             if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
                 if int(ser.read(1).hex(), 16) == 0x06:
                     drone_alt_in_p = struct.unpack('f',ser.read(4))
@@ -274,6 +279,7 @@ while True:
                     ser.reset_input_buffer()
             for i in range(5):
                 ser.write(alt_li_out)
+                time.sleep(0.2)
             if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
                 if int(ser.read(1).hex(), 16) == 0x07:
                     drone_alt_out_p = struct.unpack('f',ser.read(4))
@@ -331,6 +337,7 @@ while True:
         for _ in range(3):
             for i in range(5):
                 ser.write(li_in)
+                time.sleep(0.2)
             if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
                 if int(ser.read(1).hex(), 16) == 0x08:
                     drone_lat_in_p = struct.unpack('f',ser.read(4))
@@ -340,6 +347,7 @@ while True:
                     ser.reset_input_buffer()
             for i in range(5):
                 ser.write(li_out)
+                time.sleep(0.2)
             if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
                 if int(ser.read(1).hex(), 16) == 0x09:
                     drone_lat_out_p = struct.unpack('f',ser.read(4))
@@ -396,6 +404,7 @@ while True:
         for _ in range(3):
             for i in range(5):
                 ser.write(li_in)
+                time.sleep(0.2)
             if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
                 if int(ser.read(1).hex(), 16) == 0x0a:
                     drone_lon_in_p = struct.unpack('f',ser.read(4))
@@ -405,6 +414,7 @@ while True:
                     ser.reset_input_buffer()
             for i in range(5):
                 ser.write(li_out)
+                time.sleep(0.2)
             if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
                 if int(ser.read(1).hex(), 16) == 0x0b:
                     drone_lon_out_p = struct.unpack('f',ser.read(4))
@@ -413,26 +423,42 @@ while True:
                     print("OUT : " , drone_lon_out_p , drone_lon_out_i , drone_lon_out_d )
                     ser.reset_input_buffer()
     elif key == '7':
-        print("배터리 볼트 입력")
-        e = input()
-        volt = int(float(e)*100)
-
-        volt_1 = (volt >> 24) & 0xff  
-        volt_2 = (volt >> 16) & 0xff
-        volt_3 = (volt >> 8) & 0xff
-        volt_4 =  volt & 0xff
-
-        li_in = [0x46, 0x43, 0x0c, volt_4 , volt_3, volt_2 ,volt_1]
+        print("yaw rate gain 입력")
+        e = input().split(' ')
+        yaw_rate_p_in = int(float(e[0])*100)
+        yaw_rate_i_in = int(float(e[1])*100)
+        yaw_rate_d_in = int(float(e[2])*100)
         
+        yaw_rate_p_1 = (yaw_rate_p_in >> 24) & 0xff  
+        yaw_rate_p_2 = (yaw_rate_p_in >> 16) & 0xff
+        yaw_rate_p_3 = (yaw_rate_p_in >> 8) & 0xff
+        yaw_rate_p_4 =  yaw_rate_p_in & 0xff
+
+        yaw_rate_i_1 = (yaw_rate_i_in >> 24) & 0xff  
+        yaw_rate_i_2 = (yaw_rate_i_in >> 16) & 0xff
+        yaw_rate_i_3 = (yaw_rate_i_in >> 8) & 0xff
+        yaw_rate_i_4 =  yaw_rate_i_in & 0xff
+        
+        yaw_rate_d_1 = (yaw_rate_d_in >> 24) & 0xff  
+        yaw_rate_d_2 = (yaw_rate_d_in >> 16) & 0xff
+        yaw_rate_d_3 = (yaw_rate_d_in >> 8) & 0xff
+        yaw_rate_d_4 =  yaw_rate_d_in & 0xff
+
+        li_in = [0x46, 0x43, 0x0c, yaw_rate_p_4,  yaw_rate_p_3,   yaw_rate_p_2, yaw_rate_p_1, yaw_rate_i_4, yaw_rate_i_3, yaw_rate_i_2,
+                yaw_rate_i_1, yaw_rate_d_4, yaw_rate_d_3, yaw_rate_d_2, yaw_rate_d_1, 0x00, 0x00, 0x00, 0x00]
         ser.reset_input_buffer()
         for _ in range(3):
             for i in range(5):
                 ser.write(li_in)
+                time.sleep(0.2)
             if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
                 if int(ser.read(1).hex(), 16) == 0x0c:
-                    drone_volt = struct.unpack('f',ser.read(4))
-                    print("volt : " , drone_volt )
+                    yaw_rate_in_p = struct.unpack('f',ser.read(4))
+                    yaw_rate_in_i = struct.unpack('f',ser.read(4))
+                    yaw_rate_in_d = struct.unpack('f',ser.read(4))
+                    print("YAW RATE : " , yaw_rate_in_p , yaw_rate_in_i , yaw_rate_in_d )
                     ser.reset_input_buffer()
+        
     elif key == '8':
         print("gain 확인")
         li_in = [0x46, 0x43, 0x0d]

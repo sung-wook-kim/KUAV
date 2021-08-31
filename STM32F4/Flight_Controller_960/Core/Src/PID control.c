@@ -29,7 +29,7 @@
 PIDDouble roll;
 PIDDouble pitch;
 
-PIDSingle yaw_heading;
+PIDDouble yaw_heading;
 PIDSingle yaw_rate;
 
 PIDDouble altitude;
@@ -119,6 +119,65 @@ void Single_Yaw_Heading_PID_Calculation(PIDSingle* axis, float set_point_angle, 
 	/***************************************************************/
 }
 
+void Double_Yaw_Heading_PID_Calculation(PIDDouble* axis, float set_point_angle, float angle/*BNO080 Rotation Angle*/, float rate/*ICM-20602 Angular Rate*/)
+{
+	/*********** Double PID Outer Begin (Roll and Pitch Angular Position Control) *************/
+	axis->out.reference = set_point_angle;	//Set point of outer PID control
+	axis->out.meas_value = angle;			//BNO080 rotation angle
+
+	axis->out.error = axis->out.reference - axis->out.meas_value;	//Define error of outer loop
+
+	if(axis->out.error > 180.f) axis->out.error -= 360.f;
+	else if(axis->out.error < -180.f) axis->out.error += 360.f;
+
+	axis->out.p_result = axis->out.error * axis->out.kp;			//Calculate P result of outer loop
+
+#define OUT_ERR_SUM_MAX 2000
+#define OUT_I_ERR_MIN -OUT_ERR_SUM_MAX
+	if(axis->out.error_sum > OUT_ERR_SUM_MAX) axis->out.error_sum = OUT_ERR_SUM_MAX;
+	else if(axis->out.error_sum < OUT_I_ERR_MIN) axis->out.error_sum = OUT_I_ERR_MIN;
+	axis->out.i_result = axis->out.error_sum * axis->out.ki;			//Calculate I result of outer loop
+
+	axis->out.error_deriv = -rate;										//Define derivative of outer loop (rate = ICM-20602 Angular Rate)
+
+#if !OUTER_DERIV_FILT_ENABLE
+	axis->out.d_result = axis->out.error_deriv * axis->out.kd;			//Calculate D result of outer loop
+#else
+	axis->out.error_deriv_filt = axis->out.error_deriv_filt * 0.4f + axis->out.error_deriv * 0.6f;	//filter for derivative
+	axis->out.d_result = axis->out.error_deriv_filt * axis->out.kd;									//Calculate D result of inner loop
+#endif
+
+	axis->out.pid_result = axis->out.p_result + axis->out.i_result + axis->out.d_result;  //Calculate PID result of outer loop
+	/****************************************************************************************/
+
+	/************ Double PID Inner Begin (Roll and Pitch Angular Rate Control) **************/
+	axis->in.reference = axis->out.pid_result;	//Set point of inner PID control is the PID result of outer loop (for double PID control)
+	axis->in.meas_value = rate;					//ICM-20602 angular rate
+
+	axis->in.error = axis->in.reference - axis->in.meas_value;	//Define error of inner loop
+	axis->in.p_result = axis->in.error * axis->in.kp;			//Calculate P result of inner loop
+
+	axis->in.error_sum = axis->in.error_sum + axis->in.error * DT;	//Define summation of inner loop
+#define IN_ERR_SUM_MAX 500
+#define IN_I_ERR_MIN -IN_ERR_SUM_MAX
+	if(axis->in.error_sum > IN_ERR_SUM_MAX) axis->in.error_sum = IN_ERR_SUM_MAX;
+	else if(axis->in.error_sum < IN_I_ERR_MIN) axis->in.error_sum = IN_I_ERR_MIN;
+	axis->in.i_result = axis->in.error_sum * axis->in.ki;							//Calculate I result of inner loop
+
+	axis->in.error_deriv = -(axis->in.meas_value - axis->in.meas_value_prev) / DT;	//Define derivative of inner loop
+	axis->in.meas_value_prev = axis->in.meas_value;									//Refresh value_prev to the latest value
+
+#if !INNER_DERIV_FILT_ENABLE
+	axis->in.d_result = axis->in.error_deriv * axis->in.kd;				//Calculate D result of inner loop
+#else
+	axis->in.error_deriv_filt = axis->in.error_deriv_filt * 0.5f + axis->in.error_deriv * 0.5f;	//filter for derivative
+	axis->in.d_result = axis->in.error_deriv_filt * axis->in.kd;								//Calculate D result of inner loop
+#endif
+
+	axis->in.pid_result = axis->in.p_result + axis->in.i_result + axis->in.d_result; //Calculate PID result of inner loop
+	/****************************************************************************************/
+}
+
 void Single_Yaw_Rate_PID_Calculation(PIDSingle* axis, float set_point_rate, float rate/*ICM-20602 Angular Rate*/)
 {
 	/*********** Single PID Begin (Yaw Angular Rate Control) *************/
@@ -150,7 +209,8 @@ void Reset_All_PID_Integrator(void)
 	Reset_PID_Integrator(&roll.out);
 	Reset_PID_Integrator(&pitch.in);
 	Reset_PID_Integrator(&pitch.out);
-	Reset_PID_Integrator(&yaw_heading);
+	Reset_PID_Integrator(&yaw_heading.in);
+	Reset_PID_Integrator(&yaw_heading.out);
 	Reset_PID_Integrator(&yaw_rate);
 
 	Reset_PID_Integrator(&altitude.in);
@@ -285,10 +345,10 @@ void Double_GPS_PID_Calculation(PIDDouble* axis, double set_point_gps, double  g
    axis->out.p_result = axis->out.error * axis->out.kp;         //Calculate P result of outer loop
 
    axis->out.error_sum = axis->out.error_sum + axis->out.error * DT;   //Define summation of outer loop
-#define OUT_ERR_SUM_MAX 500
-#define OUT_ERR_SUM_MIN -OUT_ERR_SUM_MAX
-   if(axis->out.error_sum > OUT_ERR_SUM_MAX) axis->out.error_sum = OUT_ERR_SUM_MAX;
-   else if(axis->out.error_sum < OUT_ERR_SUM_MIN) axis->out.error_sum = OUT_ERR_SUM_MIN;
+#define GPS_OUT_ERR_SUM_MAX 500
+#define GPS_OUT_ERR_SUM_MIN -OUT_ERR_SUM_MAX
+   if(axis->out.error_sum > GPS_OUT_ERR_SUM_MAX) axis->out.error_sum = GPS_OUT_ERR_SUM_MAX;
+   else if(axis->out.error_sum < GPS_OUT_ERR_SUM_MIN) axis->out.error_sum = GPS_OUT_ERR_SUM_MIN;
    axis->out.i_result = axis->out.error_sum * axis->out.ki;         //Calculate I result of outer loop
 
    axis->out.error_deriv = -(axis->out.meas_value - axis->out.meas_value_prev)/DT;//Define derivative of outer loop
@@ -312,10 +372,10 @@ void Double_GPS_PID_Calculation(PIDDouble* axis, double set_point_gps, double  g
    axis->in.p_result = axis->in.error * axis->in.kp;         //Calculate P result of inner loop
 
    axis->in.error_sum = axis->in.error_sum + axis->in.error * DT;   //Define summation of inner loop
-#define IN_ERR_SUM_MAX 500
-#define IN_ERR_SUM_MIN -IN_ERR_SUM_MAX
-   if(axis->in.error_sum > IN_ERR_SUM_MAX) axis->in.error_sum = IN_ERR_SUM_MAX;
-   else if(axis->in.error_sum < IN_ERR_SUM_MIN) axis->in.error_sum = IN_ERR_SUM_MIN;
+#define GPS_IN_ERR_SUM_MAX 200
+#define GPS_IN_ERR_SUM_MIN -IN_ERR_SUM_MAX
+   if(axis->in.error_sum > GPS_IN_ERR_SUM_MAX) axis->in.error_sum = GPS_IN_ERR_SUM_MAX;
+   else if(axis->in.error_sum < GPS_IN_ERR_SUM_MIN) axis->in.error_sum = GPS_IN_ERR_SUM_MIN;
    axis->in.i_result = axis->in.error_sum * axis->in.ki;                     //Calculate I result of inner loop
 
    axis->in.error_deriv = -(axis->in.meas_value - axis->in.meas_value_prev) / DT;   //Define derivative of inner loop

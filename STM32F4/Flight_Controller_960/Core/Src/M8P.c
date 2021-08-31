@@ -1,7 +1,7 @@
 #include "M8P.h"
 
-M8P_UBX_NAV_POSLLH M8P_posllh;
-M8P_UBX_NAV_PVT M8P_pvt;
+M8P_UBX_NAV_POSLLH posllh;
+M8P_UBX_NAV_PVT pvt;
 
 
 const unsigned char M8P_UBX_CFG_PRT[] = {
@@ -131,8 +131,6 @@ void M8P_Initialization(void)
 {
 	M8P_UART4_Initialization();
 	M8P_TransmitData(&M8P_UBX_CFG_PRT[0], sizeof(M8P_UBX_CFG_PRT));
-	HAL_Delay(100);
-	M8P_UART4_Baud_Change;
 	HAL_Delay(100);
 	M8P_TransmitData(&M8P_UBX_CFG_TMODE3[0], sizeof(M8P_UBX_CFG_TMODE3));
 	HAL_Delay(100);

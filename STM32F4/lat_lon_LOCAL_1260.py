@@ -5,25 +5,20 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import threading
 import struct
-ser = serial.Serial('COM4', 115200)
+ser = serial.Serial('COM7', 115200)
+rtk = serial.Serial('COM8', 115200)
 ser.flush()
-# rtk = serial.Serial('COM14', 115200)
-# rtk.flush()
+rtk.flush()
+global yaw, lat_gps , lon_gps , lat_waypoint , lon_waypoint , my_checksum , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li
 
-global voltage, voltage_li, yaw, lat_gps , lon_gps , lat_waypoint , lon_waypoint , my_checksum , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li,alt, alt_li, height, height_li
-
-voltage = 0
 yaw = 0
 lat_gps = 0 
 lat_waypoint = 0
 lon_gps = 0 
 lon_waypoint = 0
-alt = 0
-height = 0
 my_checksum = 0xffffffff
 i = 0
 
-voltage_li = []
 yaw_li = []
 lat_gps_li = []
 lon_gps_li = []
@@ -31,8 +26,6 @@ lat_waypoint_li = []
 lon_waypoint_li = []
 pitch_li = []
 roll_li = []
-alt_li = []
-height_li = []
 
 def receive_data(byte, sign = True):
     global my_checksum
@@ -67,15 +60,10 @@ def receive_data(byte, sign = True):
 
 def RTKfn():
     while True:
-        a = rtk.in_waiting
-        if a > 230:
-            ser.write(rtk.read(a))
-            print(a)
-        
-        
-
+        s = rtk.read(1)
+        ser.write(s)
 def connect():
-    global voltage, voltage_li, my_checksum ,yaw, lat_gps , lon_gps , lat_waypoint , lon_waypoint , i , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li, alt, alt_li, height, height_li
+    global my_checksum ,yaw, lat_gps , lon_gps , lat_waypoint , lon_waypoint , i , lat_gps_li , lon_gps_li , lat_waypoint_li , lon_waypoint_li
     while True:
         i+=1
         if i % 100 == 0:
@@ -83,7 +71,6 @@ def connect():
             timevar = time.strftime('%d%H%M', now)
             df = pd.DataFrame()
 
-            df['voltage'] = voltage_li
             df['yaw'] = yaw_li
             df['lat'] = lat_gps_li
             df['lon'] = lon_gps_li
@@ -91,10 +78,7 @@ def connect():
             df['lon_waypoint'] = lon_waypoint_li
             df['pitch'] = pitch_li
             df['roll'] = roll_li
-            df['alt'] = alt_li
-            df['height'] = height_li
-
-            df.to_csv(f"Data/pid_data_{timevar}.csv")
+            df.to_csv(f"pid_data_{timevar}.csv")
             print("Data is saved in data folder")
         
         my_checksum = 0xffffffff
@@ -104,7 +88,7 @@ def connect():
             if b == 0x17:
                 my_checksum -= 0x77
                 my_checksum -= 0x17
-                voltage = receive_data(4)
+                volatge = receive_data(4)
                 num_sv = receive_data(1,sign=False)
                 yaw = receive_data(4)
                 lat_gps = receive_data(8)
@@ -113,53 +97,44 @@ def connect():
                 lon_waypoint = receive_data(8)
                 pitch_adjust = receive_data(4)
                 roll_adjust = receive_data(4)
-
-                flag = receive_data(1 , sign=False)
-                fixtype = receive_data(1, sign = False)
-
-                alt = receive_data(4)
-                height = receive_data(4)
-                #
-                # checksum_1 = int(ser.read(1).hex(), 16) & 0xff
-                # checksum_2 = int(ser.read(1).hex(), 16) & 0xff
-                # checksum_3 = int(ser.read(1).hex(), 16) & 0xff
-                # checksum_4 = int(ser.read(1).hex(), 16) & 0xff
-                #
-                # checksum = checksum_1 << 24 | checksum_2 << 16 | checksum_3 << 8 | checksum_4
-                # print(f'flag = {flag}, fixtype = {fixtype},  lat = {lat_gps}, lon = {lon_gps}, target_lat = {lat_waypoint},target_lon = {lon_waypoint} ,alt ={alt} , temp = {height}, vol = {volatge / 100} ')
-                print(f'heading_reference : {voltage}, BNO_Yaw : {yaw}')
+                
+                checksum_1 = int(ser.read(1).hex(), 16) & 0xff
+                checksum_2 = int(ser.read(1).hex(), 16) & 0xff
+                checksum_3 = int(ser.read(1).hex(), 16) & 0xff
+                checksum_4 = int(ser.read(1).hex(), 16) & 0xff
+                
+                checksum = checksum_1 << 24 | checksum_2 << 16 | checksum_3 << 8 | checksum_4
+                print(f'lat = {lat_gps}, lon = {lon_gps}, target_lat = {lat_waypoint},target_lon = {lon_waypoint} ,yaw = {yaw}, vol = {volatge / 100}')
                 ser.reset_input_buffer()
-                # if checksum == my_checksum:
-                voltage_li.append(voltage)
-                yaw_li.append(yaw)
-                lat_gps_li.append(lat_gps)
-                lon_gps_li.append(lon_gps)
-                lat_waypoint_li.append(lat_waypoint)
-                lon_waypoint_li.append(lon_waypoint)
-                pitch_li.append(pitch_adjust)
-                roll_li.append(roll_adjust)
-                alt_li.append(alt)
-                height_li.append(height)
+                if checksum == my_checksum:
+                    yaw_li.append(yaw)
+                    lat_gps_li.append(lat_gps)
+                    lon_gps_li.append(lon_gps)
+                    lat_waypoint_li.append(lat_waypoint)
+                    lon_waypoint_li.append(lon_waypoint)
+                    pitch_li.append(pitch_adjust)
+                    roll_li.append(roll_adjust)
 
                     # print(f'reference\tmeas_value\terror\terror_deriv\terror_sum\tp_result\ti_result\td_result\tpid_result\n')
                     # print(f'-------------------------------------------------------------------------------------------------\n')
-                # print(f'{pvt_lat} {lat_gps}\t{out_reference}\t{out_meas_value}\t{out_error}\t{out_error_deriv}\t{out_error_sum}\t{out_p_result}\t{out_i_result}\t{out_d_result}\t{out_pid_result}')
+                    # print(f'{pvt_lat} {lat_gps}\t{out_reference}\t{out_meas_value}\t{out_error}\t{out_error_deriv}\t{out_error_sum}\t{out_p_result}\t{out_i_result}\t{out_d_result}\t{out_pid_result}')
                     # print(f'{in_reference}\t{in_meas_value}\t{in_error}\t{in_error_deriv}\t{in_error_sum}\t{in_p_result}\t{in_i_result}\t{in_d_result}\t{in_pid_result}')
                     # print(f'{in_reference}\t{in_meas_value}\t{in_error}\t{in_error_deriv}\t{in_error_sum}\t{in_p_result}\
                     # print("check")
-                ser.reset_input_buffer()
+                    ser.reset_input_buffer()
 
 thread1 = threading.Thread(target = connect)
 thread1.start()
-# thread2 = threading.Thread(target = RTKfn)
-# thread2.start()
+
+thread2 = threading.Thread(target = RTKfn)
+thread2.start()
 j = 0
 time.sleep(3)
 while True:
     if lat_gps_li[-1] != 0 and lon_gps_li[-1] !=0:
         plt.scatter(lon_gps_li[-1],lat_gps_li[-1])
-        # if (lat_waypoint_li[-1] != lat_gps_li[-1]) or(lon_waypoint_li[-1] != lon_gps_li[-1]):
-        #     plt.scatter(lon_waypoint_li[-1] , lat_waypoint_li[-1] , c= 'k' , s = 100)
+        if (lat_waypoint_li[-1] != lat_gps_li[-1]) or(lon_waypoint_li[-1] != lon_gps_li[-1]):
+            plt.scatter(lon_waypoint_li[-1] , lat_waypoint_li[-1] , c= 'k' , s = 100)
         plt.xlabel('lat')
         plt.ylabel('lon')
         plt.pause(0.05)
