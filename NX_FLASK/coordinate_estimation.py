@@ -3,11 +3,15 @@ import time
 import numpy as np
 from storm32 import Storm32
 from util import *
+import os
+os.system('sudo systemctl restart nvargus-daemon')
+os.system('sudo chmod 666 /dev/ttyACM0')
 
 count = 0
 currTime = time.time()
-gimbal = Storm32(port='COM5')
-cap = cv2.VideoCapture(0)
+# gimbal = Storm32(port='/dev/ttyACM0')
+
+cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=2, capture_width=3840, capture_height=2160, display_width=956, display_height=540, framerate=21), cv2.CAP_GSTREAMER)
 circles = []
 prm1 = 940
 prm2 = 10
@@ -24,14 +28,18 @@ thickness = 1
 i = 0
 setroll, setpitch, setyaw = 0, 45, 0
 
-K = np.array([[2.015446587076636433e+03, 0, 9.765539697951869584e+02],
-              [0, 2.017362842708620747e+03, 4.778646481084207380e+02], [0, 0, 1]])
+# 1.019148736205558748e+03,0.000000000000000000e+00,4.543907475076335913e+02
+# 0.000000000000000000e+00,1.025519691143287901e+03,2.894037118747232284e+02
+# 0.000000000000000000e+00,0.000000000000000000e+00,1.000000000000000000e+00
+
+K = np.array([[1.019148736205558748e+03, 0, 4.543907475076335913e+02],
+              [0, 1.025519691143287901e+03, 2.894037118747232284e+02], [0, 0, 1]])
 K_inv = np.linalg.inv(K)
 T = np.array([[0], [0], [-1]])
 R_tran = np.array([[0, 0, 1, 0], [1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1]])
 
 while (True):
-    gimbal.set_angles(setpitch, setroll, setyaw)
+    # gimbal.set_angles(setpitch, setroll, setyaw)
     src = cap.read()[1]
     try:
         frame_gau_blur = cv2.GaussianBlur(src, (3, 3), 0)
@@ -43,10 +51,15 @@ while (True):
         # print(blue_s_gray)
         circles = cv2.HoughCircles(blue_s_gray, cv2.HOUGH_GRADIENT, 1, 100, param1=prm1, param2=prm2, minRadius=5,
                                    maxRadius=50)[0]
-        roll, pitch, yaw = gimbal.get_imu1_angles()
-        roll = math.pi/180*roll
-        pitch = -math.pi/180*pitch
-        yaw = -math.pi/180*yaw
+        # pitch, roll, yaw = gimbal.get_imu1_angles()
+        # print(roll,pitch, yaw)
+        # roll = math.pi/180*roll
+        # pitch = -math.pi/180*pitch
+        # yaw = -math.pi/180*yaw
+        roll = 0
+        pitch = -math.pi/180*45
+        yaw = 0
+        
 
 
         OR_G = euler_rotation_matrix(roll, pitch, yaw)
@@ -64,7 +77,8 @@ while (True):
             xy_est = xy_est / xy_est[2]
             H_x, H_y = (xy_est[0], xy_est[1])
             cv2.putText(src, str((H_x, H_y)), (int(i[0]), int(i[1]) - 2), fontFace, fontScale,
-                        (255, 0, 255), thickness)
+                        (0, 0, 0), thickness)
+                        
     except:
         pass
     cv2.imshow("dst", src)

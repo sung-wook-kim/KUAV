@@ -23,8 +23,8 @@ WIP to do list
 
 ######################Global variable declaration(User Specific)#######################
 baud = 115200  # Having the wrong value here will cause serial communication issues.
-# com = '/dev/ttyACM0'  # Change this value to your COM port
-com = 'COM5'
+com = '/dev/ttyACM0'  # Change this value to your COM port
+# com = 'COM5'
 crc = '3334'  # Non-mavlink CRC dummy value. Should not need to change!
 sleeptime = [None, .001]  # In seconds. [Movement CMD delay, Non-movement CMD delay]
 
@@ -371,7 +371,6 @@ def cmdexecute(cmd, sleep):
     ser.close()
     return (response)
 
-
 # Intializes script
 def main():
     print('Initializing...', end='')
@@ -387,7 +386,7 @@ def main():
     # array = ['helloworld']
     # for i in range(3):
     #     setpitchrollyaw(0, 0, i * 60)
-    setpitchrollyaw(0, 0, 0)
+    setpitchrollyaw(0, 0, 60)
 
 
 if __name__=="__main__":

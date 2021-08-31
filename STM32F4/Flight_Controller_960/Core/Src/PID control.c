@@ -148,6 +148,11 @@ void Double_Yaw_Heading_PID_Calculation(PIDDouble* axis, float set_point_angle, 
 #endif
 
 	axis->out.pid_result = axis->out.p_result + axis->out.i_result + axis->out.d_result;  //Calculate PID result of outer loop
+
+#define YAW_HEADING_OUT_MAX 500
+#define YAW_HEADING_OUT_MIN -YAW_HEADING_OUT_MAX
+	if(axis->out.pid_result > YAW_HEADING_OUT_MAX) axis->out.pid_result = YAW_HEADING_OUT_MAX;
+	else if(axis->out.pid_result < YAW_HEADING_OUT_MIN) axis->out.pid_result = YAW_HEADING_OUT_MIN;
 	/****************************************************************************************/
 
 	/************ Double PID Inner Begin (Roll and Pitch Angular Rate Control) **************/
