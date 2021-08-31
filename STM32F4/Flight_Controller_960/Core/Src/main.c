@@ -850,6 +850,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  lon_waypoint = lon_gps;
 			  return_to_home_step = 0;
 			  takeoff_step = 0;
+			  increase_throttle = 0;
 			  Reset_PID_Integrator(&lat.in);
 			  Reset_PID_Integrator(&lat.out);
 			  Reset_PID_Integrator(&lon.in);
@@ -948,7 +949,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  tim7_200ms_flag = 0;
 
 			  Encode_Msg_Mission(&telemetry_tx_buf[0]);
-			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 46);
+			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 58);
 
 			  Encode_Msg_Nx(&nx_tx_buf[0]);
 			  HAL_UART_Transmit_DMA(&huart6, &nx_tx_buf[0], 47);
@@ -973,6 +974,8 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  BNO080_Pitch = -BNO080_Pitch;
 		  BNO080_Pitch -= BNO080_PITCH_OFFSET;
 		  BNO080_Yaw -= DECLINATION;
+		  if(BNO080_Yaw < 0) BNO080_Yaw += 360.f;
+		  else if(BNO080_Yaw > 360) BNO080_Yaw -= 360.f;
 	  }
 
 	  /***********************************************************************************************
@@ -1896,10 +1899,25 @@ void Encode_Msg_Mission(unsigned char* telemetry_tx_buf)
 	telemetry_tx_buf[40] = (int)(altitude_setpoint * 100) >> 8;
 	telemetry_tx_buf[41] = (int)(altitude_setpoint * 100);
 
-	telemetry_tx_buf[42] = (int)(yaw_heading_reference * 100);
-	telemetry_tx_buf[43] = (int)(yaw_heading_reference * 100);
-	telemetry_tx_buf[44] = (int)(yaw_heading_reference * 100);
-	telemetry_tx_buf[45] = (int)(yaw_heading_reference * 100);
+	telemetry_tx_buf[42] = (int)(yaw_heading_reference) >> 24;
+	telemetry_tx_buf[43] = (int)(yaw_heading_reference) >> 16;
+	telemetry_tx_buf[44] = (int)(yaw_heading_reference) >> 8;
+	telemetry_tx_buf[45] = (int)(yaw_heading_reference);
+
+	telemetry_tx_buf[46] = (int)(BNO080_Yaw) >> 24;
+	telemetry_tx_buf[47] = (int)(BNO080_Yaw) >> 16;
+	telemetry_tx_buf[48] = (int)(BNO080_Yaw) >> 8;
+	telemetry_tx_buf[49] = (int)(BNO080_Yaw);
+
+	telemetry_tx_buf[50] = (int)(takeoff_step) >> 24;
+	telemetry_tx_buf[51] = (int)(takeoff_step) >> 16;
+	telemetry_tx_buf[52] = (int)(takeoff_step) >> 8;
+	telemetry_tx_buf[53] = (int)(takeoff_step);
+
+	telemetry_tx_buf[54] = (int)(yaw_heading.in.pid_result) >> 24;
+	telemetry_tx_buf[55] = (int)(yaw_heading.in.pid_result) >> 16;
+	telemetry_tx_buf[56] = (int)(yaw_heading.in.pid_result) >> 8;
+	telemetry_tx_buf[57] = (int)(yaw_heading.in.pid_result);
 }
 
 void Encode_Msg_Nx(unsigned char* nx_tx_buf)
