@@ -49,6 +49,8 @@ baro_list = []
 altitude_setpoint_list = []
 lat_setpoint_list = []
 lon_setpoint_list = []
+flight_mode_list = []
+failsafe_flag_list = []
 
 while True:
     i += 1
@@ -65,6 +67,8 @@ while True:
         df['altitude setpoint'] = altitude_setpoint_list
         df['lat setpoint'] = lat_setpoint_list
         df['lon setpoint'] = lon_setpoint_list
+        df['flight mode'] = flight_mode_list
+        df['failsafe flag'] = failsafe_flag_list
 
         df.to_csv(f"data/{timevar}_mission_data.csv")
 
@@ -75,6 +79,8 @@ while True:
         if b == 0x17:
             
             mode = receive_data(1, sign = False)
+            flight_mode = receive_data(1, sign=False)
+            failsafe_flag = receive_data(1, sign=False)
             takeoff_step = receive_data(1, sign=False)
             increase_throttle = receive_data(4, sign=False)
             takeoff_throttle = receive_data(4, sign= False)
@@ -83,7 +89,6 @@ while True:
             lidar = receive_data(4) / 100
             baro = receive_data(4) / 100
             altitude_setpoint = receive_data(4) / 100
-
 
             mode_list.append(mode)
             takeoff_step_list.append(takeoff_step)
@@ -94,9 +99,11 @@ while True:
             altitude_setpoint_list.append(altitude_setpoint)
             lat_setpoint_list.append(lat_setpoint)
             lon_setpoint_list.append(lon_setpoint)
+            flight_mode_list.append(flight_mode)
+            failsafe_flag_list.append(failsafe_flag)
 
             print(f'mode : {mode}\t takeoff_step : {takeoff_step}\t increase_throttle : {increase_throttle}\t '
                   f'takeoff_throttle : {takeoff_throttle}\t lidar : {lidar}\t baro : {baro} alt_set : {altitude_setpoint}\t'
-                  f'lat_set : {lat_setpoint}\t lon_set : {lon_setpoint}')
+                  f'lat_set : {lat_setpoint}\t lon_set : {lon_setpoint}\t nx_flight_mode : {flight_mode}\t failsafe : {failsafe_flag}')
 
             ser.reset_input_buffer()

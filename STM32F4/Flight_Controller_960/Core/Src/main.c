@@ -122,6 +122,10 @@ float lidar_altitude_previous;
 float lidar_add;
 float lidar_altitude_actual;
 float baro_lidar_offset;
+const float altitude_change_condition = 0.05f;
+const float altitude_change = 0.1f;
+const float altitude_turning_point = 3.f;
+const float mission_altitude = 5.f;
 
 // Gps Value
 #define DECLINATION 8.88F
@@ -150,6 +154,7 @@ double lon_gps_home = 0;
 double return_to_home_lat_factor = 0, return_to_home_lon_factor = 0,return_to_home_move_factor = 0;
 double lat_gps_float_adjust = 0, lon_gps_float_adjust = 0;
 unsigned char is_lat_nearby = 0, is_lon_nearby = 0;
+unsigned int decrease_throttle;
 
 // takeoff
 unsigned char takeoff_step = 0;
@@ -542,37 +547,37 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
   batVolt = adcVal * 0.00699563f;
 
 //   GPS Home
-    while(Is_GPS_In_Korea() != 1 || Is_GPS_Accuracy() != 1)
-    {
-  	  if(m8p_rx_cplt_flag == 1) // GPS receive checking
-  	  {
-  		  m8p_rx_cplt_flag = 0;
-
-  		  if(M8P_UBX_CHKSUM_Check(&m8p_rx_buf[0], 100) == 1)
-  		  {
-  			  M8P_UBX_NAV_PVT_Parsing(&m8p_rx_buf[0], &pvt);
-  		  }
-  	  }
-    }
-    while(gps_home_cnt < 10)
-    {
-  	  if(m8p_rx_cplt_flag == 1) // GPS receive checking
-  	  {
-  		  m8p_rx_cplt_flag = 0;
-
-  		  if(M8P_UBX_CHKSUM_Check(&m8p_rx_buf[0], 100) == 1)
-  		  {
-  			  M8P_UBX_NAV_PVT_Parsing(&m8p_rx_buf[0], &pvt);
-
-  			  lat_gps_home += (double)pvt.lat;
-  			  lon_gps_home += (double)pvt.lon;
-
-  			  gps_home_cnt++;
-  		  }
-  	  }
-    }
-    lat_gps_home /= 10.00;
-    lon_gps_home /= 10.00;
+//    while(Is_GPS_In_Korea() != 1 || Is_GPS_Accuracy() != 1)
+//    {
+//  	  if(m8p_rx_cplt_flag == 1) // GPS receive checking
+//  	  {
+//  		  m8p_rx_cplt_flag = 0;
+//
+//  		  if(M8P_UBX_CHKSUM_Check(&m8p_rx_buf[0], 100) == 1)
+//  		  {
+//  			  M8P_UBX_NAV_PVT_Parsing(&m8p_rx_buf[0], &pvt);
+//  		  }
+//  	  }
+//    }
+//    while(gps_home_cnt < 10)
+//    {
+//  	  if(m8p_rx_cplt_flag == 1) // GPS receive checking
+//  	  {
+//  		  m8p_rx_cplt_flag = 0;
+//
+//  		  if(M8P_UBX_CHKSUM_Check(&m8p_rx_buf[0], 100) == 1)
+//  		  {
+//  			  M8P_UBX_NAV_PVT_Parsing(&m8p_rx_buf[0], &pvt);
+//
+//  			  lat_gps_home += (double)pvt.lat;
+//  			  lon_gps_home += (double)pvt.lon;
+//
+//  			  gps_home_cnt++;
+//  		  }
+//  	  }
+//    }
+//    lat_gps_home /= 10.00;
+//    lon_gps_home /= 10.00;
 
   /********************* FC Ready to Fly ************************/
 
@@ -653,7 +658,8 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 //		  if(iBus.SwA == 2000 && iBus.SwD == 2000 && iBus.VrB > 1900 && is_throttle_middle == 1) flight_mode = 4;
 //		  else if(iBus.SwA == 2000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 3;
 
-		  // 0 : manual mode 1 : takeoff -> move to mission location 2&5 : gps hold  3&4 : gps waypoint 6 : move to gps_home -> landing
+		  // Select flight mode
+		  // 0 : manual mode  10 : takeoff -> move to mission location  2~5 : gps hold  6 : move to gps_home -> landing
 		  if(iBus.SwD != 2000)
 		  {
 			  nx_flight_mode = 10;
@@ -785,9 +791,16 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  }
 		  else if(nx_flight_mode == 3 ) // Return to Home Mode
 		  {
-			  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, actual_pressure_fast);
-
 			  return_to_home();
+
+			  if(return_to_home_step == 4)
+			  {
+				  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, lidar_altitude);
+			  }
+			  else
+			  {
+				  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, actual_pressure_fast);
+			  }
 
 			  if (lat_gps_float_adjust > 10) {
 				  lat_waypoint += 10;
@@ -821,11 +834,21 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  if (gps_pitch_adjust < GPS_PD_MIN) gps_pitch_adjust = GPS_PD_MIN;
 
 			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference , BNO080_Yaw, ICM20602.gyro_z);
-			  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
-			  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
-			  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
-			  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
-			  ccr2 = (unsigned int)((float)ccr2 * MOTOR_FREQ_ADJUST);
+
+			  if(return_to_home_step == 5 || return_to_home_step == 6)
+			  {
+				  ccr1 = 84000 + decrease_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.in.pid_result;
+				  ccr2 = 84000 + decrease_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.in.pid_result;
+				  ccr3 = 84000 + decrease_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.in.pid_result;
+				  ccr4 = 84000 + decrease_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.in.pid_result;
+			  }
+			  else
+			  {
+				  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
+				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
+				  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
+				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
+			  }
 		  }
 		  else// Default Manual Mode
 		  {
@@ -902,10 +925,10 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  {
 			  if(iBus.LV > 1050)
 			  {
-				  TIM5->CCR1 = ccr1 > 167999 ? 167999 : ccr1 < 84000 ? 84000 : ccr1;
-				  TIM5->CCR2 = ccr2 > 167999 ? 167999 : ccr2 < 84000 ? 84000 : ccr2;
-				  TIM5->CCR3 = ccr3 > 167999 ? 167999 : ccr3 < 84000 ? 84000 : ccr3;
-				  TIM5->CCR4 = ccr4 > 167999 ? 167999 : ccr4 < 84000 ? 84000 : ccr4;
+				  TIM5->CCR1 = ccr1 > 167900 ? 167900 : ccr1 < 84000 ? 84000 : ccr1;
+				  TIM5->CCR2 = ccr2 > 167900 ? 167900 : ccr2 < 84000 ? 84000 : ccr2;
+				  TIM5->CCR3 = ccr3 > 167900 ? 167900 : ccr3 < 84000 ? 84000 : ccr3;
+				  TIM5->CCR4 = ccr4 > 167900 ? 167900 : ccr4 < 84000 ? 84000 : ccr4;
 
 			  }
 			  else
@@ -947,7 +970,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  tim7_200ms_flag = 0;
 
 			  Encode_Msg_Mission(&telemetry_tx_buf[0]);
-			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 44);
+			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 46);
 
 			  Encode_Msg_Nx(&nx_tx_buf[0]);
 			  HAL_UART_Transmit_DMA(&huart6, &nx_tx_buf[0], 47);
@@ -1846,56 +1869,60 @@ void Encode_Msg_Mission(unsigned char* telemetry_tx_buf)
 
 	telemetry_tx_buf[2] = XAVIER_rx.mode;
 
-	telemetry_tx_buf[3] = takeoff_step;
+	telemetry_tx_buf[3] = nx_flight_mode;
 
-	telemetry_tx_buf[4] = increase_throttle >> 24;
-	telemetry_tx_buf[5] = increase_throttle >> 16;
-	telemetry_tx_buf[6] = increase_throttle >> 8;
-	telemetry_tx_buf[7] = increase_throttle;
+	telemetry_tx_buf[4] = failsafe_flag;
 
-	telemetry_tx_buf[8] = takeoff_throttle >> 24;
-	telemetry_tx_buf[9] = takeoff_throttle >> 16;
-	telemetry_tx_buf[10] = takeoff_throttle >> 8;
-	telemetry_tx_buf[11] = takeoff_throttle;
+	telemetry_tx_buf[5] = takeoff_step;
+
+	telemetry_tx_buf[6] = increase_throttle >> 24;
+	telemetry_tx_buf[7] = increase_throttle >> 16;
+	telemetry_tx_buf[8] = increase_throttle >> 8;
+	telemetry_tx_buf[9] = increase_throttle;
+
+	telemetry_tx_buf[10] = takeoff_throttle >> 24;
+	telemetry_tx_buf[11] = takeoff_throttle >> 16;
+	telemetry_tx_buf[12] = takeoff_throttle >> 8;
+	telemetry_tx_buf[13] = takeoff_throttle;
 
 
-	telemetry_tx_buf[12] = (long long int)lat_waypoint >> 56;
-	telemetry_tx_buf[13] = (long long int)lat_waypoint >> 48;
-	telemetry_tx_buf[14] = (long long int)lat_waypoint >> 40;
-	telemetry_tx_buf[15] = (long long int)lat_waypoint >> 32;
-	telemetry_tx_buf[16] = (long long int)lat_waypoint >> 24;
-	telemetry_tx_buf[17] = (long long int)lat_waypoint >> 16;
-	telemetry_tx_buf[18] = (long long int)lat_waypoint >> 8;
-	telemetry_tx_buf[19] = (long long int)lat_waypoint;
+	telemetry_tx_buf[14] = (long long int)lat_waypoint >> 56;
+	telemetry_tx_buf[15] = (long long int)lat_waypoint >> 48;
+	telemetry_tx_buf[16] = (long long int)lat_waypoint >> 40;
+	telemetry_tx_buf[17] = (long long int)lat_waypoint >> 32;
+	telemetry_tx_buf[18] = (long long int)lat_waypoint >> 24;
+	telemetry_tx_buf[19] = (long long int)lat_waypoint >> 16;
+	telemetry_tx_buf[20] = (long long int)lat_waypoint >> 8;
+	telemetry_tx_buf[21] = (long long int)lat_waypoint;
 
-	telemetry_tx_buf[20] = (long long int)lon_waypoint >> 56;
-	telemetry_tx_buf[21] = (long long int)lon_waypoint >> 48;
-	telemetry_tx_buf[22] = (long long int)lon_waypoint >> 40;
-	telemetry_tx_buf[23] = (long long int)lon_waypoint >> 32;
-	telemetry_tx_buf[24] = (long long int)lon_waypoint >> 24;
-	telemetry_tx_buf[25] = (long long int)lon_waypoint >> 16;
-	telemetry_tx_buf[26] = (long long int)lon_waypoint >> 8;
-	telemetry_tx_buf[27] = (long long int)lon_waypoint;
+	telemetry_tx_buf[22] = (long long int)lon_waypoint >> 56;
+	telemetry_tx_buf[23] = (long long int)lon_waypoint >> 48;
+	telemetry_tx_buf[24] = (long long int)lon_waypoint >> 40;
+	telemetry_tx_buf[25] = (long long int)lon_waypoint >> 32;
+	telemetry_tx_buf[26] = (long long int)lon_waypoint >> 24;
+	telemetry_tx_buf[27] = (long long int)lon_waypoint >> 16;
+	telemetry_tx_buf[28] = (long long int)lon_waypoint >> 8;
+	telemetry_tx_buf[29] = (long long int)lon_waypoint;
 
-	telemetry_tx_buf[28] = (int)(lidar_altitude * 100) >> 24;
-	telemetry_tx_buf[29] = (int)(lidar_altitude * 100) >> 16;
-	telemetry_tx_buf[30] = (int)(lidar_altitude * 100) >> 8;
-	telemetry_tx_buf[31] = (int)(lidar_altitude * 100);
+	telemetry_tx_buf[30] = (int)(lidar_altitude * 100) >> 24;
+	telemetry_tx_buf[31] = (int)(lidar_altitude * 100) >> 16;
+	telemetry_tx_buf[32] = (int)(lidar_altitude * 100) >> 8;
+	telemetry_tx_buf[33] = (int)(lidar_altitude * 100);
 
-	telemetry_tx_buf[32] = (int)(actual_pressure_fast * 100) >> 24;
-	telemetry_tx_buf[33] = (int)(actual_pressure_fast * 100) >> 16;
-	telemetry_tx_buf[34] = (int)(actual_pressure_fast * 100) >> 8;
-	telemetry_tx_buf[35] = (int)(actual_pressure_fast * 100);
+	telemetry_tx_buf[34] = (int)(actual_pressure_fast * 100) >> 24;
+	telemetry_tx_buf[35] = (int)(actual_pressure_fast * 100) >> 16;
+	telemetry_tx_buf[36] = (int)(actual_pressure_fast * 100) >> 8;
+	telemetry_tx_buf[37] = (int)(actual_pressure_fast * 100);
 
-	telemetry_tx_buf[36] = (int)(altitude_setpoint * 100) >> 24;
-	telemetry_tx_buf[37] = (int)(altitude_setpoint * 100) >> 16;
-	telemetry_tx_buf[38] = (int)(altitude_setpoint * 100) >> 8;
-	telemetry_tx_buf[39] = (int)(altitude_setpoint * 100);
+	telemetry_tx_buf[38] = (int)(altitude_setpoint * 100) >> 24;
+	telemetry_tx_buf[39] = (int)(altitude_setpoint * 100) >> 16;
+	telemetry_tx_buf[40] = (int)(altitude_setpoint * 100) >> 8;
+	telemetry_tx_buf[41] = (int)(altitude_setpoint * 100);
 
-	telemetry_tx_buf[40] = (int)(altitude_setpoint * 100) >> 24;
-	telemetry_tx_buf[41] = (int)(altitude_setpoint * 100) >> 16;
-	telemetry_tx_buf[42] = (int)(altitude_setpoint * 100) >> 8;
-	telemetry_tx_buf[43] = (int)(altitude_setpoint * 100);
+	telemetry_tx_buf[42] = (int)(altitude_setpoint * 100) >> 24;
+	telemetry_tx_buf[43] = (int)(altitude_setpoint * 100) >> 16;
+	telemetry_tx_buf[44] = (int)(altitude_setpoint * 100) >> 8;
+	telemetry_tx_buf[45] = (int)(altitude_setpoint * 100);
 }
 
 void Encode_Msg_Nx(unsigned char* nx_tx_buf)
@@ -2276,6 +2303,7 @@ void Encode_Msg_Temp(unsigned char* telemery_tx_buf)
 
 void return_to_home(void)
 {
+	static const unsigned int landing_spare = 4200;
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//Step 0 - make some basic calculations
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2302,21 +2330,21 @@ void return_to_home(void)
 		}
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//Step - 1 increase the altitude to 20 meter above ground level
+	//Step - 1 increase the altitude to mission altitude above ground level
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
 	if (return_to_home_step == 1)
 	{
-		if(altitude_setpoint == 7) return_to_home_step = 2;
+		if(altitude.out.meas_value < (double)(mission_altitude + altitude_change_condition) && altitude.out.meas_value > (double)(mission_altitude - altitude_change_condition)) return_to_home_step = 2;
 
-		if(altitude_setpoint < 7)
+		if(altitude_setpoint < mission_altitude)
 		{
-			if(altitude.out.error < 0.1 && altitude.out.error > -0.1) altitude_setpoint += 0.3;
-			if(altitude_setpoint > 7) altitude_setpoint = 7;
+			if(altitude.out.error < altitude_change_condition && altitude.out.error > -altitude_change_condition) altitude_setpoint += altitude_change;
+			if(altitude_setpoint > mission_altitude) altitude_setpoint = mission_altitude;
 		}
 		else
 		{
-			if(altitude.out.error < 0.1 && altitude.out.error > -0.1) altitude_setpoint -= 0.3;
-			if(altitude_setpoint < 7) altitude_setpoint = 7;
+			if(altitude.out.error < altitude_change_condition && altitude.out.error > -altitude_change_condition) altitude_setpoint -= altitude_change;
+			if(altitude_setpoint < mission_altitude) altitude_setpoint = mission_altitude;
 		}
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2342,28 +2370,57 @@ void return_to_home(void)
 		}
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//Step - 3 decrease the altitude by increasing the pressure setpoint
+	//Step - 3 Using Baro, decrease the altitude by increasing the pressure setpoint
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
-	if (return_to_home_step == 3) {
-		if(altitude_setpoint == 3) return_to_home_step = 4;
-
-		if(altitude_setpoint > 3)
+	if (return_to_home_step == 3)
+	{
+		if(lidar_altitude < altitude_turning_point)
 		{
-			if(altitude.out.error < 0.1 && altitude.out.error > -0.1) altitude_setpoint -= 0.3;
-			if(altitude_setpoint < 3) altitude_setpoint = 3;
+			return_to_home_step = 4;
+			altitude_setpoint = lidar_altitude;
+		}
+
+
+		if(altitude_setpoint > altitude_turning_point)
+		{
+			if(altitude.out.error < altitude_change_condition && altitude.out.error > -altitude_change_condition) altitude_setpoint -= altitude_change;
+			if(altitude_setpoint < altitude_turning_point) altitude_setpoint = altitude_turning_point;
 		}
 		else
 		{
-			if(altitude.out.error < 0.1 && altitude.out.error > -0.1) altitude_setpoint += 0.3;
-			if(altitude_setpoint > 3) altitude_setpoint = 3;
+			if(altitude.out.error < altitude_change_condition && altitude.out.error > -altitude_change_condition) altitude_setpoint += altitude_change;
+			if(altitude_setpoint > altitude_turning_point) altitude_setpoint = altitude_turning_point;
 		}
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//Step - 4 Stop the motors
+	//Step - 4 Using Lidar, decrease the altitude by increasing the lidar setpoint
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
-	if (return_to_home_step == 4) {
-		//		motor_arming_flag = 0;
-		return_to_home_step = 5;
+	if(return_to_home_step == 4)
+	{
+		if(lidar_altitude < 1)
+		{
+			return_to_home_step = 5;
+			decrease_throttle = takeoff_throttle;
+		}
+
+		if(altitude.out.error < altitude_change_condition && altitude.out.error > -altitude_change_condition) altitude_setpoint -= altitude_change;
+	}
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//Step - 5 Decrease Motor Speed
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////
+	if (return_to_home_step == 5) {
+
+		if(decrease_throttle < takeoff_throttle - landing_spare) return_to_home_step = 6;
+
+		decrease_throttle -= 2;
+	}
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//Step - 6 Stop the motors
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////
+	if(return_to_home_step == 6)
+	{
+		if(decrease_throttle < 10) motor_arming_flag = 0;
+		decrease_throttle -= 2;
 	}
 }
 void Calculate_Takeoff_Throttle()
@@ -2407,44 +2464,46 @@ int Is_Home_Now(void)
 
 void Takeoff(void)
 {
+	static const unsigned int takeoff_spare = 4200;
+
 	if(takeoff_step == 0) // Increase motor speed
 	{
-		if(increase_throttle > takeoff_throttle + 8400)
+		if(increase_throttle > takeoff_throttle + takeoff_spare)
 		{
 			takeoff_step = 1;
 		}
 
 		increase_throttle += 16;
-		altitude_setpoint = 2.0f;
+		altitude_setpoint = 0.5f;
 	}
 	if(takeoff_step == 1) // using Lidar, take off drone by 3m
 	{
-		if(lidar_altitude > 3)
+		if(lidar_altitude > altitude_turning_point)
 		{
 			takeoff_step = 2;
 			baro_lidar_offset += actual_pressure_fast - lidar_altitude;
 		}
 
-		if(altitude.out.error < 0.1 && altitude.out.error > -0.1) altitude_setpoint += 0.3;
+		if(altitude.out.error < altitude_change_condition && altitude.out.error > -altitude_change_condition) altitude_setpoint += altitude_change;
 	}
 	if(takeoff_step == 2) // using barometer, takeoff drone by 5m
 	{
-		if(altitude_setpoint == 5) takeoff_step = 3;
+		if(altitude_setpoint == mission_altitude) takeoff_step = 3;
 
-		if(altitude_setpoint < 5)
+		if(altitude_setpoint < mission_altitude)
 		{
-			if(altitude.out.error < 0.1 && altitude.out.error > -0.1) altitude_setpoint += 0.3;
-			if(altitude_setpoint > 5) altitude_setpoint = 5;
+			if(altitude.out.error < altitude_change_condition && altitude.out.error > -altitude_change_condition) altitude_setpoint += altitude_change;
+			if(altitude_setpoint > mission_altitude) altitude_setpoint = mission_altitude;
 		}
 		else
 		{
-			if(altitude.out.error < 0.1 && altitude.out.error > -0.1) altitude_setpoint -= 0.3;
-			if(altitude_setpoint < 5) altitude_setpoint = 5;
+			if(altitude.out.error < altitude_change_condition && altitude.out.error > -altitude_change_condition) altitude_setpoint -= altitude_change;
+			if(altitude_setpoint < mission_altitude) altitude_setpoint = mission_altitude;
 		}
 	}
 	if(takeoff_step == 3) // move to mission spot
 	{
-		altitude_setpoint = 5;
+		altitude_setpoint = mission_altitude;
 
 //		lat_waypoint = XAVIER_rx.lat;
 //		lon_waypoint = XAVIER_rx.lon;
