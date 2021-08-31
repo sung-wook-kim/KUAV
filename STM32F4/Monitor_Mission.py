@@ -60,10 +60,14 @@ class Monitor():
                 self.df.to_csv(f"data/{timevar}_mission_data.csv")
                 print('Save Final Monitor Data')
                 sys.exit('quit Monitor')
+            elif self.keyboard == 'c':
+                self.keyboard = None
+                self.df = pd.DataFrame(columns=self.name)
+                print('Clear DataFrame')
 
             if self.is_header_right():
                 self.save_in_buf()
-                if self.check_data() == True:
+                if self.check_data():
                     self.receive_data()
                     self.save_data()
 
@@ -125,7 +129,9 @@ class Monitor():
 
             self.new_data.append(data)
 
-        print(self.new_data)
+        for i in range(len(self.name)):
+            print(f'{self.name[i]} : {self.new_data[i]}', end='\t')
+        print('\n')
 
     def save_data(self):
         self.df = self.df.append(pd.DataFrame([self.new_data], columns=self.name), ignore_index=True)
