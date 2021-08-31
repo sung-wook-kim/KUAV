@@ -26,8 +26,6 @@ class window(QtWidgets.QMainWindow):
         # streaming
         self.webview=QtWebEngineWidgets.QWebEngineView()
         self.webview.setUrl(QUrl("http://223.171.80.232:5001"))
-        #self.webview.setUrl(QUrl("http://192.168.43.185:5001"))
-        self.webview.setUrl(QUrl("http://127.0.0.1"))
 
         # plot
         self.m = folium.Map(location=[37.5872530,127.0307692], tiles='cartodbpositron',zoom_start=13)
@@ -89,9 +87,11 @@ class window(QtWidgets.QMainWindow):
 
         self.MISSION_LAT = 0
         self.MISSION_LON = 0
+        self.RTH_LAT = 0
+        self.RTH_LON = 0
         self.lat_drone = 0
         self.lon_drone = 0
-        self.automatic = 1
+        self.automatic = 0
         self.mode_li = []
         self.automatic_li = []
         self.GPStime = []
@@ -146,7 +146,7 @@ class window(QtWidgets.QMainWindow):
 
         # 마킹코드
         if self.rad % 3 == 0 :
-            self.m = folium.Map(location=[37.5872530,127.0307692],  tiles='cartodbpositron', zoom_start=13)
+            self.m = folium.Map(location=[37.6977308,127.6068025],  tiles='cartodbpositron', zoom_start=13)
             folium.CircleMarker(color = 'red' , fill_color = 'red' ,location=[float(self.lat_drone),float(self.lon_drone)],radius=5 , popup="célula",).add_to(self.m)
             folium.CircleMarker(color = 'blue' , fill_color = 'blue' ,location=[float(lat_person),float(lon_person)],radius=5 , popup="célula",).add_to(self.m)
             self.data = io.BytesIO()
@@ -154,15 +154,15 @@ class window(QtWidgets.QMainWindow):
             self.webview2.setHtml(self.data.getvalue().decode())
 
         self.rad +=1
-        self.lat.setText(f"위도 : {float(self.lat_drone) / 10 ** 7}")
-        self.lon.setText(f"경도 : {float(self.lon_drone) / 10 ** 7}")
-        self.altstatus.setText(f"고도 : {altitude}cm")
+        self.lat.setText(f"위도 : {float(self.lat_drone)  }")
+        self.lon.setText(f"경도 : {float(self.lon_drone)  }")
+        self.altstatus.setText(f"고도 : {altitude}m")
     # 이륙 명령 -> NX한테 이륙 명령 코드를 보낸다.
     def takeoff(self):
         msgT = f"1\n{self.MISSION_LAT}\n{self.MISSION_LON}"
         self.client_socket.sendall(msgT.encode())
         _ = self.client_socket.recv(512) # don't need this
-        self.automatic = 0
+        self.automatic = 1
     
     # 리턴투홈
     def RTH(self):
@@ -182,6 +182,14 @@ class window(QtWidgets.QMainWindow):
     # 비행 데이터  : (자동 : 0 , 수동 : 1) / mode / Gps time / lat / lon / alt
     def datasave(self):
         df = pd.DataFrame()
+        # 자릿수 자르기
+        for i in range(0,len(self.lat_drone_li)):
+            if len(self.lat_drone_li[i]) == 10:
+                self.lat_drone_li[i] = self.lat_drone_li[i][:-1] 
+        for j in range(0,len(self.lon_drone_li)):
+            if len(self.lon_drone_li[j]) == 11:
+                self.lon_drone_li[j] = self.lon_drone_li[j][:-1]
+
         df['automatic'] = self.automatic_li ; df['point'] = self.mode_li 
         df['GPS Time'] = self.GPStime
         df['lat_drone'] = self.lat_drone_li ; df['lon_drone'] = self.lon_drone_li 
@@ -189,6 +197,7 @@ class window(QtWidgets.QMainWindow):
         now = time.localtime()
         timevar = time.strftime('%Y%m%d%H%M%S', now)
         df.to_csv(f"{timevar}_Flight_data.csv")
+        print("data saved")
 
 app=QtWidgets.QApplication([])
 ex=window()

@@ -86,6 +86,7 @@ uint8_t telemetry_tx_buf[220];
 uint8_t telemetry_rx_buf[30];
 uint8_t telemetry_rx_cplt_flag;
 unsigned int chksum_pid = 0xffffffff;
+unsigned int  chksum_mission = 0xffffffff;
 
 extern uint8_t nx_rx_cplt_flag;
 extern uint8_t nx_rx_buf[20];
@@ -1919,10 +1920,17 @@ void Encode_Msg_Mission(unsigned char* telemetry_tx_buf)
 	telemetry_tx_buf[40] = (int)(altitude_setpoint * 100) >> 8;
 	telemetry_tx_buf[41] = (int)(altitude_setpoint * 100);
 
-	telemetry_tx_buf[42] = (int)(altitude_setpoint * 100) >> 24;
-	telemetry_tx_buf[43] = (int)(altitude_setpoint * 100) >> 16;
-	telemetry_tx_buf[44] = (int)(altitude_setpoint * 100) >> 8;
-	telemetry_tx_buf[45] = (int)(altitude_setpoint * 100);
+	chksum_mission = 0xffffffff;
+
+	for(int i=0; i< 42; i++)
+	{
+		chksum_mission = chksum_mission - telemetry_tx_buf[i];
+	}
+
+	telemetry_tx_buf[42] = chksum_mission >> 24;
+	telemetry_tx_buf[43] = chksum_mission >> 16;
+	telemetry_tx_buf[44] = chksum_mission >> 8;
+	telemetry_tx_buf[45] = chksum_mission;
 }
 
 void Encode_Msg_Nx(unsigned char* nx_tx_buf)
