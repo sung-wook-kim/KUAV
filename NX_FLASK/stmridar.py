@@ -6,12 +6,14 @@ import threading
 import socket
 import numpy as np
 
-global lidar_distance_1 , lidar_distance_2  , mode , q , client_socket
+global lidar_distance_1 , lidar_distance_2  , mode , q , client_socket ,roll ,pitch
 
 lidar_distance_1 = 0
 lidar_distance_2 = 0
 mode = 8
 q = [5,5,5]
+roll = 0
+pitch = 0
 serSTM = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)
 serSTM.flush()
 print("stm")
@@ -74,15 +76,20 @@ def connectGCS():
 
 # 10hz time.sleep(0.1)
 def connectLIDAR():
-    global lidar_distance_1 , lidar_distance_2
+    global lidar_distance_1 , lidar_distance_2 ,roll ,pitch
     while True:
         count = serLIDAR.in_waiting
         if count > 8:  # 버퍼에 9바이트 이상 쌓이면
             recv = serLIDAR.read(9)  # read
             serLIDAR.reset_input_buffer()  # 리셋
             if recv[0] == 0x59 and recv[1] == 0x59:  # python3
-                lidar_distance_1 = recv[2]  # np.int16(recv[2] + np.int16(recv[3] << 8))
-                lidar_distance_2 = recv[3]
+                real_lidar = np.int16(recv[2] + np.int16(recv[3] << 8))
+                lidar_adjust = int(real_lidar * math.cos(roll*0.017454) * math.cos(pitch*0.017454))
+                lidar_distance_1 = (lidar_adjust >> 8) & 0xff
+                lidar_distance_2 = lidar_adjust & 0xff         
+                
+                # lidar_distance_1 = recv[2]  # np.int16(recv[2] + np.int16(recv[3] << 8))
+                # lidar_distance_2 = recv[3]
                 time.sleep(0.1)
                 print("LIDAR  : ",lidar_distance_1)
                 serLIDAR.reset_input_buffer()
@@ -91,7 +98,7 @@ def connectLIDAR():
 # next gps will be calculated when data from stm is received 
 def connectSTM():
 
-    global lidar_distance_1 , lidar_distance_2 , q , mode
+    global lidar_distance_1 , lidar_distance_2 , q , mode ,roll ,pitch
     header_1 = 0x88
     header_2 = 0x18
     lat_drone = 1;
@@ -175,10 +182,11 @@ def connectSTM():
             #     AVOID = False
             #     # 미션 좌표에 도착하면 모드를 2로 변경 ( 그전까지는 1임 )
             # # 0.0000462 -> 2m
-            # if (plag_2 == False) and (1 >= haversine.haversine((lat_drone,lon_drone),(MISSION_LAT,MISSION_LON))):  # 10 은 tracking distance인데 다르게 해야할듯
-            #     mode = 2  # yaw를 회전하며 탐색 모드
-            #     plag_2 = True
-            #     plag_MISSION = False
+            if (plag_2 == False) and (1 >= haversine.haversine((lat_drone,lon_drone),(MISSION_LAT,MISSION_LON))):  # 10 은 tracking distance인데 다르게 해야할듯
+                mode = 2  # yaw를 회전하며 탐색 모드
+                plag_2 = True
+                plag_MISSION = False
+                print(" you are in mission area")
 
             # # 2번 임무 , 사람이 detect 되지 않았으면 임의의 angle을 통해 회전 
             # if mode == 2 and human_detect == False:

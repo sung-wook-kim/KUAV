@@ -721,7 +721,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  if (gps_pitch_adjust > GPS_PD_MAX) gps_pitch_adjust = GPS_PD_MAX;
 			  if (gps_pitch_adjust < GPS_PD_MIN) gps_pitch_adjust = GPS_PD_MIN;
 
-			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference , BNO080_Yaw, ICM20602.gyro_z);
+			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference + XAVIER_rx.yaw_error, BNO080_Yaw, ICM20602.gyro_z);
 
 			  if(takeoff_step == 0)
 			  {
@@ -757,7 +757,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  if (gps_pitch_adjust > GPS_PD_MAX) gps_pitch_adjust = GPS_PD_MAX;
 			  if (gps_pitch_adjust < GPS_PD_MIN) gps_pitch_adjust = GPS_PD_MIN;
 
-			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference , BNO080_Yaw, ICM20602.gyro_z);
+			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference + XAVIER_rx.yaw_error, BNO080_Yaw, ICM20602.gyro_z);
 			  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
 			  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
 			  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
@@ -801,7 +801,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  if (gps_pitch_adjust > GPS_PD_MAX) gps_pitch_adjust = GPS_PD_MAX;
 			  if (gps_pitch_adjust < GPS_PD_MIN) gps_pitch_adjust = GPS_PD_MIN;
 
-			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference , BNO080_Yaw, ICM20602.gyro_z);
+			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference + XAVIER_rx.yaw_error, BNO080_Yaw, ICM20602.gyro_z);
 
 			  if(return_to_home_step == 5 || return_to_home_step == 6)
 			  {
@@ -1965,10 +1965,10 @@ void Encode_Msg_Nx(unsigned char* nx_tx_buf)
 	nx_tx_buf[33] = (int)BNO080_Yaw >> 8;
 	nx_tx_buf[34] = (int)BNO080_Yaw;
 
-	nx_tx_buf[35] = (int)actual_pressure_fast >> 24;
-	nx_tx_buf[36] = (int)actual_pressure_fast >> 16;
-	nx_tx_buf[37] = (int)actual_pressure_fast >> 8;
-	nx_tx_buf[38] = (int)actual_pressure_fast;
+	nx_tx_buf[35] = (int)(actual_pressure_fast * 100.f) >> 24;
+	nx_tx_buf[36] = (int)(actual_pressure_fast * 100.f) >> 16;
+	nx_tx_buf[37] = (int)(actual_pressure_fast * 100.f) >> 8;
+	nx_tx_buf[38] = (int)(actual_pressure_fast * 100.f);
 
 	nx_tx_buf[39] = (int)batVolt >> 24;
 	nx_tx_buf[40] = (int)batVolt >> 16;
