@@ -248,7 +248,11 @@ class NX(BaseCamera):
                     self.mode = 6  # RTH = 착륙
                     self.plag_6 = True
                     self.RTH_LAT = int(gcs[1]) / 10 ** 7
+<<<<<<< HEAD
+                    self.RTH_LAT = int(gcs[2]) / 10 ** 7
+=======
                     self.RTH_LON = int(gcs[2]) / 10 ** 7
+>>>>>>> 8eec77a22128c9b17780ef56d8eaf7c8acb182ce
                     self.plag_RTH = True
                 elif gcs[0] == '7' and self.plag_7 == False:
                     self.plag_7 = True
@@ -283,18 +287,11 @@ class NX(BaseCamera):
     # 5hz because STM transmit is 5hz
     # next gps will be calculated when data from stm is received 
     def connectSTM(self):
-        header_1 = 0x88
-        header_2 = 0x18
-        lat_drone = 1;
-        lon_drone = 1;
-        gps_time = 1;
-        roll = 1;
-        pitch = 1;
-        heading_angle = 1;
-        altitude = 1;
-        voltage = 1;
-        lat_person = 1;
-        lon_person = 1
+        header_1 = 0x88 ;header_2 = 0x18
+        lat_drone = 1; lon_drone = 1; gps_time = 1
+        roll = 1; pitch = 1; heading_angle = 1
+        altitude = 1; voltage = 1
+        lat_person = 1; lon_person = 1
 
         # Coordination description
         # Front(if heading angle is zero, it is same with North) -> X -> roll direction
@@ -302,7 +299,7 @@ class NX(BaseCamera):
         # Down(if roll pitch is zero, it is same with Downward) -> Z -> yaw direction
 
         mode_echo = 0
-        lat_prev = 0;
+        lat_prev = 0
         lon_prev = 0
 
         while True:
@@ -375,7 +372,7 @@ class NX(BaseCamera):
                         yaw_error = self.img_dy  # yolo를 통해 인식
                         # print("mode 3 : " , self.mode)
                     else:
-                        self.mode = 5  # 사람이 추적되지않는 대기모드 일 경우 마지막 추적값을 유지
+                        self.mode = 5  # 사람이 추적되지않는 대기모드 일 경우 마지막 추적을 유지
                         new_gps_lat = lat_drone if lat_prev == 0 else lat_prev
                         new_gps_lon = lon_drone if lon_prev == 0 else lon_prev
                         yaw_error = 0
@@ -410,8 +407,11 @@ class NX(BaseCamera):
                 # if yaw_error <= 20: # 안전범위 이내라고 판단된다면
                 #         yaw_error = 0 # 과도한 조절을 하지 않기 위해 설정
                 # 통신을 위한 변경 코드
+                
+                # for mission 5
                 lat_prev = new_gps_lat
                 lon_prev = new_gps_lon
+
                 new_lat_first = (new_gps_lat >> 24) & 0xff;
                 new_lat_second = (new_gps_lat >> 16) & 0xff
                 new_lat_third = (new_gps_lat >> 8) & 0xff;
@@ -433,9 +433,9 @@ class NX(BaseCamera):
                 self.q.append(read)
                 # 연산 후 바로 next_gps 전달
                 yaw_error = 20
-                self.serSTM.write(
-                    [header_1, header_2, self.mode, \
-                     new_lat_first, new_lat_second, new_lat_third, new_lat_fourth, \
-                     new_lon_first, new_lon_second, new_lon_third, new_lon_fourth, \
-                     yaw_error, self.lidar_distance_1, self.lidar_distance_2]
-                )
+            self.serSTM.write(
+                [header_1, header_2, self.mode, \
+                    new_lat_first, new_lat_second, new_lat_third, new_lat_fourth, \
+                    new_lon_first, new_lon_second, new_lon_third, new_lon_fourth, \
+                    yaw_error, self.lidar_distance_1, self.lidar_distance_2]
+            )

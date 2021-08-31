@@ -31,7 +31,7 @@ class NX(BaseCamera):
         print("gimbal init")
         # NX - GCS socket , NX = server
         #self.HOST = '223.171.80.232'
-        self.HOST = '192.168.0.196'
+        self.HOST = '163.152.127.122'
         self.PORT = 9998
         NX.set_human_init()
         self.threadGIMBAL = threading.Thread(target=self.connectGIMBAL)
@@ -54,7 +54,7 @@ class NX(BaseCamera):
     @staticmethod
     def frames():
         out, weights, imgsz, stride = \
-            'inference/output', '/home/drone/kuav/NX_FLASK/weights/yolov5s.pt', 640, 32
+            'inference/output', './weights/yolov5s.pt', 640, 32
         # source = 'test.mp4'
         source = 0
         device = torch_utils.select_device()
