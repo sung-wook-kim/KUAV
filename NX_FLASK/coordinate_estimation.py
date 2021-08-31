@@ -46,11 +46,25 @@ h,  w = 540, 956
 newcameramtx, roi=cv2.getOptimalNewCameraMatrix(K,dist,(w,h),1,(w,h))
 # undistort
 mapx,mapy = cv2.initUndistortRectifyMap(K,dist,None,newcameramtx,(w,h),5)
+mapx = np.array(mapx)
+mapy = np.array(mapy)
+mapx_test = np.zeros((mapx.shape[0], mapx.shape[1]), dtype=np.float32)
+mapy_test = np.zeros((mapx.shape[0], mapx.shape[1]), dtype=np.float32)
+for i in range(mapx_test.shape[0]):
+    mapx_test[i,:] = [x for x in range(mapx_test.shape[1])]
+
+for j in range(mapy_test.shape[1]):
+    mapy_test[:,j] = [y for y in range(mapy_test.shape[0])]
+
+
+mapx_ = mapx_test-mapx
+mapy_ = mapy_test-mapy
 K_inv = np.linalg.inv(newcameramtx)
 
 while (True):
     j+=1
-    gimbal.set_angles(setpitch, setroll, setyaw)
+    
+    #read image and sensor date together
     src = cap.read()[1]
     pitch, roll, yaw = gimbal.get_imu1_angles()
 
@@ -61,20 +75,19 @@ while (True):
     blue_s_gray = blue_range[::1]
     # cv2.imshow("color filter", blue_s_gray)
     # print(blue_s_gray)
-    try:
+    try : 
         circles = cv2.HoughCircles(blue_s_gray, cv2.HOUGH_GRADIENT, 1, 100, param1=prm1, param2=prm2, minRadius=5,
                                     maxRadius=50)[0]
-    except:
+    except :
         pass
 
     # tranformation process
     roll = math.pi/180*roll
     pitch = -math.pi/180*pitch
-    yaw = -setyaw
+    yaw = -math.pi/180*setyaw
     # roll = 0
     # pitch = -math.pi/180*45
     # yaw = 0
-    
     if (j%5 == 0) : 
         print("roll,pitch, yaw",roll,pitch, yaw)
     OR_G = euler_rotation_matrix(roll, pitch, yaw)
@@ -87,13 +100,17 @@ while (True):
     
     for i in circles:
         cv2.circle(src, (int(i[0]), int(i[1])), int(i[2]), (0, 255, 0), 1)
-        newx = mapx[i[0], i[1]]
-        newy = mapy[i[0], i[1]]
+
+        newx = i[0] + mapx_[int(i[1]), int(i[0])]
+        newy = i[1] + mapy_[int(i[1]), int(i[0])]
         xy_est = np.matmul(np.matmul(A, K_inv), np.array([newx, newy, 1]))
         xy_est = xy_est[0]
         xy_est = xy_est / xy_est[2]
+        # xy_est2 = np.matmul(np.matmul(A, K_inv), np.array([i[0], i[1], 1]))
+        # xy_est2 = xy_est[0]
+        # xy_est2 = xy_est / xy_est[2]
         H_x, H_y = (xy_est[0], xy_est[1])
-        cv2.putText(src, str((H_x, H_y)), (int(i[0]-70), int(i[1]) - 2), fontFace, fontScale,
+        cv2.putText(src, str(f"{H_x:.3f}, {H_y:.3f}"), (int(i[0]-70), int(i[1]) - 2), fontFace, fontScale,
                     (0, 0, 0), thickness)
 
 
