@@ -156,7 +156,7 @@ class window(QtWidgets.QMainWindow):
         self.rad +=1
         self.lat.setText(f"위도 : {float(self.lat_drone)  }")
         self.lon.setText(f"경도 : {float(self.lon_drone)  }")
-        self.altstatus.setText(f"고도 : {altitude}m")
+        self.altstatus.setText(f"고도 : {int(altitude)/100}m")
     # 이륙 명령 -> NX한테 이륙 명령 코드를 보낸다.
     def takeoff(self):
         msgT = f"1\n{self.MISSION_LAT}\n{self.MISSION_LON}"
