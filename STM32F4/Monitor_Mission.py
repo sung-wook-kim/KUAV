@@ -21,6 +21,7 @@ class Monitor():
         self.name = ['mode', 'flight_mode', 'failsafe_flag', 'takeoff_step', 'increase_throttle', 'takeoff_throttle', 'lat_setpoint', 'lon_setpoint', 'lidar', 'baro', 'altitude_setpoint']
         self.byte = [1, 1, 1, 1, 4, 4, 8, 8, 4, 4, 4]
         self.sign = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
+        self.cksum = 0xffffffff
 
         # Check input
         if not self.is_input_right():
@@ -61,14 +62,26 @@ class Monitor():
 
             if self.is_header_right():
                 self.save_in_buf()
-                self.receive_data()
-                self.save_data()
+                self.checksum = 0xffffffff
+                if self.check_data() == True:
+                    self.receive_data()
+                    self.save_data()
 
     def save_in_buf(self):
         self.telemetry_buf = []
         for _ in range(self.data_length):
             self.telemetry_buf.append(int(ser.read(1).hex(), 16) & 0xff)
         ser.reset_input_buffer()
+
+    def check_data(self):
+        received_cksum = self.telemetry_buf[len(self.telemetry_buf)-4] << 24 | self.telemetry_buf[len(self.telemetry_buf)-3] << 16 | \
+            self.telemetry_buf[len(self.telemetry_buf)-2] << 8 | self.telemetry_buf[len(self.telemetry_buf)-1]
+        for i in range(len(self.telemetry_buf)-4):
+            self.cksum -= self.telemetry_buf[i]
+        if self.cksum == received_cksum:
+            return True
+        else:
+            return False
 
     def is_input_right(self):
         if len(self.name) == len(self.byte):
