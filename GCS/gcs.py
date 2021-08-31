@@ -26,7 +26,6 @@ class window(QtWidgets.QMainWindow):
         # streaming
         self.webview=QtWebEngineWidgets.QWebEngineView()
         self.webview.setUrl(QUrl("http://223.171.80.232:5001"))
-        # self.webview.setUrl(QUrl("http://127.0.0.1"))
 
         # plot
         self.m = folium.Map(location=[37.5872530,127.0307692], tiles='cartodbpositron',zoom_start=13)
@@ -155,15 +154,9 @@ class window(QtWidgets.QMainWindow):
             self.webview2.setHtml(self.data.getvalue().decode())
 
         self.rad +=1
-<<<<<<< HEAD
         self.lat.setText(f"위도 : {float(self.lat_drone)  }")
         self.lon.setText(f"경도 : {float(self.lon_drone)  }")
         self.altstatus.setText(f"고도 : {altitude}m")
-=======
-        self.lat.setText(f"위도 : {float(self.lat_drone) / 10 ** 7}")
-        self.lon.setText(f"경도 : {float(self.lon_drone) / 10 ** 7}")
-        self.altstatus.setText(f"고도 : {altitude}cm")
->>>>>>> 8d98c4431c0386986e611b49e25423ee16952e75
     # 이륙 명령 -> NX한테 이륙 명령 코드를 보낸다.
     def takeoff(self):
         msgT = f"1\n{self.MISSION_LAT}\n{self.MISSION_LON}"

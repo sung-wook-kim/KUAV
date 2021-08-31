@@ -91,7 +91,7 @@ def connectLIDAR():
                 # lidar_distance_1 = recv[2]  # np.int16(recv[2] + np.int16(recv[3] << 8))
                 # lidar_distance_2 = recv[3]
                 time.sleep(0.1)
-                print("LIDAR  : ",lidar_distance_1)
+                print("LIDAR  : ",lidar_adjust)
                 serLIDAR.reset_input_buffer()
 
 # 5hz because STM transmit is 5hz
@@ -111,7 +111,7 @@ def connectSTM():
     voltage = 1;
     lat_person = 1;
     lon_person = 1
-
+    plag_2 = False
     # Coordination description
     # Front(if heading angle is zero, it is same with North) -> X -> roll direction
     # Left(if heading angle is zero, it is same with East) -> Y -> pitch direction
