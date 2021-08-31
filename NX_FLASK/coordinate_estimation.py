@@ -34,20 +34,30 @@ setroll, setpitch, setyaw = 0, 45, 0
 
 K = np.array([[1.019148736205558748e+03, 0, 4.543907475076335913e+02],
               [0, 1.025519691143287901e+03, 2.894037118747232284e+02], [0, 0, 1]])
-K_inv = np.linalg.inv(K)
+
 T = np.array([[0], [0], [-1.22]])
 R_tran = np.array([[0, 0, 1, 0], [1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1]])
 j = 1
 gimbal.set_angles(setpitch, setroll, setyaw)
+
+# remove distortion
+dist = np.array([-4.971605177084769123e-01,1.874575939087049781e-01,-2.658143561773393827e-03,-1.691380333517990709e-03,3.543487326723160913e-01])
+h,  w = 540, 956
+newcameramtx, roi=cv2.getOptimalNewCameraMatrix(K,dist,(w,h),1,(w,h))
+# undistort
+mapx,mapy = cv2.initUndistortRectifyMap(K,dist,None,newcameramtx,(w,h),5)
+K_inv = np.linalg.inv(newcameramtx)
+
 while (True):
     j+=1
-    
+    gimbal.set_angles(setpitch, setroll, setyaw)
     src = cap.read()[1]
-    
+    pitch, roll, yaw = gimbal.get_imu1_angles()
+
+    # image process
     frame_gau_blur = cv2.GaussianBlur(src, (3, 3), 0)
     hsv = cv2.cvtColor(src, cv2.COLOR_BGR2HSV)
     blue_range = cv2.inRange(hsv, lower_bound, higher_bound)
-
     blue_s_gray = blue_range[::1]
     # cv2.imshow("color filter", blue_s_gray)
     # print(blue_s_gray)
@@ -55,20 +65,18 @@ while (True):
         circles = cv2.HoughCircles(blue_s_gray, cv2.HOUGH_GRADIENT, 1, 100, param1=prm1, param2=prm2, minRadius=5,
                                     maxRadius=50)[0]
     except:
-            pass
+        pass
 
-    pitch, roll, yaw = gimbal.get_imu1_angles()
-    # print(roll,pitch, yaw)
+    # tranformation process
     roll = math.pi/180*roll
     pitch = -math.pi/180*pitch
-    yaw = -math.pi/180*setyaw
-    
-    if (j%5 == 0) : 
-        print("roll,pitch, yaw",roll,pitch, yaw)
+    yaw = -setyaw
     # roll = 0
     # pitch = -math.pi/180*45
     # yaw = 0
-
+    
+    if (j%5 == 0) : 
+        print("roll,pitch, yaw",roll,pitch, yaw)
     OR_G = euler_rotation_matrix(roll, pitch, yaw)
     OR_C = np.hstack((OR_G, T))
     OR_C = np.vstack((OR_C, np.array([[0, 0, 0, 1]])))
@@ -76,23 +84,19 @@ while (True):
     CR_O = np.linalg.inv(OR_C)
     A = np.dstack((CR_O[0:3, 0], CR_O[0:3, 1], CR_O[0:3, 3]))
     A = np.linalg.inv(A)
-
+    
     for i in circles:
-        try:
-            
-            cv2.circle(src, (int(i[0]), int(i[1])), int(i[2]), (0, 255, 0), 1)
-            # print(i)
-            xy_est = np.matmul(np.matmul(A, K_inv), np.array([i[0], i[1], 1]))
-            xy_est = xy_est[0]
-            xy_est = xy_est / xy_est[2]
-            H_x, H_y = (xy_est[0], xy_est[1])
-            if (j%5 == 0) : 
-                print(i, (H_x, H_y))
-            cv2.putText(src, (f"{H_x:.3f}, {H_y:.3f}"), (int(i[0]-70), int(i[1]) - 2), fontFace, fontScale,
-                        (0, 0, 0), thickness)
-        except:
-            pass
-                    
+        cv2.circle(src, (int(i[0]), int(i[1])), int(i[2]), (0, 255, 0), 1)
+        newx = mapx[i[0], i[1]]
+        newy = mapy[i[0], i[1]]
+        xy_est = np.matmul(np.matmul(A, K_inv), np.array([newx, newy, 1]))
+        xy_est = xy_est[0]
+        xy_est = xy_est / xy_est[2]
+        H_x, H_y = (xy_est[0], xy_est[1])
+        cv2.putText(src, str((H_x, H_y)), (int(i[0]-70), int(i[1]) - 2), fontFace, fontScale,
+                    (0, 0, 0), thickness)
+
+
     cv2.imshow("dst", src)
     key = cv2.waitKey(1)
     if key == 27:  # esc Key
@@ -149,5 +153,6 @@ while (True):
         prmch3 = False
         gimbal.set_angles(setpitch, setroll, setyaw)
         print(f"setyaw = {setyaw}, setpitch = {setpitch}")
+
 cap.release()
 cv2.destroyAllWindows()
