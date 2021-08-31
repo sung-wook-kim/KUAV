@@ -9,7 +9,7 @@ os.system('sudo chmod 666 /dev/ttyACM0')
 
 count = 0
 currTime = time.time()
-# gimbal = Storm32(port='/dev/ttyACM0')
+gimbal = Storm32(port='/dev/ttyACM0')
 
 cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=2, capture_width=3840, capture_height=2160, display_width=956, display_height=540, framerate=21), cv2.CAP_GSTREAMER)
 circles = []
@@ -34,12 +34,21 @@ setroll, setpitch, setyaw = 0, 45, 0
 
 K = np.array([[1.019148736205558748e+03, 0, 4.543907475076335913e+02],
               [0, 1.025519691143287901e+03, 2.894037118747232284e+02], [0, 0, 1]])
-K_inv = np.linalg.inv(K)
+
 T = np.array([[0], [0], [-1]])
 R_tran = np.array([[0, 0, 1, 0], [1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1]])
 
+# remove distortion
+
+dist = np.array([-4.971605177084769123e-01,1.874575939087049781e-01,-2.658143561773393827e-03,-1.691380333517990709e-03,3.543487326723160913e-01])
+h,  w = 540, 956
+newcameramtx, roi=cv2.getOptimalNewCameraMatrix(K,dist,(w,h),1,(w,h))
+# undistort
+mapx,mapy = cv2.initUndistortRectifyMap(K,dist,None,newcameramtx,(w,h),5)
+K_inv = np.linalg.inv(newcameramtx)
+
 while (True):
-    # gimbal.set_angles(setpitch, setroll, setyaw)
+    gimbal.set_angles(setpitch, setroll, setyaw)
     src = cap.read()[1]
     try:
         frame_gau_blur = cv2.GaussianBlur(src, (3, 3), 0)
@@ -51,15 +60,15 @@ while (True):
         # print(blue_s_gray)
         circles = cv2.HoughCircles(blue_s_gray, cv2.HOUGH_GRADIENT, 1, 100, param1=prm1, param2=prm2, minRadius=5,
                                    maxRadius=50)[0]
-        # pitch, roll, yaw = gimbal.get_imu1_angles()
-        # print(roll,pitch, yaw)
-        # roll = math.pi/180*roll
-        # pitch = -math.pi/180*pitch
-        # yaw = -math.pi/180*yaw
-        roll = 0
-        pitch = -math.pi/180*45
-        yaw = 0
-        
+        pitch, roll, yaw = gimbal.get_imu1_angles()
+        print(roll,pitch, yaw)
+        roll = math.pi/180*roll
+        pitch = -math.pi/180*pitch
+        yaw = -setyaw
+        # roll = 0
+        # pitch = -math.pi/180*45
+        # yaw = 0
+        #
 
 
         OR_G = euler_rotation_matrix(roll, pitch, yaw)
@@ -68,11 +77,12 @@ while (True):
         OR_C = np.matmul(OR_C, R_tran)
         CR_O = np.linalg.inv(OR_C)
         A = np.dstack((CR_O[0:3, 0], CR_O[0:3, 1], CR_O[0:3, 3]))
-
+        A = np.linalg.inv(A)
         for i in circles:
             cv2.circle(src, (int(i[0]), int(i[1])), int(i[2]), (0, 255, 0), 1)
-            A = np.linalg.inv(A)
-            xy_est = np.matmul(np.matmul(A, K_inv), np.array([i[0], i[1], 1]))
+            newx = mapx[i[0], i[1]]
+            newy = mapy[i[0], i[1]]
+            xy_est = np.matmul(np.matmul(A, K_inv), np.array([newx, newy, 1]))
             xy_est = xy_est[0]
             xy_est = xy_est / xy_est[2]
             H_x, H_y = (xy_est[0], xy_est[1])
@@ -136,5 +146,6 @@ while (True):
     elif prmch3 == True:
         prmch3 = False
         print(f"setyaw = {setyaw}, setpitch = {setpitch}")
+
 cap.release()
 cv2.destroyAllWindows()
