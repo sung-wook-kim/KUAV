@@ -7,7 +7,7 @@ import keyboard
 import threading
 
 #initial Setting
-port = 'COM7'
+port = 'COM4'
 baudrate = 115200
 
 ser = serial.Serial(port, baudrate)
@@ -18,9 +18,11 @@ class Monitor():
         self.header = [0x77, 0x17]
 
         # Message Protocol
-        self.name = ['mode', 'flight_mode', 'failsafe_flag', 'rth_step', 'decrease_throttle', 'takeoff_throttle', 'lat_setpoint', 'lon_setpoint', 'lidar', 'baro', 'altitude_setpoint']
+        self.name = ['mode', 'flight_mode', 'failsafe_flag', 'takeoff_step', 'increase_throttle', 'takeoff_throttle', 'lat_setpoint', 'lon_setpoint', 'lidar', 'baro', 'altitude_setpoint']
         self.byte = [1, 1, 1, 1, 4, 4, 8, 8, 4, 4, 4]
         self.sign = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
+        self.chksum = 0xffffffff
+        self.chksum_length = 4
 
         # Check input
         if not self.is_input_right():
@@ -58,17 +60,35 @@ class Monitor():
                 self.df.to_csv(f"data/{timevar}_mission_data.csv")
                 print('Save Final Monitor Data')
                 sys.exit('quit Monitor')
+            elif self.keyboard == 'c':
+                self.keyboard = None
+                self.df = pd.DataFrame(columns=self.name)
+                print('Clear DataFrame')
 
             if self.is_header_right():
                 self.save_in_buf()
-                self.receive_data()
-                self.save_data()
+                if self.check_data():
+                    self.receive_data()
+                    self.save_data()
 
     def save_in_buf(self):
         self.telemetry_buf = []
-        for _ in range(self.data_length):
+        for _ in range(self.data_length+self.chksum_length):
             self.telemetry_buf.append(int(ser.read(1).hex(), 16) & 0xff)
         ser.reset_input_buffer()
+
+    def check_data(self):
+        self.chksum = 0xffffffff
+        self.chksum -= self.header[0]
+        self.chksum -= self.header[1]
+        received_chksum = self.telemetry_buf[-4] << 24 | self.telemetry_buf[-3] << 16 | self.telemetry_buf[-2] << 8 | self.telemetry_buf[-1]
+        for i in range(self.data_length):
+            self.chksum -= self.telemetry_buf[i]
+
+        if self.chksum == received_chksum:
+            return True
+        else:
+            return False
 
     def is_input_right(self):
         if len(self.name) == len(self.byte):
@@ -110,7 +130,7 @@ class Monitor():
             self.new_data.append(data)
 
         for i in range(len(self.name)):
-            print(f'{self.name[i]} : {self.new_data[i]}', end= '\t')
+            print(f'{self.name[i]} : {self.new_data[i]}', end='\t')
         print('\n')
 
     def save_data(self):
