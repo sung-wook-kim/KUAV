@@ -168,10 +168,11 @@ def connectSTM(self):
             #     AVOID = False
             #     # 미션 좌표에 도착하면 모드를 2로 변경 ( 그전까지는 1임 )
             # # 0.0000462 -> 2m
-            # if (plag_2 == False) and (1 >= haversine.haversine((lat_drone,lon_drone),(MISSION_LAT,MISSION_LON))):  # 10 은 tracking distance인데 다르게 해야할듯
-            #     mode = 2  # yaw를 회전하며 탐색 모드
-            #     plag_2 = True
-            #     plag_MISSION = False
+            if (plag_2 == False) and (1 >= haversine.haversine((lat_drone,lon_drone),(MISSION_LAT,MISSION_LON))):  # 10 은 tracking distance인데 다르게 해야할듯
+                mode = 2  # yaw를 회전하며 탐색 모드
+                plag_2 = True
+                plag_MISSION = False
+                print(" you are in mission area")
 
             # # 2번 임무 , 사람이 detect 되지 않았으면 임의의 angle을 통해 회전 
             # if mode == 2 and human_detect == False:
