@@ -7,7 +7,7 @@ import keyboard
 import threading
 
 #initial Setting
-port = 'COM4'
+port = 'COM7'
 baudrate = 115200
 
 ser = serial.Serial(port, baudrate)
@@ -18,7 +18,7 @@ class Monitor():
         self.header = [0x77, 0x17]
 
         # Message Protocol
-        self.name = ['mode', 'flight_mode', 'failsafe_flag', 'takeoff_step', 'increase_throttle', 'takeoff_throttle', 'lat_setpoint', 'lon_setpoint', 'lidar', 'baro', 'altitude_setpoint']
+        self.name = ['mode', 'flight_mode', 'failsafe_flag', 'rth_step', 'decrease_throttle', 'takeoff_throttle', 'lat_setpoint', 'lon_setpoint', 'lidar', 'baro', 'altitude_setpoint']
         self.byte = [1, 1, 1, 1, 4, 4, 8, 8, 4, 4, 4]
         self.sign = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
 
@@ -109,7 +109,9 @@ class Monitor():
 
             self.new_data.append(data)
 
-        print(self.new_data)
+        for i in range(len(self.name)):
+            print(f'{self.name[i]} : {self.new_data[i]}', end= '\t')
+        print('\n')
 
     def save_data(self):
         self.df = self.df.append(pd.DataFrame([self.new_data], columns=self.name), ignore_index=True)

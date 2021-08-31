@@ -121,8 +121,8 @@ float lidar_altitude_actual;
 float baro_lidar_offset;
 const float altitude_change_condition = 0.05f;
 const float altitude_change = 0.1f;
-const float altitude_turning_point = 3.f;
-const float mission_altitude = 5.f;
+const float altitude_turning_point = 1.f;
+const float mission_altitude = 1.5f;
 
 // Gps Value
 #define DECLINATION 8.88F
@@ -164,12 +164,13 @@ unsigned int increase_throttle = 0;
 
 // Extra
 float theta, theta_radian;
-float batVolt = 0;
+float batVolt = 20.8;
 float batVolt_prev = 0;
 short gyro_x_offset = 0;
 short gyro_y_offset = 0;
 short gyro_z_offset = 0;
 float yaw_heading_reference = 0;
+unsigned short VrA_prev = 0;
 
 /* USER CODE END PV */
 
@@ -541,7 +542,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
   baro_offset = baro_offset / (float)baro_cnt;
 
   // Read Battery Voltage
-  batVolt = adcVal * 0.00699563f;
+//  batVolt = adcVal * 0.00699563f;
 
 //   GPS Home
 //    while(Is_GPS_In_Korea() != 1 || Is_GPS_Accuracy() != 1)
@@ -853,6 +854,12 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  Reset_PID_Integrator(&lat.out);
 			  Reset_PID_Integrator(&lon.in);
 			  Reset_PID_Integrator(&lon.out);
+
+			  if(iBus.VrA < 1500 && VrA_prev > 1500)
+			  {
+				  baro_offset += actual_pressure_fast;
+			  }
+			  VrA_prev = iBus.VrA;
 		  }
 	  }
 
@@ -1088,10 +1095,10 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4); //Buzzer Off
 	  }
 
-	  if(batVolt == 0) batVolt = adcVal * 0.00699563f;
-	  batVolt = 0.98 * batVolt_prev + 0.02 * (adcVal * 0.00699563f);
-	  if(batVolt < 18) batVolt = 18;
-	  batVolt_prev = batVolt;
+//	  if(batVolt == 0) batVolt = adcVal * 0.00699563f;
+//	  batVolt = 0.98 * batVolt_prev + 0.02 * (adcVal * 0.00699563f);
+//	  if(batVolt < 18) batVolt = 18;
+//	  batVolt_prev = batVolt;
 	  Calculate_Takeoff_Throttle();
   }
   /* USER CODE END 3 */
@@ -1844,18 +1851,17 @@ void Encode_Msg_Mission(unsigned char* telemetry_tx_buf)
 
 	telemetry_tx_buf[4] = failsafe_flag;
 
-	telemetry_tx_buf[5] = takeoff_step;
+	telemetry_tx_buf[5] = return_to_home_step;
 
-	telemetry_tx_buf[6] = increase_throttle >> 24;
-	telemetry_tx_buf[7] = increase_throttle >> 16;
-	telemetry_tx_buf[8] = increase_throttle >> 8;
-	telemetry_tx_buf[9] = increase_throttle;
+	telemetry_tx_buf[6] = decrease_throttle >> 24;
+	telemetry_tx_buf[7] = decrease_throttle >> 16;
+	telemetry_tx_buf[8] = decrease_throttle >> 8;
+	telemetry_tx_buf[9] = decrease_throttle;
 
 	telemetry_tx_buf[10] = takeoff_throttle >> 24;
 	telemetry_tx_buf[11] = takeoff_throttle >> 16;
 	telemetry_tx_buf[12] = takeoff_throttle >> 8;
 	telemetry_tx_buf[13] = takeoff_throttle;
-
 
 	telemetry_tx_buf[14] = (long long int)lat_waypoint >> 56;
 	telemetry_tx_buf[15] = (long long int)lat_waypoint >> 48;
@@ -1890,10 +1896,10 @@ void Encode_Msg_Mission(unsigned char* telemetry_tx_buf)
 	telemetry_tx_buf[40] = (int)(altitude_setpoint * 100) >> 8;
 	telemetry_tx_buf[41] = (int)(altitude_setpoint * 100);
 
-	telemetry_tx_buf[42] = (int)(altitude_setpoint * 100) >> 24;
-	telemetry_tx_buf[43] = (int)(altitude_setpoint * 100) >> 16;
-	telemetry_tx_buf[44] = (int)(altitude_setpoint * 100) >> 8;
-	telemetry_tx_buf[45] = (int)(altitude_setpoint * 100);
+	telemetry_tx_buf[42] = (int)(yaw_heading_reference * 100);
+	telemetry_tx_buf[43] = (int)(yaw_heading_reference * 100);
+	telemetry_tx_buf[44] = (int)(yaw_heading_reference * 100);
+	telemetry_tx_buf[45] = (int)(yaw_heading_reference * 100);
 }
 
 void Encode_Msg_Nx(unsigned char* nx_tx_buf)
