@@ -205,27 +205,16 @@ class NX(BaseCamera):
     def connectGIMBAL(self):
         target_pitch = 0
         target_yaw = 0
-        dy_prev = 0
-        dx_prev = 0
         while True:
             if self.gimbal_plag == True:
                 self.gimbal_plag = False
                 pitch_gain = 0.01
-                yaw_gain = -0.02
-                #                pitch_d = -0.0025
-                #                yaw_d = 0.005
-                #                dy_term = self.img_dy - dy_prev
-                #                dx_term = self.img_dx - dx_prev
-                target_pitch += round((pitch_gain * self.img_dy), 2)  # + dy_term * pitch_d)
-                target_yaw += -math.atan(self.img_dx / 410 * math.tan(63 / 2)) * 180 / math.pi  # + dx_term * yaw_d)
+                target_pitch += round((pitch_gain * self.img_dy), 2)
                 #   Pitch     Roll      Yaw      axislimit
                 # [Min, Max, Min, Max, Min, Max]
                 target_pitch = min(max(axislimit[0], target_pitch), axislimit[1])
-                target_yaw = min(max(axislimit[4], target_yaw), axislimit[5])
                 print(f"img_dx {self.img_dx}, img_dy {self.img_dy}, target_pitch {target_pitch}, target_yaw {target_yaw}")
                 setpitchrollyaw(target_pitch, 0, target_yaw)
-            #                dy_prev = self.img_dy
-            #                dx_prev = self.img_dx
             else:
                 time.sleep(0.01)
 
@@ -234,8 +223,8 @@ class NX(BaseCamera):
         time.sleep(10)
         while True:
             try:
-                sendingMsg = self.q.pop(
-                    -1)  # sendingmsg = 'mode \n lat_drone \n lon_drone \n gps_time \n lat_person \n lon_person \n altitude \n detection'
+                sendingMsg = self.q.pop(-1)
+                # sendingmsg = 'mode \n lat_drone \n lon_drone \n gps_time \n lat_person \n lon_person \n altitude \n detection'
                 gcs = self.client_socket.recv(1024).decode().split('\n')
                 # print("From GCS : " , gcs)
                 if gcs[0] == '1' and self.plag_1 == False:  # 미션 시작
@@ -248,11 +237,7 @@ class NX(BaseCamera):
                     self.mode = 6  # RTH = 착륙
                     self.plag_6 = True
                     self.RTH_LAT = int(gcs[1]) / 10 ** 7
-<<<<<<< HEAD
-                    self.RTH_LAT = int(gcs[2]) / 10 ** 7
-=======
                     self.RTH_LON = int(gcs[2]) / 10 ** 7
->>>>>>> 8eec77a22128c9b17780ef56d8eaf7c8acb182ce
                     self.plag_RTH = True
                 elif gcs[0] == '7' and self.plag_7 == False:
                     self.plag_7 = True
