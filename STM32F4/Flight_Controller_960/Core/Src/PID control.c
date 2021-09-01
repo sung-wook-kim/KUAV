@@ -177,7 +177,7 @@ void Double_Yaw_Heading_PID_Calculation(PIDDouble* axis, float set_point_angle, 
 
 	axis->in.pid_result = axis->in.p_result + axis->in.i_result + axis->in.d_result; //Calculate PID result of inner loop
 
-#define YAW_PID_MAX 10000
+#define YAW_PID_MAX 6000
 #define YAW_PID_MIN -YAW_PID_MAX
 	if(axis->in.pid_result > YAW_PID_MAX) axis->in.pid_result = YAW_PID_MAX;
 	else if(axis->in.pid_result < YAW_PID_MIN) axis->in.pid_result = YAW_PID_MIN;
