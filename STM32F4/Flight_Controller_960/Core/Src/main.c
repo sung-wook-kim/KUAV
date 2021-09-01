@@ -123,10 +123,10 @@ float lidar_altitude_previous;
 float lidar_add;
 float lidar_altitude_actual;
 float baro_lidar_offset;
-const float altitude_change_condition = 0.05f;
-const float altitude_change = 0.1f;
-const float altitude_turning_point = 1.f;
-const float mission_altitude = 2.f;
+const float altitude_change_condition = 0.15f;
+const float altitude_change = 0.3f;
+const float altitude_turning_point = 3.f;
+const float mission_altitude = 5.f;
 
 // Gps Value
 #define DECLINATION 8.88F
@@ -655,75 +655,52 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  if(iBus.LH > 1485 && iBus.LH < 1515) is_yaw_middle = 1;
 		  else is_yaw_middle = 0;
 
-//		  flight_mode = 1;
-//		  if(iBus.SwA == 2000 && iBus.SwD == 2000 && iBus.VrB > 1900 && is_throttle_middle == 1) flight_mode = 4;
-//		  else if(iBus.SwA == 2000 && iBus.SwD == 2000 && is_throttle_middle == 1) flight_mode = 3;
 
-		  // Select flight mode
-		  // 0 : manual mode  10 : takeoff -> move to mission location  2~5 : gps hold  6 : move to gps_home -> landing
-		  if(iBus.SwD != 2000)
+		  if(iBus.SwA == 2000 && iBus.SwD == 2000)
 		  {
-			  nx_flight_mode = 10;
+			  if(iBus.VrB < 1100) nx_flight_mode = 3;
+			  else if(iBus.VrB > 1900) nx_flight_mode = 1;
+			  else nx_flight_mode = 2;
 		  }
 		  else
 		  {
-			  switch(XAVIER_rx.mode)
-			  {
-			  case 1:
-				  nx_flight_mode = 1;
-				  break;
-			  case 2:
-				  nx_flight_mode = 2;
-				  break;
-			  case 3:
-				  nx_flight_mode = 2;
-				  break;
-			  case 4:
-				  nx_flight_mode = 2;
-				  break;
-			  case 5:
-				  nx_flight_mode = 2;
-				  break;
-			  case 6:
-				  nx_flight_mode = 3;
-				  break;
-			  default :
-				  nx_flight_mode = 10;
-				  break;
-			  }
+			  nx_flight_mode = 10;
 		  }
 
-//		  if(flight_mode == 2) //Altitude Holding Mode
+		  // Select flight mode
+		  // 0 : manual mode  10 : takeoff -> move to mission location  2~5 : gps hold  6 : move to gps_home -> landing
+//		  if(iBus.SwD != 2000)
 //		  {
-//			  if(iBus.VrB < 1100) iBus_VrB_flag = 0;
-//			  else if(iBus.VrB > 1900) iBus_VrB_flag = 2;
-//			  else iBus_VrB_flag = 1;
-//
-//			  if(iBus_VrB_flag==0 && iBus_VrB_Prev_flag==1) altitude_setpoint -= 0.5f;
-//			  else if(iBus_VrB_flag==2 && iBus_VrB_Prev_flag==1) altitude_setpoint += 0.5f;
-//
-//			  iBus_VrB_Prev_flag = iBus_VrB_flag;
-//
-//			  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, actual_pressure_fast);
-//
-//			  if(is_yaw_middle == 0)
+//			  nx_flight_mode = 10;
+//		  }
+//		  else
+//		  {
+//			  switch(XAVIER_rx.mode)
 //			  {
-//				  yaw_heading_reference = BNO080_Yaw;
-//				  Single_Yaw_Rate_PID_Calculation(&yaw_rate, (iBus.LH-1500), ICM20602.gyro_z);
-//				  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result -yaw_rate.pid_result+altitude.in.pid_result;
-//				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result +yaw_rate.pid_result+altitude.in.pid_result;
-//				  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result -yaw_rate.pid_result+altitude.in.pid_result;
-//				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result +yaw_rate.pid_result+altitude.in.pid_result;
-//			  }
-//			  else
-//			  {
-//				  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference, BNO080_Yaw, ICM20602.gyro_z);
-//				  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
-//				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
-//				  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
-//				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
+//			  case 1:
+//				  nx_flight_mode = 1;
+//				  break;
+//			  case 2:
+//				  nx_flight_mode = 2;
+//				  break;
+//			  case 3:
+//				  nx_flight_mode = 2;
+//				  break;
+//			  case 4:
+//				  nx_flight_mode = 2;
+//				  break;
+//			  case 5:
+//				  nx_flight_mode = 2;
+//				  break;
+//			  case 6:
+//				  nx_flight_mode = 3;
+//				  break;
+//			  default :
+//				  nx_flight_mode = 10;
+//				  break;
 //			  }
 //		  }
+
 		  if(nx_flight_mode == 1) // Takeoff and move to mission spot
 		  {
 			  Takeoff();
@@ -750,7 +727,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  if (gps_pitch_adjust > GPS_PD_MAX) gps_pitch_adjust = GPS_PD_MAX;
 			  if (gps_pitch_adjust < GPS_PD_MIN) gps_pitch_adjust = GPS_PD_MIN;
 
-			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference + XAVIER_rx.yaw_error, BNO080_Yaw, ICM20602.gyro_z);
+			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference /*+ XAVIER_rx.yaw_error*/, BNO080_Yaw, ICM20602.gyro_z);
 
 			  if(takeoff_step == 0)
 			  {
@@ -784,7 +761,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  if (gps_pitch_adjust > GPS_PD_MAX) gps_pitch_adjust = GPS_PD_MAX;
 			  if (gps_pitch_adjust < GPS_PD_MIN) gps_pitch_adjust = GPS_PD_MIN;
 
-			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference + XAVIER_rx.yaw_error, BNO080_Yaw, ICM20602.gyro_z);
+			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference /*+ XAVIER_rx.yaw_error*/, BNO080_Yaw, ICM20602.gyro_z);
 			  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
 			  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
 			  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
@@ -834,7 +811,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  if (gps_pitch_adjust > GPS_PD_MAX) gps_pitch_adjust = GPS_PD_MAX;
 			  if (gps_pitch_adjust < GPS_PD_MIN) gps_pitch_adjust = GPS_PD_MIN;
 
-			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference + XAVIER_rx.yaw_error, BNO080_Yaw, ICM20602.gyro_z);
+			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference /*+ XAVIER_rx.yaw_error*/, BNO080_Yaw, ICM20602.gyro_z);
 
 			  if(return_to_home_step == 5 || return_to_home_step == 6)
 			  {
@@ -851,28 +828,39 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
 			  }
 		  }
-		  else// Default Manual Mode
+		  else if(nx_flight_mode == 4) //Altitude Holding Mode
 		  {
 			  if(iBus.VrB < 1100) iBus_VrB_flag = 0;
 			  else if(iBus.VrB > 1900) iBus_VrB_flag = 2;
 			  else iBus_VrB_flag = 1;
 
-			  if(iBus_VrB_flag==0 && iBus_VrB_Prev_flag==1) yaw_heading_reference -= 10;
-			  else if(iBus_VrB_flag==2 && iBus_VrB_Prev_flag==1) yaw_heading_reference += 10;
+			  if(iBus_VrB_flag==0 && iBus_VrB_Prev_flag==1) altitude_setpoint -= 0.3f;
+			  else if(iBus_VrB_flag==2 && iBus_VrB_Prev_flag==1) altitude_setpoint += 0.3f;
 
 			  iBus_VrB_Prev_flag = iBus_VrB_flag;
 
-			  if(iBus.VrA < 1100) iBus_VrA_flag = 0;
-			  else if(iBus.VrA > 1900) iBus_VrA_flag = 2;
-			  else iBus_VrA_flag = 1;
+			  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, actual_pressure_fast);
 
-			  if(iBus_VrA_flag==0 && iBus_VrA_Prev_flag==1) yaw_heading_reference -= 25;
-			  else if(iBus_VrA_flag==2 && iBus_VrA_Prev_flag==1) yaw_heading_reference += 25;
-
-			  iBus_VrA_Prev_flag = iBus_VrA_flag;
-
-			  if(yaw_heading_reference > 360) yaw_heading_reference -= 360;
-			  else if(yaw_heading_reference < 0) yaw_heading_reference += 360;
+			  if(is_yaw_middle == 0)
+			  {
+				  yaw_heading_reference = BNO080_Yaw;
+				  Single_Yaw_Rate_PID_Calculation(&yaw_rate, (iBus.LH-1500), ICM20602.gyro_z);
+				  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result -yaw_rate.pid_result+altitude.in.pid_result;
+				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result +yaw_rate.pid_result+altitude.in.pid_result;
+				  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result -yaw_rate.pid_result+altitude.in.pid_result;
+				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result +yaw_rate.pid_result+altitude.in.pid_result;
+			  }
+			  else
+			  {
+				  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference, BNO080_Yaw, ICM20602.gyro_z);
+				  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
+				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
+				  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
+				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
+			  }
+		  }
+		  else// Default Manual Mode
+		  {
 
 			  if(is_yaw_middle == 0)
 			  {
@@ -898,6 +886,8 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 
 			  lat_waypoint = lat_gps;
 			  lon_waypoint = lon_gps;
+			  lat_gps_home = lat_gps + 1;
+			  lon_gps_home = lon_gps + 1;
 			  return_to_home_step = 0;
 			  takeoff_step = 0;
 			  Reset_PID_Integrator(&lat.in);
@@ -992,7 +982,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  tim7_200ms_flag = 0;
 
 			  Encode_Msg_Mission(&telemetry_tx_buf[0]);
-			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 60);
+			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 81);
 
 			  Encode_Msg_Nx(&nx_tx_buf[0]);
 			  HAL_UART_Transmit_DMA(&huart6, &nx_tx_buf[0], 47);
@@ -1145,6 +1135,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 	  if(batVolt == 0) batVolt = adcVal * 0.00699563f;
 	  batVolt = 0.98 * batVolt_prev + 0.02 * (adcVal * 0.00699563f);
 	  if(batVolt < 20.4) batVolt = 20.4;
+	  else if(batVolt > 25.2) batVolt = 25.2;
 	  batVolt_prev = batVolt;
 	  Calculate_Takeoff_Throttle();
   }
@@ -1911,23 +1902,23 @@ void Encode_Msg_Mission(unsigned char* telemetry_tx_buf)
 	telemetry_tx_buf[13] = takeoff_throttle;
 
 
-	telemetry_tx_buf[14] = (long long int)lat_waypoint >> 56;
-	telemetry_tx_buf[15] = (long long int)lat_waypoint >> 48;
-	telemetry_tx_buf[16] = (long long int)lat_waypoint >> 40;
-	telemetry_tx_buf[17] = (long long int)lat_waypoint >> 32;
-	telemetry_tx_buf[18] = (long long int)lat_waypoint >> 24;
-	telemetry_tx_buf[19] = (long long int)lat_waypoint >> 16;
-	telemetry_tx_buf[20] = (long long int)lat_waypoint >> 8;
-	telemetry_tx_buf[21] = (long long int)lat_waypoint;
+	telemetry_tx_buf[14] = (long long int)lat_gps >> 56;
+	telemetry_tx_buf[15] = (long long int)lat_gps >> 48;
+	telemetry_tx_buf[16] = (long long int)lat_gps >> 40;
+	telemetry_tx_buf[17] = (long long int)lat_gps >> 32;
+	telemetry_tx_buf[18] = (long long int)lat_gps >> 24;
+	telemetry_tx_buf[19] = (long long int)lat_gps >> 16;
+	telemetry_tx_buf[20] = (long long int)lat_gps >> 8;
+	telemetry_tx_buf[21] = (long long int)lat_gps;
 
-	telemetry_tx_buf[22] = (long long int)lon_waypoint >> 56;
-	telemetry_tx_buf[23] = (long long int)lon_waypoint >> 48;
-	telemetry_tx_buf[24] = (long long int)lon_waypoint >> 40;
-	telemetry_tx_buf[25] = (long long int)lon_waypoint >> 32;
-	telemetry_tx_buf[26] = (long long int)lon_waypoint >> 24;
-	telemetry_tx_buf[27] = (long long int)lon_waypoint >> 16;
-	telemetry_tx_buf[28] = (long long int)lon_waypoint >> 8;
-	telemetry_tx_buf[29] = (long long int)lon_waypoint;
+	telemetry_tx_buf[22] = (long long int)lon_gps >> 56;
+	telemetry_tx_buf[23] = (long long int)lon_gps >> 48;
+	telemetry_tx_buf[24] = (long long int)lon_gps >> 40;
+	telemetry_tx_buf[25] = (long long int)lon_gps >> 32;
+	telemetry_tx_buf[26] = (long long int)lon_gps >> 24;
+	telemetry_tx_buf[27] = (long long int)lon_gps >> 16;
+	telemetry_tx_buf[28] = (long long int)lon_gps >> 8;
+	telemetry_tx_buf[29] = (long long int)lon_gps;
 
 	telemetry_tx_buf[30] = (int)(lidar_altitude * 100) >> 24;
 	telemetry_tx_buf[31] = (int)(lidar_altitude * 100) >> 16;
@@ -1962,17 +1953,42 @@ void Encode_Msg_Mission(unsigned char* telemetry_tx_buf)
 	telemetry_tx_buf[54] = (int)(batVolt * 100) >> 8;
 	telemetry_tx_buf[55] = (int)(batVolt * 100);
 
+	telemetry_tx_buf[56] = (long long int)lat_waypoint >> 56;
+	telemetry_tx_buf[57] = (long long int)lat_waypoint >> 48;
+	telemetry_tx_buf[58] = (long long int)lat_waypoint >> 40;
+	telemetry_tx_buf[59] = (long long int)lat_waypoint >> 32;
+	telemetry_tx_buf[60] = (long long int)lat_waypoint >> 24;
+	telemetry_tx_buf[61] = (long long int)lat_waypoint >> 16;
+	telemetry_tx_buf[62] = (long long int)lat_waypoint >> 8;
+	telemetry_tx_buf[63] = (long long int)lat_waypoint;
+
+	telemetry_tx_buf[64] = (long long int)lon_waypoint >> 56;
+	telemetry_tx_buf[65] = (long long int)lon_waypoint >> 48;
+	telemetry_tx_buf[66] = (long long int)lon_waypoint >> 40;
+	telemetry_tx_buf[67] = (long long int)lon_waypoint >> 32;
+	telemetry_tx_buf[68] = (long long int)lon_waypoint >> 24;
+	telemetry_tx_buf[69] = (long long int)lon_waypoint >> 16;
+	telemetry_tx_buf[70] = (long long int)lon_waypoint >> 8;
+	telemetry_tx_buf[71] = (long long int)lon_waypoint;
+
+	telemetry_tx_buf[72] = return_to_home_step;
+
+	telemetry_tx_buf[73] = decrease_throttle >> 24;
+	telemetry_tx_buf[74] = decrease_throttle >> 16;
+	telemetry_tx_buf[75] = decrease_throttle >> 8;
+	telemetry_tx_buf[76] = decrease_throttle;
+
 	chksum_mission = 0xffffffff;
 
-	for(int i=0; i< 56; i++)
+	for(int i=0; i< 77; i++)
 	{
 		chksum_mission = chksum_mission - telemetry_tx_buf[i];
 	}
 
-	telemetry_tx_buf[56] = chksum_mission >> 24;
-	telemetry_tx_buf[57] = chksum_mission >> 16;
-	telemetry_tx_buf[58] = chksum_mission >> 8;
-	telemetry_tx_buf[59] = chksum_mission;
+	telemetry_tx_buf[77] = chksum_mission >> 24;
+	telemetry_tx_buf[78] = chksum_mission >> 16;
+	telemetry_tx_buf[79] = chksum_mission >> 8;
+	telemetry_tx_buf[80] = chksum_mission;
 }
 
 void Encode_Msg_Nx(unsigned char* nx_tx_buf)
@@ -2368,15 +2384,32 @@ void return_to_home(void)
 
 		//Calculate gradient
 		if (return_to_home_lat_factor == 1 || return_to_home_lon_factor == 1)return_to_home_step = 1; //go to next step
+
 		if (abs_double(lat_gps_home, lat_waypoint) >= abs_double(lon_gps_home, lon_waypoint))
 		{
-			return_to_home_lon_factor = abs_double(lon_gps_home, lon_waypoint) / abs_double(lat_gps_home, lat_waypoint);
-			return_to_home_lat_factor = 1;
+			if(abs_double(lat_gps_home, lat_waypoint) != 0)
+			{
+				return_to_home_lon_factor = abs_double(lon_gps_home, lon_waypoint) / abs_double(lat_gps_home, lat_waypoint);
+				return_to_home_lat_factor = 1;
+			}
+			else
+			{
+				return_to_home_lat_factor = 1;
+				return_to_home_lon_factor = 0;
+			}
 		}
 		else
 		{
-			return_to_home_lon_factor = 1;
-			return_to_home_lat_factor = abs_double(lat_gps_home, lat_waypoint) / abs_double(lon_gps_home, lon_waypoint);
+			if(abs_double(lon_gps_home, lon_waypoint) != 0)
+			{
+				return_to_home_lon_factor = 1;
+				return_to_home_lat_factor = abs_double(lat_gps_home, lat_waypoint) / abs_double(lon_gps_home, lon_waypoint);
+			}
+			else
+			{
+				return_to_home_lat_factor = 0;
+				return_to_home_lon_factor = 1;
+			}
 		}
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2447,10 +2480,10 @@ void return_to_home(void)
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
 	if(return_to_home_step == 4)
 	{
-		if(lidar_altitude < 1)
+		if(lidar_altitude < 0.5)
 		{
 			return_to_home_step = 5;
-			decrease_throttle = takeoff_throttle;
+			decrease_throttle = takeoff_throttle - landing_spare;
 		}
 
 		if(altitude.out.error < altitude_change_condition && altitude.out.error > -altitude_change_condition) altitude_setpoint -= altitude_change;
@@ -2460,7 +2493,7 @@ void return_to_home(void)
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////
 	if (return_to_home_step == 5) {
 
-		if(decrease_throttle < takeoff_throttle - landing_spare) return_to_home_step = 6;
+		if(decrease_throttle < (takeoff_throttle - 2 * landing_spare)) return_to_home_step = 6;
 
 		decrease_throttle -= 2;
 	}
@@ -2470,13 +2503,12 @@ void return_to_home(void)
 	if(return_to_home_step == 6)
 	{
 		if(decrease_throttle < 10) motor_arming_flag = 0;
-		decrease_throttle -= 2;
+		decrease_throttle -= 30;
 	}
 }
 void Calculate_Takeoff_Throttle()
 {
-	takeoff_throttle = (2 - cos(BNO080_Roll * 0.017453) * cos(BNO080_Pitch * 0.017453)) *  83.9 * ( batVolt * (-12.161) + 1710.3 - 1000 + 10);
-
+	takeoff_throttle = (2 - cos(BNO080_Roll * 0.017453) * cos(BNO080_Pitch * 0.017453)) *  83.9 * ( batVolt * (-12.124) + 1708 - 1000);
 }
 
 int Is_GPS_In_Korea(void)
