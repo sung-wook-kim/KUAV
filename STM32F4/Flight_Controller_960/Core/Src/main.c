@@ -2502,8 +2502,27 @@ void return_to_home(void)
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
 	if(return_to_home_step == 6)
 	{
-		if(decrease_throttle < 10) motor_arming_flag = 0;
-		decrease_throttle -= 30;
+		if(decrease_throttle <= 30)
+		{
+			while(1)
+			{
+				  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4);
+
+				  TIM3->PSC = 2000;
+				  HAL_Delay(100);
+				  TIM3->PSC = 1500;
+				  HAL_Delay(100);
+				  TIM3->PSC = 1000;
+				  HAL_Delay(100);
+
+				  LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
+			}
+
+		}
+		else
+		{
+			decrease_throttle -= 30;
+		}
 	}
 }
 void Calculate_Takeoff_Throttle()
