@@ -992,7 +992,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  tim7_200ms_flag = 0;
 
 			  Encode_Msg_Mission(&telemetry_tx_buf[0]);
-			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 56);
+			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 60);
 
 			  Encode_Msg_Nx(&nx_tx_buf[0]);
 			  HAL_UART_Transmit_DMA(&huart6, &nx_tx_buf[0], 47);
@@ -1954,20 +1954,25 @@ void Encode_Msg_Mission(unsigned char* telemetry_tx_buf)
 	telemetry_tx_buf[48] = (int)yaw_heading_reference >> 8;
 	telemetry_tx_buf[49] = (int)yaw_heading_reference;
 
-	telemetry_tx_buf[50] = (int)iBus.LV;
+	telemetry_tx_buf[50] = (int)iBus.LV >> 8;
 	telemetry_tx_buf[51] = (int)iBus.LV;
+
+	telemetry_tx_buf[52] = (int)(batVolt * 100) >> 24;
+	telemetry_tx_buf[53] = (int)(batVolt * 100) >> 16;
+	telemetry_tx_buf[54] = (int)(batVolt * 100) >> 8;
+	telemetry_tx_buf[55] = (int)(batVolt * 100);
 
 	chksum_mission = 0xffffffff;
 
-	for(int i=0; i< 52; i++)
+	for(int i=0; i< 56; i++)
 	{
 		chksum_mission = chksum_mission - telemetry_tx_buf[i];
 	}
 
-	telemetry_tx_buf[52] = chksum_mission >> 24;
-	telemetry_tx_buf[53] = chksum_mission >> 16;
-	telemetry_tx_buf[54] = chksum_mission >> 8;
-	telemetry_tx_buf[55] = chksum_mission;
+	telemetry_tx_buf[56] = chksum_mission >> 24;
+	telemetry_tx_buf[57] = chksum_mission >> 16;
+	telemetry_tx_buf[58] = chksum_mission >> 8;
+	telemetry_tx_buf[59] = chksum_mission;
 }
 
 void Encode_Msg_Nx(unsigned char* nx_tx_buf)
