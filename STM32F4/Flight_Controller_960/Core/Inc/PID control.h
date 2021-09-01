@@ -51,6 +51,7 @@ typedef struct _PIDSingle
 	float d_result;
 	
 	float pid_result;
+	float integral_anti_windup;
 }PIDSingle;
 
 typedef struct _PIDDouble

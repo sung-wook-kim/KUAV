@@ -149,10 +149,6 @@ void Double_Yaw_Heading_PID_Calculation(PIDDouble* axis, float set_point_angle, 
 
 	axis->out.pid_result = axis->out.p_result + axis->out.i_result + axis->out.d_result;  //Calculate PID result of outer loop
 
-#define YAW_HEADING_OUT_MAX 500
-#define YAW_HEADING_OUT_MIN -YAW_HEADING_OUT_MAX
-	if(axis->out.pid_result > YAW_HEADING_OUT_MAX) axis->out.pid_result = YAW_HEADING_OUT_MAX;
-	else if(axis->out.pid_result < YAW_HEADING_OUT_MIN) axis->out.pid_result = YAW_HEADING_OUT_MIN;
 	/****************************************************************************************/
 
 	/************ Double PID Inner Begin (Roll and Pitch Angular Rate Control) **************/
@@ -167,7 +163,7 @@ void Double_Yaw_Heading_PID_Calculation(PIDDouble* axis, float set_point_angle, 
 #define IN_I_ERR_MIN -IN_ERR_SUM_MAX
 	if(axis->in.error_sum > IN_ERR_SUM_MAX) axis->in.error_sum = IN_ERR_SUM_MAX;
 	else if(axis->in.error_sum < IN_I_ERR_MIN) axis->in.error_sum = IN_I_ERR_MIN;
-	axis->in.i_result = axis->in.error_sum * axis->in.ki;							//Calculate I result of inner loop
+	axis->in.i_result = axis->in.error_sum * axis->in.ki - axis->in.integral_anti_windup;							//Calculate I result of inner loop
 
 	axis->in.error_deriv = -(axis->in.meas_value - axis->in.meas_value_prev) / DT;	//Define derivative of inner loop
 	axis->in.meas_value_prev = axis->in.meas_value;									//Refresh value_prev to the latest value
@@ -180,6 +176,13 @@ void Double_Yaw_Heading_PID_Calculation(PIDDouble* axis, float set_point_angle, 
 #endif
 
 	axis->in.pid_result = axis->in.p_result + axis->in.i_result + axis->in.d_result; //Calculate PID result of inner loop
+
+#define YAW_PID_MAX 10000
+#define YAW_PID_MIN -YAW_PID_MAX
+	if(axis->in.pid_result > YAW_PID_MAX) axis->in.pid_result = YAW_PID_MAX;
+	else if(axis->in.pid_result < YAW_PID_MIN) axis->in.pid_result = YAW_PID_MIN;
+
+	axis->in.integral_anti_windup = axis->in.p_result + axis->in.i_result + axis->in.d_result - axis->in.pid_result;
 	/****************************************************************************************/
 }
 
