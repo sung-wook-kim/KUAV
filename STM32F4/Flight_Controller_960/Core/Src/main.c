@@ -158,7 +158,7 @@ unsigned char is_lat_nearby = 0, is_lon_nearby = 0;
 unsigned int decrease_throttle;
 unsigned char emergency_landing_flag = 0;
 
-// takeoff
+// takeofff
 unsigned char takeoff_step = 0;
 
 // Motor Value
@@ -175,6 +175,7 @@ short gyro_x_offset = 2;
 short gyro_y_offset = -8;
 short gyro_z_offset = 6;
 float yaw_heading_reference = 0;
+float target_yaw = 0;
 
 /* USER CODE END PV */
 
@@ -701,6 +702,8 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 //				  break;
 //			  }
 //		  }
+
+		  target_yaw = (float)XAVIER_rx.target_yaw / 100.f;
 
 		  if(nx_flight_mode == 1) // Takeoff and move to mission spot
 		  {
@@ -1984,17 +1987,22 @@ void Encode_Msg_Mission(unsigned char* telemetry_tx_buf)
 	telemetry_tx_buf[75] = decrease_throttle >> 8;
 	telemetry_tx_buf[76] = decrease_throttle;
 
+	telemetry_tx_buf[77] = (int)(target_yaw * 100) >> 24;
+	telemetry_tx_buf[78] = (int)(target_yaw * 100) >> 16;
+	telemetry_tx_buf[79] = (int)(target_yaw * 100) >> 8;
+	telemetry_tx_buf[80] = (int)(target_yaw * 100);
+
 	chksum_mission = 0xffffffff;
 
-	for(int i=0; i< 77; i++)
+	for(int i=0; i< 81; i++)
 	{
 		chksum_mission = chksum_mission - telemetry_tx_buf[i];
 	}
 
-	telemetry_tx_buf[77] = chksum_mission >> 24;
-	telemetry_tx_buf[78] = chksum_mission >> 16;
-	telemetry_tx_buf[79] = chksum_mission >> 8;
-	telemetry_tx_buf[80] = chksum_mission;
+	telemetry_tx_buf[81] = chksum_mission >> 24;
+	telemetry_tx_buf[82] = chksum_mission >> 16;
+	telemetry_tx_buf[83] = chksum_mission >> 8;
+	telemetry_tx_buf[84] = chksum_mission;
 }
 
 void Encode_Msg_Nx(unsigned char* nx_tx_buf)
