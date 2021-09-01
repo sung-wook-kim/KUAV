@@ -156,6 +156,7 @@ double return_to_home_lat_factor = 0, return_to_home_lon_factor = 0,return_to_ho
 double lat_gps_float_adjust = 0, lon_gps_float_adjust = 0;
 unsigned char is_lat_nearby = 0, is_lon_nearby = 0;
 unsigned int decrease_throttle;
+unsigned char emergency_landing_flag = 0;
 
 // takeoff
 unsigned char takeoff_step = 0;
@@ -769,6 +770,11 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  }
 		  else if(nx_flight_mode == 3 ) // Return to Home Mode
 		  {
+			  if(batVolt < 21 && emergency_landing_flag == 0)
+			  {
+				  return_to_home_step = 3;
+				  emergency_landing_flag = 1;
+			  }
 			  return_to_home();
 
 			  if(return_to_home_step == 4)
@@ -2463,17 +2469,8 @@ void return_to_home(void)
 			altitude_setpoint = lidar_altitude;
 		}
 
-
-		if(altitude_setpoint > altitude_turning_point)
-		{
-			if(altitude.out.error < altitude_change_condition && altitude.out.error > -altitude_change_condition) altitude_setpoint -= altitude_change;
-			if(altitude_setpoint < altitude_turning_point) altitude_setpoint = altitude_turning_point;
-		}
-		else
-		{
-			if(altitude.out.error < altitude_change_condition && altitude.out.error > -altitude_change_condition) altitude_setpoint += altitude_change;
-			if(altitude_setpoint > altitude_turning_point) altitude_setpoint = altitude_turning_point;
-		}
+		if(altitude.out.error < altitude_change_condition && altitude.out.error > -altitude_change_condition) altitude_setpoint -= altitude_change;
+		if(altitude_setpoint < altitude_turning_point) altitude_setpoint = altitude_turning_point;
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//Step - 4 Using Lidar, decrease the altitude by increasing the lidar setpoint
