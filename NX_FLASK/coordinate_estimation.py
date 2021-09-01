@@ -44,6 +44,7 @@ gimbal.set_angles(setpitch, setroll, setyaw)
 dist = np.array([-4.971605177084769123e-01,1.874575939087049781e-01,-2.658143561773393827e-03,-1.691380333517990709e-03,3.543487326723160913e-01])
 h,  w = 540, 956
 newcameramtx, roi=cv2.getOptimalNewCameraMatrix(K,dist,(w,h),1,(w,h))
+x,y,w,h = roi
 # undistort
 mapx,mapy = cv2.initUndistortRectifyMap(K,dist,None,newcameramtx,(w,h),5)
 mapx = np.array(mapx)
@@ -103,7 +104,7 @@ while (True):
 
         newx = i[0] + mapx_[int(i[1]), int(i[0])]
         newy = i[1] + mapy_[int(i[1]), int(i[0])]
-        xy_est = np.matmul(np.matmul(A, K_inv), np.array([newx, newy, 1]))
+        xy_est = np.matmul(np.matmul(A, K_inv), np.array([newx-x, newy-y, 1]))
         xy_est = xy_est[0]
         xy_est = xy_est / xy_est[2]
         # xy_est2 = np.matmul(np.matmul(A, K_inv), np.array([i[0], i[1], 1]))
