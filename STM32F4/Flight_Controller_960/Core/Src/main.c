@@ -2506,18 +2506,18 @@ void return_to_home(void)
 		{
 			while(1)
 			{
-				  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4);
+				// Landing Complete
+				LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4);
 
-				  TIM3->PSC = 2000;
-				  HAL_Delay(100);
-				  TIM3->PSC = 1500;
-				  HAL_Delay(100);
-				  TIM3->PSC = 1000;
-				  HAL_Delay(100);
+				TIM3->PSC = 2000;
+				HAL_Delay(100);
+				TIM3->PSC = 1500;
+				HAL_Delay(100);
+				TIM3->PSC = 1000;
+				HAL_Delay(100);
 
-				  LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
+				LL_TIM_CC_DisableChannel(TIM3, LL_TIM_CHANNEL_CH4);
 			}
-
 		}
 		else
 		{
