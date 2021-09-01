@@ -11,7 +11,7 @@ count = 0
 currTime = time.time()
 gimbal = Storm32(port='/dev/ttyACM0')
 
-cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=2, capture_width=3840, capture_height=2160, display_width=956, display_height=540, framerate=21), cv2.CAP_GSTREAMER)
+cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=2, capture_width=1920, capture_height=1080, display_width=960, display_height=540, framerate=30), cv2.CAP_GSTREAMER)
 circles = []
 prm1 = 940
 prm2 = 5
@@ -28,21 +28,22 @@ thickness = 1
 i = 0
 setroll, setpitch, setyaw = 0, 45, 0
 
-# 1.019148736205558748e+03,0.000000000000000000e+00,4.543907475076335913e+02
-# 0.000000000000000000e+00,1.025519691143287901e+03,2.894037118747232284e+02
-# 0.000000000000000000e+00,0.000000000000000000e+00,1.000000000000000000e+00
+# 1920,1080 NX ver
+# [[980.02319542   0.         453.44606334]
+#  [  0.         979.3227789  276.15629447]
+#  [  0.           0.           1.        ]]
 
-K = np.array([[1.019148736205558748e+03, 0, 4.543907475076335913e+02],
-              [0, 1.025519691143287901e+03, 2.894037118747232284e+02], [0, 0, 1]])
+K = np.array([[980.02319542, 0, 453.44606334],
+              [0, 979.3227789, 276.15629447], [0, 0, 1]])
 
-T = np.array([[0], [0], [-1.22]])
+T = np.array([[0], [0], [-0.9]])
 R_tran = np.array([[0, 0, 1, 0], [1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1]])
 j = 1
 gimbal.set_angles(setpitch, setroll, setyaw)
 
 # remove distortion
-dist = np.array([-4.971605177084769123e-01,1.874575939087049781e-01,-2.658143561773393827e-03,-1.691380333517990709e-03,3.543487326723160913e-01])
-h,  w = 540, 956
+dist = np.array([-4.92456940e-01,  2.68723186e-01, -1.15903527e-04, -6.44152979e-04, -2.90173099e-02])
+h,  w = 540, 960
 newcameramtx, roi=cv2.getOptimalNewCameraMatrix(K,dist,(w,h),1,(w,h))
 x,y,w,h = roi
 # undistort
@@ -68,6 +69,8 @@ while (True):
     #read image and sensor date together
     src = cap.read()[1]
     pitch, roll, yaw = gimbal.get_imu1_angles()
+    if (j%5 == 0) : 
+        print("roll,pitch, yaw raw",roll,pitch, yaw, end=' ')
 
     # image process
     frame_gau_blur = cv2.GaussianBlur(src, (3, 3), 0)
@@ -91,7 +94,7 @@ while (True):
     # yaw = 0
     if (j%5 == 0) : 
         print("roll,pitch, yaw",roll,pitch, yaw)
-    OR_G = euler_rotation_matrix(roll, pitch, yaw)
+    OR_G = euler_rotation_matrix_YRP(roll, pitch, yaw)
     OR_C = np.hstack((OR_G, T))
     OR_C = np.vstack((OR_C, np.array([[0, 0, 0, 1]])))
     OR_C = np.matmul(OR_C, R_tran)
@@ -102,9 +105,9 @@ while (True):
     for i in circles:
         cv2.circle(src, (int(i[0]), int(i[1])), int(i[2]), (0, 255, 0), 1)
 
-        newx = i[0] + mapx_[int(i[1]), int(i[0])]
-        newy = i[1] + mapy_[int(i[1]), int(i[0])]
-        xy_est = np.matmul(np.matmul(A, K_inv), np.array([newx-x, newy-y, 1]))
+        newx = i[0] + mapx_[min(int(i[1]),h-1), min(int(i[0]),w-1)]
+        newy = i[1] + mapy_[min(int(i[1]),h-1), min(int(i[0]),w-1)]
+        xy_est = np.matmul(np.matmul(A, K_inv), np.array([min(newx+x, w), min(newy+y, h), 1]))
         xy_est = xy_est[0]
         xy_est = xy_est / xy_est[2]
         # xy_est2 = np.matmul(np.matmul(A, K_inv), np.array([i[0], i[1], 1]))

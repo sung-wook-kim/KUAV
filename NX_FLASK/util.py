@@ -232,3 +232,42 @@ def euler_rotation_matrix(roll, pitch, yaw):
                            [r20, r21, r22]])
 
     return rot_matrix
+
+def euler_rotation_matrix_YRP(roll, pitch, yaw):
+    """
+    Generate a full three-dimensional rotation matrix from euler angles
+    Original rotation matix order is YPR. But, because of the gimbal sensor, the order need to be changed to YRP
+
+    Input
+    :param roll: The roll angle (radians) - Rotation around the x-axis
+    :param pitch: The pitch angle (radians) - Rotation around the y-axis
+    :param yaw: The yaw angle (radians) - Rotation around the z-axis
+
+    Output
+    :return: A 3x3 element matix containing the rotation matrix.
+             This rotation matrix converts a point in the local reference
+             frame to a point in the global reference frame.
+
+    """
+    # First row of the rotation matrix
+
+    r00 = np.cos(yaw) * np.cos(pitch) - np.sin(pitch)*np.sin(roll)*np.sin(yaw)
+    r01 = - np.sin(yaw) * np.cos(roll)
+    r02 = np.sin(yaw) * np.sin(roll) * np.cos(pitch) + np.cos(yaw) * np.sin(pitch)
+
+    # Second row of the rotation matrix
+    r10 = np.sin(pitch) * np.sin(roll)*np.cos(yaw) + np.cos(pitch)*np.sin(yaw)
+    r11 = np.cos(yaw) * np.cos(roll)
+    r12 = np.sin(yaw) * np.sin(pitch) - np.cos(yaw) * np.sin(roll)* np.cos(pitch)
+
+    # Third row of the rotation matrix
+    r20 = -np.sin(pitch)*np.cos(roll)
+    r21 = np.sin(roll)
+    r22 = np.cos(pitch) * np.cos(roll)
+
+    # 3x3 rotation matrix
+    rot_matrix = np.array([[r00, r01, r02],
+                           [r10, r11, r12],
+                           [r20, r21, r22]])
+
+    return rot_matrix
