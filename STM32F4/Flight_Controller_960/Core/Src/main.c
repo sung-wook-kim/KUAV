@@ -727,7 +727,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  if (gps_pitch_adjust > GPS_PD_MAX) gps_pitch_adjust = GPS_PD_MAX;
 			  if (gps_pitch_adjust < GPS_PD_MIN) gps_pitch_adjust = GPS_PD_MIN;
 
-			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference /*+ XAVIER_rx.yaw_error*/, BNO080_Yaw, ICM20602.gyro_z);
+			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference , BNO080_Yaw, ICM20602.gyro_z);
 
 			  if(takeoff_step == 0)
 			  {
@@ -755,13 +755,13 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  gps_roll_adjust = ((float)lon.in.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) + ((float)lat.in.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
 			  gps_pitch_adjust = ((float)lat.in.pid_result * cos((360.f - BNO080_Yaw) * 0.017453)) - ((float)lon.in.pid_result * sin((360.f - BNO080_Yaw) * 0.017453));
 
-			  //Limit the maximum correction to 6000. This way we still have full control with the pitch and roll stick on the transmitter.
+			  //Limit the maximum correction to 6000. This way we still have full cFontrol with the pitch and roll stick on the transmitter.
 			  if (gps_roll_adjust > GPS_PD_MAX) gps_roll_adjust = GPS_PD_MAX;
 			  if (gps_roll_adjust < GPS_PD_MIN) gps_roll_adjust = GPS_PD_MIN;
 			  if (gps_pitch_adjust > GPS_PD_MAX) gps_pitch_adjust = GPS_PD_MAX;
 			  if (gps_pitch_adjust < GPS_PD_MIN) gps_pitch_adjust = GPS_PD_MIN;
 
-			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference /*+ XAVIER_rx.yaw_error*/, BNO080_Yaw, ICM20602.gyro_z);
+			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference , BNO080_Yaw, ICM20602.gyro_z);
 			  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
 			  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
 			  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
@@ -811,7 +811,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  if (gps_pitch_adjust > GPS_PD_MAX) gps_pitch_adjust = GPS_PD_MAX;
 			  if (gps_pitch_adjust < GPS_PD_MIN) gps_pitch_adjust = GPS_PD_MIN;
 
-			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference /*+ XAVIER_rx.yaw_error*/, BNO080_Yaw, ICM20602.gyro_z);
+			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference , BNO080_Yaw, ICM20602.gyro_z);
 
 			  if(return_to_home_step == 5 || return_to_home_step == 6)
 			  {
@@ -1431,7 +1431,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 						else
 							cnt_6=0;
 						break;
-					case 13:
+					case 14:
 						nx_rx_buf[cnt_6]=uart6_rx_data;
 						cnt_6=0;
 						nx_rx_cplt_flag = 1;
