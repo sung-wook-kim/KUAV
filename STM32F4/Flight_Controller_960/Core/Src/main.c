@@ -125,8 +125,8 @@ float lidar_altitude_actual;
 float baro_lidar_offset;
 const float altitude_change_condition = 0.05f;
 const float altitude_change = 0.1f;
-const float altitude_turning_point = 3.f;
-const float mission_altitude = 5.f;
+const float altitude_turning_point = 1.f;
+const float mission_altitude = 2.f;
 
 // Gps Value
 #define DECLINATION 8.88F
@@ -853,6 +853,27 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  }
 		  else// Default Manual Mode
 		  {
+			  if(iBus.VrB < 1100) iBus_VrB_flag = 0;
+			  else if(iBus.VrB > 1900) iBus_VrB_flag = 2;
+			  else iBus_VrB_flag = 1;
+
+			  if(iBus_VrB_flag==0 && iBus_VrB_Prev_flag==1) yaw_heading_reference -= 10;
+			  else if(iBus_VrB_flag==2 && iBus_VrB_Prev_flag==1) yaw_heading_reference += 10;
+
+			  iBus_VrB_Prev_flag = iBus_VrB_flag;
+
+			  if(iBus.VrA < 1100) iBus_VrA_flag = 0;
+			  else if(iBus.VrA > 1900) iBus_VrA_flag = 2;
+			  else iBus_VrA_flag = 1;
+
+			  if(iBus_VrA_flag==0 && iBus_VrA_Prev_flag==1) yaw_heading_reference -= 25;
+			  else if(iBus_VrA_flag==2 && iBus_VrA_Prev_flag==1) yaw_heading_reference += 25;
+
+			  iBus_VrA_Prev_flag = iBus_VrA_flag;
+
+			  if(yaw_heading_reference > 360) yaw_heading_reference -= 360;
+			  else if(yaw_heading_reference < 0) yaw_heading_reference += 360;
+
 			  if(is_yaw_middle == 0)
 			  {
 				  yaw_heading_reference = BNO080_Yaw;
@@ -971,7 +992,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  tim7_200ms_flag = 0;
 
 			  Encode_Msg_Mission(&telemetry_tx_buf[0]);
-			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 46);
+			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 56);
 
 			  Encode_Msg_Nx(&nx_tx_buf[0]);
 			  HAL_UART_Transmit_DMA(&huart6, &nx_tx_buf[0], 47);
@@ -996,6 +1017,9 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  BNO080_Pitch = -BNO080_Pitch;
 		  BNO080_Pitch -= BNO080_PITCH_OFFSET;
 		  BNO080_Yaw -= DECLINATION;
+
+		  if(BNO080_Yaw < 0) BNO080_Yaw += 360;
+		  else if(BNO080_Yaw > 360) BNO080_Yaw -= 360;
 	  }
 
 	  /***********************************************************************************************
@@ -1920,17 +1944,30 @@ void Encode_Msg_Mission(unsigned char* telemetry_tx_buf)
 	telemetry_tx_buf[40] = (int)(altitude_setpoint * 100) >> 8;
 	telemetry_tx_buf[41] = (int)(altitude_setpoint * 100);
 
+	telemetry_tx_buf[42] = (int)BNO080_Yaw >> 24;
+	telemetry_tx_buf[43] = (int)BNO080_Yaw >> 16;
+	telemetry_tx_buf[44] = (int)BNO080_Yaw >> 8;
+	telemetry_tx_buf[45] = (int)BNO080_Yaw;
+
+	telemetry_tx_buf[46] = (int)yaw_heading_reference >> 24;
+	telemetry_tx_buf[47] = (int)yaw_heading_reference >> 16;
+	telemetry_tx_buf[48] = (int)yaw_heading_reference >> 8;
+	telemetry_tx_buf[49] = (int)yaw_heading_reference;
+
+	telemetry_tx_buf[50] = (int)iBus.LV;
+	telemetry_tx_buf[51] = (int)iBus.LV;
+
 	chksum_mission = 0xffffffff;
 
-	for(int i=0; i< 42; i++)
+	for(int i=0; i< 52; i++)
 	{
 		chksum_mission = chksum_mission - telemetry_tx_buf[i];
 	}
 
-	telemetry_tx_buf[42] = chksum_mission >> 24;
-	telemetry_tx_buf[43] = chksum_mission >> 16;
-	telemetry_tx_buf[44] = chksum_mission >> 8;
-	telemetry_tx_buf[45] = chksum_mission;
+	telemetry_tx_buf[52] = chksum_mission >> 24;
+	telemetry_tx_buf[53] = chksum_mission >> 16;
+	telemetry_tx_buf[54] = chksum_mission >> 8;
+	telemetry_tx_buf[55] = chksum_mission;
 }
 
 void Encode_Msg_Nx(unsigned char* nx_tx_buf)
