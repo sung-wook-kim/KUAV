@@ -123,10 +123,12 @@ float lidar_altitude_previous;
 float lidar_add;
 float lidar_altitude_actual;
 float baro_lidar_offset;
-const float altitude_change_condition = 0.15f;
-const float altitude_change = 0.3f;
-const float altitude_turning_point = 3.f;
-const float mission_altitude = 5.f;
+const float takeoff_altitude_change_condition = 0.25f;
+const float takeoff_altitude_change = 0.7f;
+const float landing_altitude_change_condition = 0.15f;
+const float landing_altitude_change = 0.3f;
+const float altitude_turning_point = 1.f;
+const float mission_altitude = 3.f;
 
 // Gps Value
 #define DECLINATION 8.88F
@@ -991,7 +993,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  tim7_200ms_flag = 0;
 
 			  Encode_Msg_Mission(&telemetry_tx_buf[0]);
-			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 85);
+			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 93);
 
 			  Encode_Msg_Nx(&nx_tx_buf[0]);
 			  HAL_UART_Transmit_DMA(&huart6, &nx_tx_buf[0], 47);
@@ -1992,17 +1994,28 @@ void Encode_Msg_Mission(unsigned char* telemetry_tx_buf)
 	telemetry_tx_buf[79] = (int)(target_yaw * 100) >> 8;
 	telemetry_tx_buf[80] = (int)(target_yaw * 100);
 
+	telemetry_tx_buf[81] = (int)gps_roll_adjust >> 24;
+	telemetry_tx_buf[82] = (int)gps_roll_adjust >> 16;
+	telemetry_tx_buf[83] = (int)gps_roll_adjust >> 8;
+	telemetry_tx_buf[84] = (int)gps_roll_adjust;
+
+	telemetry_tx_buf[85] = (int)gps_roll_adjust >> 24;
+	telemetry_tx_buf[86] = (int)gps_roll_adjust >> 16;
+	telemetry_tx_buf[87] = (int)gps_roll_adjust >> 8;
+	telemetry_tx_buf[88] = (int)gps_roll_adjust;
+
+
 	chksum_mission = 0xffffffff;
 
-	for(int i=0; i< 81; i++)
+	for(int i=0; i< 89; i++)
 	{
 		chksum_mission = chksum_mission - telemetry_tx_buf[i];
 	}
 
-	telemetry_tx_buf[81] = chksum_mission >> 24;
-	telemetry_tx_buf[82] = chksum_mission >> 16;
-	telemetry_tx_buf[83] = chksum_mission >> 8;
-	telemetry_tx_buf[84] = chksum_mission;
+	telemetry_tx_buf[89] = chksum_mission >> 24;
+	telemetry_tx_buf[90] = chksum_mission >> 16;
+	telemetry_tx_buf[91] = chksum_mission >> 8;
+	telemetry_tx_buf[92] = chksum_mission;
 }
 
 void Encode_Msg_Nx(unsigned char* nx_tx_buf)
@@ -2431,16 +2444,16 @@ void return_to_home(void)
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
 	if (return_to_home_step == 1)
 	{
-		if(altitude.out.meas_value < (double)(mission_altitude + altitude_change_condition) && altitude.out.meas_value > (double)(mission_altitude - altitude_change_condition)) return_to_home_step = 2;
+		if(altitude.out.meas_value < (double)(mission_altitude + landing_altitude_change_condition) && altitude.out.meas_value > (double)(mission_altitude - landing_altitude_change_condition)) return_to_home_step = 2;
 
 		if(altitude_setpoint < mission_altitude)
 		{
-			if(altitude.out.error < altitude_change_condition && altitude.out.error > -altitude_change_condition) altitude_setpoint += altitude_change;
+			if(altitude.out.error < landing_altitude_change_condition && altitude.out.error > -landing_altitude_change_condition) altitude_setpoint += landing_altitude_change;
 			if(altitude_setpoint > mission_altitude) altitude_setpoint = mission_altitude;
 		}
 		else
 		{
-			if(altitude.out.error < altitude_change_condition && altitude.out.error > -altitude_change_condition) altitude_setpoint -= altitude_change;
+			if(altitude.out.error < landing_altitude_change_condition && altitude.out.error > -landing_altitude_change_condition) altitude_setpoint -= landing_altitude_change;
 			if(altitude_setpoint < mission_altitude) altitude_setpoint = mission_altitude;
 		}
 	}
@@ -2477,7 +2490,7 @@ void return_to_home(void)
 			altitude_setpoint = lidar_altitude;
 		}
 
-		if(altitude.out.error < altitude_change_condition && altitude.out.error > -altitude_change_condition) altitude_setpoint -= altitude_change;
+		if(altitude.out.error < landing_altitude_change_condition && altitude.out.error > -landing_altitude_change_condition) altitude_setpoint -= landing_altitude_change;
 		if(altitude_setpoint < altitude_turning_point) altitude_setpoint = altitude_turning_point;
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2485,13 +2498,13 @@ void return_to_home(void)
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
 	if(return_to_home_step == 4)
 	{
-		if(lidar_altitude < 0.5)
+		if(lidar_altitude < 0.65f)
 		{
 			return_to_home_step = 5;
 			decrease_throttle = takeoff_throttle - landing_spare;
 		}
 
-		if(altitude.out.error < altitude_change_condition && altitude.out.error > -altitude_change_condition) altitude_setpoint -= altitude_change;
+		if(altitude.out.error < landing_altitude_change_condition && altitude.out.error > -landing_altitude_change_condition) altitude_setpoint -= landing_altitude_change;
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//Step - 5 Decrease Motor Speed
@@ -2512,6 +2525,13 @@ void return_to_home(void)
 			while(1)
 			{
 				// Landing Complete
+				TIM5->CCR1 = 84000;
+				TIM5->CCR2 = 84000;
+				TIM5->CCR3 = 84000;
+				TIM5->CCR4 = 84000;
+
+				HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 93);
+
 				LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4);
 
 				TIM3->PSC = 2000;
@@ -2582,7 +2602,7 @@ void Takeoff(void)
 		increase_throttle += 16;
 		altitude_setpoint = 0.5f;
 	}
-	if(takeoff_step == 1) // using Lidar, take off drone by 3m
+	if(takeoff_step == 1) // using Lidar, take off drone by turning point
 	{
 		if(lidar_altitude > altitude_turning_point)
 		{
@@ -2590,29 +2610,30 @@ void Takeoff(void)
 			baro_lidar_offset += actual_pressure_fast - lidar_altitude;
 		}
 
-		if(altitude.out.error < altitude_change_condition && altitude.out.error > -altitude_change_condition) altitude_setpoint += altitude_change;
+		if(altitude.out.error < takeoff_altitude_change_condition && altitude.out.error > -takeoff_altitude_change_condition) altitude_setpoint += takeoff_altitude_change;
 	}
 	if(takeoff_step == 2) // using barometer, takeoff drone by 5m
 	{
-		if(altitude_setpoint == mission_altitude) takeoff_step = 3;
+		if(altitude_setpoint == mission_altitude)
+		{
+			takeoff_step = 3;
+			lat_waypoint += 300.00;
+		}
 
 		if(altitude_setpoint < mission_altitude)
 		{
-			if(altitude.out.error < altitude_change_condition && altitude.out.error > -altitude_change_condition) altitude_setpoint += altitude_change;
+			if(altitude.out.error < takeoff_altitude_change_condition && altitude.out.error > -takeoff_altitude_change_condition) altitude_setpoint += takeoff_altitude_change;
 			if(altitude_setpoint > mission_altitude) altitude_setpoint = mission_altitude;
 		}
 		else
 		{
-			if(altitude.out.error < altitude_change_condition && altitude.out.error > -altitude_change_condition) altitude_setpoint -= altitude_change;
+			if(altitude.out.error < takeoff_altitude_change_condition && altitude.out.error > -takeoff_altitude_change_condition) altitude_setpoint -= takeoff_altitude_change;
 			if(altitude_setpoint < mission_altitude) altitude_setpoint = mission_altitude;
 		}
 	}
 	if(takeoff_step == 3) // move to mission spot
 	{
 		altitude_setpoint = mission_altitude;
-
-//		lat_waypoint = XAVIER_rx.lat;
-//		lon_waypoint = XAVIER_rx.lon;
 	}
 }
 /* USER CODE END 4 */
