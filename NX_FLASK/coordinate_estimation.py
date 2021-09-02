@@ -27,8 +27,8 @@ Hunder = 200
 lower_bound = np.array([135, 78, 50])
 higher_bound = np.array([200, 200, 255])
 fontFace = cv2.FONT_HERSHEY_SIMPLEX
-fontScale = 0.5
-thickness = 1
+fontScale = 1
+thickness = 2
 i = 0
 setroll, setpitch, setyaw = 0, 45, 0
 
@@ -66,7 +66,7 @@ class CoordEstimator:
     def est(self, pitch, roll, yaw, foot):
         # stm front ->x, right -> y, down -> z
 
-        T = np.array([[0], [0], [-1.22]])
+        T = np.array([[0], [0], [-1]])
         OR_G = euler_rotation_matrix_YRP(roll, pitch, yaw)
         OR_C = np.hstack((OR_G, T))
         OR_C = np.vstack((OR_C, np.array([[0, 0, 0, 1]])))
@@ -77,27 +77,25 @@ class CoordEstimator:
         newx = foot[0] + self.mapx_[min(int(foot[1]), self.h - 1), min(int(foot[0]), self.w - 1)]
         newy = foot[1] + self.mapy_[min(int(foot[1]), self.h - 1), min(int(foot[0]), self.w - 1)]
         xy_est = np.matmul(np.matmul(A, self.K_inv),
-                           np.array([min(newx + self.x, self.w), min(newy + self.y, self.h), 1]))
+                           np.array([min(newx, self.w), min(newy, self.h), 1]))
         xy_est = xy_est[0]
         xy_est = xy_est / xy_est[2]
         H_x, H_y = (xy_est[0], xy_est[1])
         return [H_x, H_y]
 
-
+gimbal.set_angles(setpitch,setroll,setyaw)
 coord_estor = CoordEstimator()
 j = 0
-prev_H_x, prev_H_y = 1,0
-min_len = 0.1
-target_i = None
-while (True):
+H_x, H_y = prev_H_x, prev_H_y = 1,0
 
+target_i = [453, 276]
+while (True):
+    min_len = 0.05
     j += 1
 
     # read image and sensor date together
     src = cap.read()[1]
-    pitch, roll, yaw = gimbal.get_imu1_angles()
-    if (j % 5 == 0):
-        print("roll,pitch, yaw raw", roll, pitch, yaw, end=' ')
+    pitch, roll, _ = gimbal.get_imu1_angles()
     # image process
     frame_gau_blur = cv2.GaussianBlur(src, (3, 3), 0)
     hsv = cv2.cvtColor(src, cv2.COLOR_BGR2HSV)
@@ -115,10 +113,10 @@ while (True):
 
     roll = math.pi / 180 * roll
     pitch = -math.pi / 180 * pitch
-    yaw = -math.pi / 180 * yaw
+    # yaw = -math.pi / 180 * yaw
     # roll = 0
     # pitch = -math.pi/180*45
-    # yaw = 0
+    yaw =-math.pi / 180 * setyaw
     if (j % 5 == 0):
         print("roll,pitch, yaw", roll, pitch, yaw)
     detect = False
@@ -127,15 +125,23 @@ while (True):
         cv2.circle(src, (int(i[0]), int(i[1])), int(i[2]), (0, 255, 0), 1)
         H_x_, H_y_ = coord_estor.est(pitch, roll, yaw, i)
         foot_len = math.sqrt((H_x_ - prev_H_x) ** 2 + (H_y_ - prev_H_y) ** 2)
+        cv2.putText(src, str(f"{H_x_:.3f}, {H_y_:.3f}"), (int(i[0] - 60), int(i[1]) - 2), fontFace, fontScale,
+                        (255, 0, 0), thickness)
         if min_len > foot_len:
             min_len = foot_len
             H_x, H_y = H_x_, H_y_
+            target_i = i
             detect = True
-        if detect is True:
-            cv2.putText(src, str(f"{H_x:.3f}, {H_y:.3f}"), (int(i[0] - 70), int(i[1]) - 2), fontFace, fontScale,
-                        (0, 0, 0), thickness)
-            prev_H_x = H_x
-            prev_H_y = H_y
+    if detect is True:
+        cv2.putText(src, str(f"{H_x:.3f}, {H_y:.3f}"), (int(target_i[0] - 60), int(target_i[1]) - 2), fontFace, fontScale,
+                    (0, 0, 0), thickness)
+        prev_H_x = H_x
+        prev_H_y = H_y
+        print(target_i)
+    else :
+        cv2.putText(src, str(f"{prev_H_x:.3f}, {prev_H_y:.3f}"), (int(target_i[0] - 60), int(target_i[1]) - 2), fontFace, fontScale,
+                            (125, 0, 0), thickness)
+        print(target_i)
 
     cv2.imshow("dst", src)
     key = cv2.waitKey(1)
