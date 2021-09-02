@@ -879,8 +879,8 @@ def plot_one_box2(x, im, color=(128, 128, 128), label=None, line_thickness=3):
 		cv2.rectangle(im, c1, c2, color, -1, cv2.LINE_AA)  # filled
 		cv2.putText(im, label, (c1[0], c1[1] - 2), 0, tl / 3, [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
 		# putText(img, text, org, fontFace, fontScale, color[, thickness[, lineType[, bottomLeftOrigin]]])
-		cv2.putText(im, str(center), (center[0], center[1] - 2), 0, tl / 3, [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
-		cv2.circle(im, center, 1, color, thickness=tl)
+		# cv2.putText(im, str(center), (center[0], center[1] - 2), 0, tl / 3, [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
+		# cv2.circle(im, center, 1, color, thickness=tl)
 	return center, foot
 
 

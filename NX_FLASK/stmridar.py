@@ -5,13 +5,13 @@ import math
 import threading
 import socket
 import numpy as np
-
+import haversine
 global lidar_distance_1 , lidar_distance_2  , mode , q , client_socket ,roll ,pitch
 
 lidar_distance_1 = 0
 lidar_distance_2 = 0
 mode = 8
-q = [5,5,5]
+q = [5, 5, 5]
 roll = 0
 pitch = 0
 serSTM = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)
@@ -35,21 +35,22 @@ gimbal_plag = False
 
 
 def connectGCS():
-    global mode , q , client_socket
+    global mode, q, client_socket
     time.sleep(10)
-    plag_1 = False
-    plag_6 = False
-    plag_9 = False
+    plag_1 = False  # mission (이륙) 미션 장소로 이동
+    plag_6 = False  # RTH
+    plag_9 = False  # 강제종료
     while True:
         try:
-            print("MODE : " , mode)
-            sendingMsg = q.pop(-1)  # sendingmsg = 'mode \n lat_drone \n lon_drone \n gps_time \n lat_person \n lon_person \n altitude \n detection'
+            print("MODE : ", mode)
+            sendingMsg = q.pop(-1)
+            # sendingmsg = 'mode \n lat_drone \n lon_drone \n gps_time \n lat_person \n lon_person \n altitude \n detection'
             gcs = client_socket.recv(1024).decode().split('\n')
             # print("From GCS : " , gcs)
             if gcs[0] == '1' and plag_1 == False:  # 미션 시작
                 mode = 1  # 임무 장소 이동 , 30M 고도 유지
                 plag_1 = True
-                MISSION_LAT = int(gcs[1]) / 10 ** 7
+                MISSION_LAT = int(gcs[1]) / 10 ** 7  #사람 출발 지점
                 MISSION_LON = int(gcs[2]) / 10 ** 7
                 plag_MISSION = True
             elif gcs[0] == '6' and plag_6 == False:
@@ -62,7 +63,7 @@ def connectGCS():
             #     plag_7 = True
             #     AVOID_LAT = int(gcs[1]) / 10 ** 7
             #     AVOID_LON = int(gcs[2]) / 10 ** 7
-                
+
             elif gcs[0] == '9' and plag_9 == False:
                 mode = 9  # 비상 모터 정지
                 plag_9 = True
@@ -70,13 +71,14 @@ def connectGCS():
             client_socket.sendall(sendingMsg.encode())
         except Exception as e:
             # GCS connection off , connection waiting
-            print("connection error" , e)
+            print("connection error", e)
             client_socket.close()
             client_socket, addr = server_socket.accept()
 
+
 # 10hz time.sleep(0.1)
 def connectLIDAR():
-    global lidar_distance_1 , lidar_distance_2 ,roll ,pitch
+    global lidar_distance_1, lidar_distance_2, roll, pitch
     while True:
         count = serLIDAR.in_waiting
         if count > 8:  # 버퍼에 9바이트 이상 쌓이면
@@ -85,20 +87,22 @@ def connectLIDAR():
             if recv[0] == 0x59 and recv[1] == 0x59:  # python3
                 real_lidar = np.int16(recv[2] + np.int16(recv[3] << 8))
                 lidar_adjust = int(real_lidar * math.cos(roll*0.017454) * math.cos(pitch*0.017454))
-                lidar_distance_1 = (lidar_adjust >> 8) & 0xff
-                lidar_distance_2 = lidar_adjust & 0xff         
+                if lidar_adjust <=0:
+                    lidar_adjust = 0
+                lidar_distance_1 = lidar_adjust & 0xff
+                lidar_distance_2 = (lidar_adjust >> 8 )& 0xff         
                 
                 # lidar_distance_1 = recv[2]  # np.int16(recv[2] + np.int16(recv[3] << 8))
                 # lidar_distance_2 = recv[3]
                 time.sleep(0.1)
-                print("LIDAR  : ",lidar_adjust)
+                print("LIDAR  : ",lidar_adjust , lidar_distance_1 , lidar_distance_2)
                 serLIDAR.reset_input_buffer()
+
 
 # 5hz because STM transmit is 5hz
 # next gps will be calculated when data from stm is received 
 def connectSTM():
-
-    global lidar_distance_1 , lidar_distance_2 , q , mode ,roll ,pitch
+    global lidar_distance_1, lidar_distance_2, q, mode, roll, pitch
     header_1 = 0x88
     header_2 = 0x18
     lat_drone = 1;
@@ -112,6 +116,8 @@ def connectSTM():
     lat_person = 1;
     lon_person = 1
     plag_2 = False
+    MISSION_LAT = 0
+    MISSION_LON = 0
     # Coordination description
     # Front(if heading angle is zero, it is same with North) -> X -> roll direction
     # Left(if heading angle is zero, it is same with East) -> Y -> pitch direction
@@ -122,23 +128,27 @@ def connectSTM():
     lon_prev = 0
 
     while True:
-        
+
         countSTM = serSTM.in_waiting
         if countSTM > 46:
             recvSTM = serSTM.read(47)
             check = 0xffffffff
-            for i in range(0,43):
+            for i in range(0, 43):
                 check -= recvSTM[i]
             serSTM.reset_input_buffer()
             if recvSTM[0] == 0x88 and recvSTM[1] == 0x18:
                 mode_echo = np.int16(recvSTM[2])
 
-                lat_drone = np.int32( 
-                    np.int32(recvSTM[3] << 56) + np.int32(recvSTM[4] << 48) + np.int32(recvSTM[5] << 40) + np.int32(recvSTM[6] << 32 ) +
-                    np.int32(recvSTM[7] << 24) + np.int32(recvSTM[8] << 16) + np.int32(recvSTM[9] << 8) + recvSTM[10]) / 10 ** 7
-                lon_drone = np.int32( 
-                    np.int32(recvSTM[11] << 56) + np.int32(recvSTM[12] << 48) + np.int32(recvSTM[13] << 40) + np.int32(recvSTM[14] << 32 ) +
-                    np.int32(recvSTM[15] << 24) + np.int32(recvSTM[16] << 16) + np.int32(recvSTM[17] << 8) + recvSTM[18]) / 10 ** 7
+                lat_drone = np.int32(
+                    np.int32(recvSTM[3] << 56) + np.int32(recvSTM[4] << 48) + np.int32(recvSTM[5] << 40) + np.int32(
+                        recvSTM[6] << 32) +
+                    np.int32(recvSTM[7] << 24) + np.int32(recvSTM[8] << 16) + np.int32(recvSTM[9] << 8) + recvSTM[
+                        10]) / 10 ** 7
+                lon_drone = np.int32(
+                    np.int32(recvSTM[11] << 56) + np.int32(recvSTM[12] << 48) + np.int32(recvSTM[13] << 40) + np.int32(
+                        recvSTM[14] << 32) +
+                    np.int32(recvSTM[15] << 24) + np.int32(recvSTM[16] << 16) + np.int32(recvSTM[17] << 8) + recvSTM[
+                        18]) / 10 ** 7
                 gps_time = np.int32(
                     np.int32(recvSTM[19] << 24) + np.int32(recvSTM[20] << 16) + np.int32(recvSTM[21] << 8) +
                     recvSTM[22])
@@ -166,11 +176,11 @@ def connectSTM():
                 checksum_2 = recvSTM[44] & 0xff
                 checksum_3 = recvSTM[45] & 0xff
                 checksum_4 = recvSTM[46] & 0xff
-                
+
                 checksum = checksum_1 << 24 | checksum_2 << 16 | checksum_3 << 8 | checksum_4
                 if checksum == check:
-
-                    print("From STM : " , mode_echo , lat_drone , lon_drone , gps_time , roll , pitch , heading_angle , altitude , voltage)
+                    print("From STM : ", mode_echo, lat_drone, lon_drone, gps_time, roll, pitch, heading_angle,
+                          altitude, voltage)
 
                 serSTM.reset_input_buffer()
             # # 특정 범위에 드론이 들어가면 , AVOID 모드 AVOID on ,off 이므로 확실히 구분 된 조건문
@@ -182,7 +192,8 @@ def connectSTM():
             #     AVOID = False
             #     # 미션 좌표에 도착하면 모드를 2로 변경 ( 그전까지는 1임 )
             # # 0.0000462 -> 2m
-            if (plag_2 == False) and (1 >= haversine.haversine((lat_drone,lon_drone),(MISSION_LAT,MISSION_LON))):  # 10 은 tracking distance인데 다르게 해야할듯
+            if (plag_2 == False) and (1 >= haversine.haversine((lat_drone, lon_drone), (
+            MISSION_LAT, MISSION_LON))):  # 10 은 tracking distance인데 다르게 해야할듯
                 mode = 2  # yaw를 회전하며 탐색 모드
                 plag_2 = True
                 plag_MISSION = False
@@ -262,16 +273,17 @@ def connectSTM():
             read = str(mode_echo) + '\n' + str(lat_drone) + '\n' + str(lon_drone) + '\n' + str(
                 gps_time) + '\n' + str(lat_drone + 1) + '\n' + str(
                 lon_drone + 1) + '\n' + str(altitude)
-            #print(read)
+            # print(read)
             q.append(read)
             # 연산 후 바로 next_gps 전달
             yaw_error = 20
             serSTM.write(
                 [header_1, header_2, mode, \
-                    new_lat_first, new_lat_second, new_lat_third, new_lat_fourth, \
-                    new_lon_first, new_lon_second, new_lon_third, new_lon_fourth, \
-                    yaw_error, lidar_distance_1, lidar_distance_2])
-            
+                 new_lat_first, new_lat_second, new_lat_third, new_lat_fourth, \
+                 new_lon_first, new_lon_second, new_lon_third, new_lon_fourth, \
+                 yaw_error, lidar_distance_1, lidar_distance_2])
+
+
 print("thread start")
 threadSTM = threading.Thread(target=connectSTM)
 threadGCS = threading.Thread(target=connectGCS)
@@ -279,5 +291,3 @@ threadLIDAR = threading.Thread(target=connectLIDAR)
 threadSTM.start()
 threadGCS.start()
 threadLIDAR.start()
-
-

@@ -19,9 +19,10 @@ class Monitor():
 
         # Message Protocol
         self.name = ['mode', 'flight_mode', 'failsafe_flag', 'takeoff_step', 'increase_throttle', 'takeoff_throttle',
-                     'lat_setpoint', 'lon_setpoint', 'lidar', 'baro', 'altitude_setpoint', 'yaw', 'heading_reference', 'throttle']
-        self.byte = [1, 1, 1, 1, 4, 4, 8, 8, 4, 4, 4, 4, 4, 2]
-        self.sign = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0]
+                     'lat', 'lon', 'lidar', 'baro', 'altitude_setpoint', 'yaw', 'heading_reference', 'throttle', 'batvolt',
+                     'lat_setpoint', 'lon_setpoint', 'rth_step', 'decrease_throttle', 'target_yaw', 'gps roll adjust', 'gps pitch adjust']
+        self.byte = [1, 1, 1, 1, 4, 4, 8, 8, 4, 4, 4, 4, 4, 2, 4, 8, 8, 1, 4, 4, 4, 4]
+        self.sign = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1]
         self.chksum = 0xffffffff
         self.chksum_length = 4
 

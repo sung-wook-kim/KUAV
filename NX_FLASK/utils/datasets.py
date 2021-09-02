@@ -13,8 +13,7 @@ import torch
 from PIL import Image, ExifTags
 from torch.utils.data import Dataset
 from tqdm import tqdm
-
-from utils.general import xyxy2xywh, xywh2xyxy, torch_distributed_zero_first
+from general import xyxy2xywh, xywh2xyxy, torch_distributed_zero_first
 
 help_url = 'https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data'
 img_formats = ['.bmp', '.jpg', '.jpeg', '.png', '.tif', '.tiff', '.dng']
@@ -222,20 +221,18 @@ class LoadStreams:  # multiple IP or RTSP cameras
     def __init__(self, sources='streams.txt', img_size=640):
         self.mode = 'images'
         self.img_size = img_size
-
         if os.path.isfile(sources):
             with open(sources, 'r') as f:
                 sources = [x.strip() for x in f.read().splitlines() if len(x.strip())]
         else:
             sources = [sources]
-
         n = len(sources)
         self.imgs = [None] * n
         self.sources = sources
         for i, s in enumerate(sources):
             # Start the thread to read frames from the video stream
             print('%g/%g: %s... ' % (i + 1, n, s), end='')
-            cap = cv2.VideoCapture(" nvarguscamerasrc ! video/x-raw(memory:NVMM), width=1920, height=1080, format=(string)NV12, framerate=60/1 !  nvvidconv flip-method=2 ! video/x-raw, width=820, height=616, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink",cv2.CAP_GSTREAMER)
+            cap = cv2.VideoCapture(" nvarguscamerasrc ! video/x-raw(memory:NVMM), width=1920, height=1080, format=(string)NV12, framerate=60/1 !  nvvidconv flip-method=2 ! video/x-raw, width=960, height=560, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink",cv2.CAP_GSTREAMER)
             #cap = cv2.VideoCapture(0)
             assert cap.isOpened(), 'Failed to open %s' % s
             w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -259,8 +256,8 @@ class LoadStreams:  # multiple IP or RTSP cameras
         while cap.isOpened():
             n += 1
             # _, self.imgs[index] = cap.read()
-            cap.grab()
-            if n == 4:  # read every 4th frame
+            cap.grab()  # TODO : 이게뭘까??????? 왜 4번으로 되어있는지?
+            if n == 1:  # read every 4th frame ??????
                 _, self.imgs[index] = cap.retrieve()
                 n = 0
             time.sleep(0.01)  # wait time

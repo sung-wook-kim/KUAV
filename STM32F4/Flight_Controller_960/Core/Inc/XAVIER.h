@@ -12,7 +12,7 @@
 		unsigned char mode;
 		signed int lat;
 		signed int lon;
-		int yaw_error;
+		unsigned short target_yaw;
 		unsigned short lidar;
 	}XAVIER_RX;
 
