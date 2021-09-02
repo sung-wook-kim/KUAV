@@ -178,6 +178,10 @@ short gyro_y_offset = -8;
 short gyro_z_offset = 6;
 float yaw_heading_reference = 0;
 float target_yaw = 0;
+unsigned char iBus_VrA_flag = 0;
+unsigned char iBus_VrA_Prev_flag = 0;
+unsigned char iBus_VrB_flag = 0;
+unsigned char iBus_VrB_Prev_flag = 0;
 
 /* USER CODE END PV */
 
@@ -231,10 +235,6 @@ float quatRadianAccuracy;
 
 unsigned short iBus_SwA_Prev = 0;
 unsigned char iBus_rx_cnt = 0;
-unsigned char iBus_VrA_flag = 0;
-unsigned char iBus_VrA_Prev_flag = 0;
-unsigned char iBus_VrB_flag = 0;
-unsigned char iBus_VrB_Prev_flag = 0;
 
 unsigned char is_throttle_middle = 0;
 unsigned char is_yaw_middle = 0;
@@ -2617,7 +2617,6 @@ void Takeoff(void)
 		if(altitude_setpoint == mission_altitude)
 		{
 			takeoff_step = 3;
-			lat_waypoint += 300.00;
 		}
 
 		if(altitude_setpoint < mission_altitude)
@@ -2631,9 +2630,25 @@ void Takeoff(void)
 			if(altitude_setpoint < mission_altitude) altitude_setpoint = mission_altitude;
 		}
 	}
-	if(takeoff_step == 3) // move to mission spot
+	if(takeoff_step == 3) //Wait for stabilization
+	{
+		if(altitude.out.error < 0.1 && altitude.out.error > -0.1 && altitude.out.error_deriv_filt < 0.2 && altitude.out.error_deriv_filt > -0.2)
+		{
+			takeoff_step = 4;
+		}
+	}
+	if(takeoff_step ==4) // move to mission spot
 	{
 		altitude_setpoint = mission_altitude;
+
+		if(iBus.VrA< 1100) iBus_VrA_flag = 0;
+		else if(iBus.VrA > 1900) iBus_VrA_flag = 2;
+		else iBus_VrA_flag = 1;
+
+		if(iBus_VrA_flag==0 && iBus_VrA_Prev_flag==1) lat_waypoint -= 10;
+		else if(iBus_VrA_flag==2 && iBus_VrA_Prev_flag==1) lat_waypoint += 10;
+
+		iBus_VrA_Prev_flag = iBus_VrA_flag;
 	}
 }
 /* USER CODE END 4 */
