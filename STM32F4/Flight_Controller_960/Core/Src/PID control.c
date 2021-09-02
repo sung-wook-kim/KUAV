@@ -320,7 +320,7 @@ void Double_Altitude_PID_Calculation(PIDDouble* axis, float set_point_altitude, 
 	axis->in.error_sum = axis->in.error_sum + axis->in.error * DT;
 	if(axis->in.error_sum > ALT_ERR_SUM_MAX) axis->in.error_sum = ALT_ERR_SUM_MAX;
 	else if(axis->in.error_sum < ALT_ERR_SUM_MIN) axis->in.error_sum = ALT_ERR_SUM_MIN;
-	axis->in.i_result = axis->in.ki * axis->in.error_sum - axis->in.integral_anti_windup;
+	axis->in.i_result = axis->in.ki * axis->in.error_sum;
 
 	axis->in.error_deriv = -(axis->in.meas_value - axis->in.meas_value_prev) / DT;	//Define derivative of inner loop
 	axis->in.meas_value_prev = axis->in.meas_value;									//Refresh value_prev to the latest value
@@ -338,8 +338,6 @@ void Double_Altitude_PID_Calculation(PIDDouble* axis, float set_point_altitude, 
 #define ALT_PID_MIN -ALT_PID_MAX / 2
 	if (axis->in.pid_result < ALT_PID_MIN) axis->in.pid_result = ALT_PID_MIN;
 	if (axis->in.pid_result > ALT_PID_MAX) axis->in.pid_result = ALT_PID_MAX;
-
-	axis->in.integral_anti_windup = axis->in.p_result + axis->in.i_result + axis->in.d_result - axis->in.pid_result;
 
 }
 

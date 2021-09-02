@@ -123,12 +123,12 @@ float lidar_altitude_previous;
 float lidar_add;
 float lidar_altitude_actual;
 float baro_lidar_offset;
-const float takeoff_altitude_change_condition = 0.25f;
-const float takeoff_altitude_change = 0.7f;
+const float takeoff_altitude_change_condition = 0.2f;
+const float takeoff_altitude_change = 0.6f;
 const float landing_altitude_change_condition = 0.15f;
 const float landing_altitude_change = 0.3f;
-const float altitude_turning_point = 1.f;
-const float mission_altitude = 3.f;
+const float altitude_turning_point = 3.f;
+const float mission_altitude = 5.f;
 
 // Gps Value
 #define DECLINATION 8.88F
@@ -146,8 +146,10 @@ double lat_diff;
 double lon_diff;
 float gps_roll_adjust;
 float gps_pitch_adjust;
-#define GPS_PD_MAX 200
+double waypoint_lat_factor = 0, waypoint_lon_factor = 0,waypoint_move_factor = 0;
+#define GPS_PD_MAX 100
 #define GPS_PD_MIN -GPS_PD_MAX
+
 
 // Return to home value
 unsigned char gps_home_cnt = 0;
@@ -162,6 +164,8 @@ unsigned char emergency_landing_flag = 0;
 
 // takeofff
 unsigned char takeoff_step = 0;
+double mission_start_lat;
+double mission_start_lon;
 
 // Motor Value
 uint8_t ccr[18];
@@ -839,40 +843,39 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
 			  }
 		  }
-		  else if(nx_flight_mode == 4) //Altitude Holding Mode
-		  {
-			  if(iBus.VrB < 1100) iBus_VrB_flag = 0;
-			  else if(iBus.VrB > 1900) iBus_VrB_flag = 2;
-			  else iBus_VrB_flag = 1;
-
-			  if(iBus_VrB_flag==0 && iBus_VrB_Prev_flag==1) altitude_setpoint -= 0.3f;
-			  else if(iBus_VrB_flag==2 && iBus_VrB_Prev_flag==1) altitude_setpoint += 0.3f;
-
-			  iBus_VrB_Prev_flag = iBus_VrB_flag;
-
-			  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, actual_pressure_fast);
-
-			  if(is_yaw_middle == 0)
-			  {
-				  yaw_heading_reference = BNO080_Yaw;
-				  Single_Yaw_Rate_PID_Calculation(&yaw_rate, (iBus.LH-1500), ICM20602.gyro_z);
-				  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result -yaw_rate.pid_result+altitude.in.pid_result;
-				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result +yaw_rate.pid_result+altitude.in.pid_result;
-				  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result -yaw_rate.pid_result+altitude.in.pid_result;
-				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result +yaw_rate.pid_result+altitude.in.pid_result;
-			  }
-			  else
-			  {
-				  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference, BNO080_Yaw, ICM20602.gyro_z);
-				  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
-				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
-				  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
-				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
-			  }
-		  }
+//		  else if(nx_flight_mode == 4) //Altitude Holding Mode
+//		  {
+//			  if(iBus.VrB < 1100) iBus_VrB_flag = 0;
+//			  else if(iBus.VrB > 1900) iBus_VrB_flag = 2;
+//			  else iBus_VrB_flag = 1;
+//
+//			  if(iBus_VrB_flag==0 && iBus_VrB_Prev_flag==1) altitude_setpoint -= 0.3f;
+//			  else if(iBus_VrB_flag==2 && iBus_VrB_Prev_flag==1) altitude_setpoint += 0.3f;
+//
+//			  iBus_VrB_Prev_flag = iBus_VrB_flag;
+//
+//			  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, actual_pressure_fast);
+//
+//			  if(is_yaw_middle == 0)
+//			  {
+//				  yaw_heading_reference = BNO080_Yaw;
+//				  Single_Yaw_Rate_PID_Calculation(&yaw_rate, (iBus.LH-1500), ICM20602.gyro_z);
+//				  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result -yaw_rate.pid_result+altitude.in.pid_result;
+//				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result +yaw_rate.pid_result+altitude.in.pid_result;
+//				  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result -yaw_rate.pid_result+altitude.in.pid_result;
+//				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result +yaw_rate.pid_result+altitude.in.pid_result;
+//			  }
+//			  else
+//			  {
+//				  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference, BNO080_Yaw, ICM20602.gyro_z);
+//				  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
+//				  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
+//				  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
+//				  ccr4 = 84000 + takeoff_throttle - pitch.in.pid_result - roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
+//			  }
+//		  }
 		  else// Default Manual Mode
 		  {
-
 			  if(is_yaw_middle == 0)
 			  {
 				  yaw_heading_reference = BNO080_Yaw;
@@ -2393,6 +2396,52 @@ void Encode_Msg_Temp(unsigned char* telemery_tx_buf)
 	telemetry_tx_buf[26] = ((int)(LPS22HH.temperature_raw/100.f)) >> 8;
 	telemetry_tx_buf[27] = ((int)(LPS22HH.temperature_raw/100.f));
 }
+void go_to_waypoint(double lat_setpoint, double lon_setpoint)
+{
+	// Calculate velocity
+	if (abs_double(lat_setpoint, lat_gps) >= abs_double(lon_setpoint, lon_gps))
+	{
+		if(abs_double(lat_setpoint, lat_gps) != 0)
+		{
+			waypoint_lon_factor = abs_double(lon_setpoint, lon_gps) / abs_double(lat_setpoint, lat_gps);
+			waypoint_lat_factor = 1;
+		}
+		else
+		{
+			waypoint_lat_factor = 0;
+			waypoint_lon_factor = 0;
+		}
+	}
+	else
+	{
+		if(abs_double(lon_setpoint, lon_gps) != 0)
+		{
+			waypoint_lon_factor = 1;
+			waypoint_lat_factor = abs_double(lat_setpoint, lat_gps) / abs_double(lon_setpoint, lon_gps);
+		}
+		else
+		{
+			waypoint_lat_factor = 0;
+			waypoint_lon_factor = 0;
+		}
+	}
+
+	// Calculate Move Factor
+	// Min Speed : 0.005 -> 5cm/s
+	if (abs_double(lat_setpoint, lat_gps) < 200 && abs_double(lon_setpoint, lon_gps) < 200 && waypoint_move_factor > 0.005)waypoint_move_factor -= 0.000015;
+	// Max Speed : 0.025 -> 25cm/s
+	else if (waypoint_move_factor < 0.025)waypoint_move_factor += 0.0000125;
+
+	// Calculate gps float adjust
+	if (lat_setpoint != lat_gps) {
+		if (lat_setpoint > lat_gps) lat_gps_float_adjust += waypoint_move_factor * waypoint_lat_factor;
+		if (lat_setpoint < lat_gps) lat_gps_float_adjust -= waypoint_move_factor * waypoint_lat_factor;
+	}
+	if (lon_setpoint != lon_gps) {
+		if (lon_setpoint > lon_gps) lon_gps_float_adjust += waypoint_move_factor * waypoint_lon_factor;
+		if (lon_setpoint < lon_gps) lon_gps_float_adjust -= waypoint_move_factor * waypoint_lon_factor;
+	}
+}
 
 void return_to_home(void)
 {
@@ -2412,11 +2461,11 @@ void return_to_home(void)
 		//Calculate gradient
 		if (return_to_home_lat_factor == 1 || return_to_home_lon_factor == 1)return_to_home_step = 1; //go to next step
 
-		if (abs_double(lat_gps_home, lat_waypoint) >= abs_double(lon_gps_home, lon_waypoint))
+		if (abs_double(lat_gps_home, lat_gps) >= abs_double(lon_gps_home, lon_gps))
 		{
-			if(abs_double(lat_gps_home, lat_waypoint) != 0)
+			if(abs_double(lat_gps_home, lat_gps) != 0)
 			{
-				return_to_home_lon_factor = abs_double(lon_gps_home, lon_waypoint) / abs_double(lat_gps_home, lat_waypoint);
+				return_to_home_lon_factor = abs_double(lon_gps_home, lon_gps) / abs_double(lat_gps_home, lat_gps);
 				return_to_home_lat_factor = 1;
 			}
 			else
@@ -2427,10 +2476,10 @@ void return_to_home(void)
 		}
 		else
 		{
-			if(abs_double(lon_gps_home, lon_waypoint) != 0)
+			if(abs_double(lon_gps_home, lon_gps) != 0)
 			{
 				return_to_home_lon_factor = 1;
-				return_to_home_lat_factor = abs_double(lat_gps_home, lat_waypoint) / abs_double(lon_gps_home, lon_waypoint);
+				return_to_home_lat_factor = abs_double(lat_gps_home, lat_gps) / abs_double(lon_gps_home, lon_gps);
 			}
 			else
 			{
@@ -2465,18 +2514,18 @@ void return_to_home(void)
 		if (Is_Home_Now() == 1)return_to_home_step = 3;
 
 		// Slow Down speed when drone is located nearby home
-		// Min Speed : 0.01 -> 10cm/s
-		if (abs_double(lat_gps_home, lat_waypoint) < 200 && abs_double(lon_gps_home, lon_waypoint) < 200 && return_to_home_move_factor > 0.01)return_to_home_move_factor -= 0.00003;
-		// Max Speed : 0.05 -> 50cm/s
-		else if (return_to_home_move_factor < 0.05)return_to_home_move_factor += 0.000025;
+		// Min Speed : 0.005 -> 5cm/s
+		if (abs_double(lat_gps_home, lat_gps) < 200 && abs_double(lon_gps_home, lon_gps) < 200 && return_to_home_move_factor > 0.005)return_to_home_move_factor -= 0.000015;
+		// Max Speed : 0.025 -> 25cm/s
+		else if (return_to_home_move_factor < 0.025)return_to_home_move_factor += 0.0000125;
 
-		if (lat_gps_home != lat_waypoint) {
-			if (lat_gps_home > lat_waypoint) lat_gps_float_adjust += return_to_home_move_factor * return_to_home_lat_factor;
-			if (lat_gps_home < lat_waypoint) lat_gps_float_adjust -= return_to_home_move_factor * return_to_home_lat_factor;
+		if (lat_gps_home != lat_gps) {
+			if (lat_gps_home > lat_gps) lat_gps_float_adjust += return_to_home_move_factor * return_to_home_lat_factor;
+			if (lat_gps_home < lat_gps) lat_gps_float_adjust -= return_to_home_move_factor * return_to_home_lat_factor;
 		}
-		if (lon_gps_home != lon_waypoint) {
-			if (lon_gps_home > lon_waypoint) lon_gps_float_adjust += return_to_home_move_factor * return_to_home_lon_factor;
-			if (lon_gps_home < lon_waypoint) lon_gps_float_adjust -= return_to_home_move_factor * return_to_home_lon_factor;
+		if (lon_gps_home != lon_gps) {
+			if (lon_gps_home > lon_gps) lon_gps_float_adjust += return_to_home_move_factor * return_to_home_lon_factor;
+			if (lon_gps_home < lon_gps) lon_gps_float_adjust -= return_to_home_move_factor * return_to_home_lon_factor;
 		}
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2632,15 +2681,21 @@ void Takeoff(void)
 	}
 	if(takeoff_step == 3) //Wait for stabilization
 	{
-		if(altitude.out.error < 0.1 && altitude.out.error > -0.1 && altitude.out.error_deriv_filt < 0.2 && altitude.out.error_deriv_filt > -0.2)
+		if(altitude.out.error < 0.1 && altitude.out.error > -0.1 && altitude.out.error_deriv_filt < 0.1 && altitude.out.error_deriv_filt > -0.1)
 		{
 			takeoff_step = 4;
+			mission_start_lat = lat_gps + 300;
+			mission_start_lon = lon_gps + 1;
+			lat_gps_float_adjust = 0;
+			lon_gps_float_adjust = 0;
 		}
 	}
 	if(takeoff_step ==4) // move to mission spot
 	{
 		altitude_setpoint = mission_altitude;
 
+		// test1(manual setpoint change)
+		/*
 		if(iBus.VrA< 1100) iBus_VrA_flag = 0;
 		else if(iBus.VrA > 1900) iBus_VrA_flag = 2;
 		else iBus_VrA_flag = 1;
@@ -2649,6 +2704,27 @@ void Takeoff(void)
 		else if(iBus_VrA_flag==2 && iBus_VrA_Prev_flag==1) lat_waypoint += 10;
 
 		iBus_VrA_Prev_flag = iBus_VrA_flag;
+		*/
+		// test2(auto set point change)
+		go_to_waypoint(mission_start_lat, mission_start_lon);
+
+		if (lat_gps_float_adjust > 10) {
+			lat_waypoint += 10;
+			lat_gps_float_adjust -= 10;
+		}
+		if (lat_gps_float_adjust < -10) {
+			lat_waypoint -= 10;
+			lat_gps_float_adjust += 10;
+		}
+
+		if (lon_gps_float_adjust > 10) {
+			lon_waypoint += 10;
+			lon_gps_float_adjust -= 10;
+		}
+		if (lon_gps_float_adjust < -10) {
+			lon_waypoint -= 10;
+			lon_gps_float_adjust += 10;
+		}
 	}
 }
 /* USER CODE END 4 */
