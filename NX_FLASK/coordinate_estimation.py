@@ -4,6 +4,7 @@ import numpy as np
 from storm32 import Storm32
 from util import *
 import os
+import time
 os.system('sudo systemctl restart nvargus-daemon')
 os.system('sudo chmod 666 /dev/ttyACM0')
 
@@ -66,9 +67,12 @@ while (True):
     j+=1
     
     #read image and sensor date together
-    src = cap.read()[1]
+    t1 = time.time()
     pitch, roll, yaw = gimbal.get_imu1_angles()
-
+    t2 = time.time()
+    src = cap.read()[1]
+    t3 = time.time()
+    print(f"src, {t2-t1}, gimbal, {t3-t2}", end = ' ')
     # image process
     frame_gau_blur = cv2.GaussianBlur(src, (3, 3), 0)
     hsv = cv2.cvtColor(src, cv2.COLOR_BGR2HSV)
@@ -86,10 +90,10 @@ while (True):
     roll = math.pi/180*roll
     pitch = -math.pi/180*pitch
     yaw = -math.pi/180*setyaw
-    # roll = 0
+    roll = 0
     # pitch = -math.pi/180*45
     # yaw = 0
-    if (j%5 == 0) : 
+    if (j%1 == 0) : 
         print("roll,pitch, yaw",roll,pitch, yaw)
     OR_G = euler_rotation_matrix(roll, pitch, yaw)
     OR_C = np.hstack((OR_G, T))
@@ -101,10 +105,10 @@ while (True):
     
     for i in circles:
         cv2.circle(src, (int(i[0]), int(i[1])), int(i[2]), (0, 255, 0), 1)
-
-        newx = i[0] + mapx_[int(i[1]), int(i[0])]
-        newy = i[1] + mapy_[int(i[1]), int(i[0])]
-        xy_est = np.matmul(np.matmul(A, K_inv), np.array([newx-x, newy-y, 1]))
+        
+        newx = i[0] + mapx_[min(int(i[1]),h-1), min(int(i[0]),w-1)]
+        newy = i[1] + mapy_[min(int(i[1]),h-1), min(int(i[0]),w-1)]
+        xy_est = np.matmul(np.matmul(A, K_inv), np.array([newx, newy, 1]))
         xy_est = xy_est[0]
         xy_est = xy_est / xy_est[2]
         # xy_est2 = np.matmul(np.matmul(A, K_inv), np.array([i[0], i[1], 1]))
