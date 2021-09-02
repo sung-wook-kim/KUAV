@@ -5,7 +5,7 @@ import math
 import threading
 import socket
 import numpy as np
-
+import haversine
 global lidar_distance_1 , lidar_distance_2  , mode , q , client_socket ,roll ,pitch
 
 lidar_distance_1 = 0
@@ -85,13 +85,15 @@ def connectLIDAR():
             if recv[0] == 0x59 and recv[1] == 0x59:  # python3
                 real_lidar = np.int16(recv[2] + np.int16(recv[3] << 8))
                 lidar_adjust = int(real_lidar * math.cos(roll*0.017454) * math.cos(pitch*0.017454))
-                lidar_distance_1 = (lidar_adjust >> 8) & 0xff
-                lidar_distance_2 = lidar_adjust & 0xff         
+                if lidar_adjust <=0:
+                    lidar_adjust = 0
+                lidar_distance_1 = lidar_adjust & 0xff
+                lidar_distance_2 = (lidar_adjust >> 8 )& 0xff         
                 
                 # lidar_distance_1 = recv[2]  # np.int16(recv[2] + np.int16(recv[3] << 8))
                 # lidar_distance_2 = recv[3]
                 time.sleep(0.1)
-                print("LIDAR  : ",lidar_adjust)
+                print("LIDAR  : ",lidar_adjust , lidar_distance_1 , lidar_distance_2)
                 serLIDAR.reset_input_buffer()
 
 # 5hz because STM transmit is 5hz
@@ -112,6 +114,8 @@ def connectSTM():
     lat_person = 1;
     lon_person = 1
     plag_2 = False
+    MISSION_LAT = 0
+    MISSION_LON = 0
     # Coordination description
     # Front(if heading angle is zero, it is same with North) -> X -> roll direction
     # Left(if heading angle is zero, it is same with East) -> Y -> pitch direction
