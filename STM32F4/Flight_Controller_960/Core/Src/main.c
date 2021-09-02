@@ -710,6 +710,8 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 //		  }
 
 		  target_yaw = (float)XAVIER_rx.target_yaw / 100.f;
+		  if(target_yaw > 360) target_yaw = 360.f;
+		  if(target_yaw < 0) target_yaw = 0.0f;
 
 		  if(nx_flight_mode == 1) // Takeoff and move to mission spot
 		  {
@@ -898,10 +900,10 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  Reset_PID_Integrator(&altitude.out);
 			  Reset_PID_Integrator(&altitude.in);
 
-			  lat_waypoint = lat_gps;
-			  lon_waypoint = lon_gps;
-			  lat_gps_home = lat_gps + 1;
-			  lon_gps_home = lon_gps + 1;
+			  lat_waypoint = lat_gps + 1;
+			  lon_waypoint = lon_gps + 1;
+			  lat_gps_home = lat_gps + 2;
+			  lon_gps_home = lon_gps + 2;
 			  return_to_home_step = 0;
 			  takeoff_step = 0;
 			  Reset_PID_Integrator(&lat.in);
@@ -996,7 +998,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  tim7_200ms_flag = 0;
 
 			  Encode_Msg_Mission(&telemetry_tx_buf[0]);
-			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 93);
+			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 113);
 
 			  Encode_Msg_Nx(&nx_tx_buf[0]);
 			  HAL_UART_Transmit_DMA(&huart6, &nx_tx_buf[0], 47);
@@ -2002,23 +2004,48 @@ void Encode_Msg_Mission(unsigned char* telemetry_tx_buf)
 	telemetry_tx_buf[83] = (int)gps_roll_adjust >> 8;
 	telemetry_tx_buf[84] = (int)gps_roll_adjust;
 
-	telemetry_tx_buf[85] = (int)gps_roll_adjust >> 24;
-	telemetry_tx_buf[86] = (int)gps_roll_adjust >> 16;
-	telemetry_tx_buf[87] = (int)gps_roll_adjust >> 8;
-	telemetry_tx_buf[88] = (int)gps_roll_adjust;
+	telemetry_tx_buf[85] = (int)gps_pitch_adjust >> 24;
+	telemetry_tx_buf[86] = (int)gps_pitch_adjust >> 16;
+	telemetry_tx_buf[87] = (int)gps_pitch_adjust >> 8;
+	telemetry_tx_buf[88] = (int)gps_pitch_adjust;
+
+	telemetry_tx_buf[89] = (int)altitude.out.error_deriv_filt >> 24;
+	telemetry_tx_buf[90] = (int)altitude.out.error_deriv_filt >> 16;
+	telemetry_tx_buf[91] = (int)altitude.out.error_deriv_filt >> 8;
+	telemetry_tx_buf[92] = (int)altitude.out.error_deriv_filt;
+
+	telemetry_tx_buf[93] = (long long int)waypoint_move_factor >> 56;
+	telemetry_tx_buf[94] = (long long int)waypoint_move_factor >> 48;
+	telemetry_tx_buf[95] = (long long int)waypoint_move_factor >> 40;
+	telemetry_tx_buf[96] = (long long int)waypoint_move_factor >> 32;
+	telemetry_tx_buf[97] = (long long int)waypoint_move_factor >> 24;
+	telemetry_tx_buf[98] = (long long int)waypoint_move_factor >> 16;
+	telemetry_tx_buf[99] = (long long int)waypoint_move_factor >> 8;
+	telemetry_tx_buf[100] = (long long int)waypoint_move_factor;
+
+	telemetry_tx_buf[101] = (int)lat.in.pid_result >> 24;
+	telemetry_tx_buf[102] = (int)lat.in.pid_result >> 16;
+	telemetry_tx_buf[103] = (int)lat.in.pid_result >> 8;
+	telemetry_tx_buf[104] = (int)lat.in.pid_result;
+
+	telemetry_tx_buf[105] = (int)lon.in.pid_result >> 24;
+	telemetry_tx_buf[106] = (int)lon.in.pid_result >> 16;
+	telemetry_tx_buf[107] = (int)lon.in.pid_result >> 8;
+	telemetry_tx_buf[108] = (int)lon.in.pid_result;
+
 
 
 	chksum_mission = 0xffffffff;
 
-	for(int i=0; i< 89; i++)
+	for(int i=0; i< 109; i++)
 	{
 		chksum_mission = chksum_mission - telemetry_tx_buf[i];
 	}
 
-	telemetry_tx_buf[89] = chksum_mission >> 24;
-	telemetry_tx_buf[90] = chksum_mission >> 16;
-	telemetry_tx_buf[91] = chksum_mission >> 8;
-	telemetry_tx_buf[92] = chksum_mission;
+	telemetry_tx_buf[109] = chksum_mission >> 24;
+	telemetry_tx_buf[110] = chksum_mission >> 16;
+	telemetry_tx_buf[111] = chksum_mission >> 8;
+	telemetry_tx_buf[112] = chksum_mission;
 }
 
 void Encode_Msg_Nx(unsigned char* nx_tx_buf)
