@@ -663,55 +663,59 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  if(iBus.LH > 1485 && iBus.LH < 1515) is_yaw_middle = 1;
 		  else is_yaw_middle = 0;
 
-
-		  if(iBus.SwA == 2000 && iBus.SwD == 2000)
-		  {
-			  if(iBus.VrB < 1100) nx_flight_mode = 3;
-			  else if(iBus.VrB > 1900) nx_flight_mode = 1;
-			  else nx_flight_mode = 2;
-		  }
-		  else
-		  {
-			  nx_flight_mode = 10;
-		  }
-
-		  // Select flight mode
-		  // 0 : manual mode  10 : takeoff -> move to mission location  2~5 : gps hold  6 : move to gps_home -> landing
-//		  if(iBus.SwD != 2000)
+//		  if(iBus.SwA == 2000 && iBus.SwD == 2000)
 //		  {
-//			  nx_flight_mode = 10;
+//			  if(iBus.VrB < 1100) nx_flight_mode = 3;
+//			  else if(iBus.VrB > 1900) nx_flight_mode = 1;
+//			  else nx_flight_mode = 2;
 //		  }
 //		  else
 //		  {
-//			  switch(XAVIER_rx.mode)
-//			  {
-//			  case 1:
-//				  nx_flight_mode = 1;
-//				  break;
-//			  case 2:
-//				  nx_flight_mode = 2;
-//				  break;
-//			  case 3:
-//				  nx_flight_mode = 2;
-//				  break;
-//			  case 4:
-//				  nx_flight_mode = 2;
-//				  break;
-//			  case 5:
-//				  nx_flight_mode = 2;
-//				  break;
-//			  case 6:
-//				  nx_flight_mode = 3;
-//				  break;
-//			  default :
-//				  nx_flight_mode = 10;
-//				  break;
-//			  }
+//			  nx_flight_mode = 10;
 //		  }
 
+//		   Select flight mode
+//		   0 : manual mode  10 : takeoff -> move to mission location  2~5 : gps hold  6 : move to gps_home -> landing
+		  if(iBus.SwD != 2000)
+		  {
+			  nx_flight_mode = 10;
+		  }
+		  else
+		  {
+			  switch(XAVIER_rx.mode)
+			  {
+			  case 1:
+				  nx_flight_mode = 1;
+				  break;
+			  case 2:
+				  nx_flight_mode = 2;
+				  break;
+			  case 3:
+				  nx_flight_mode = 2;
+				  break;
+			  case 4:
+				  nx_flight_mode = 2;
+				  break;
+			  case 5:
+				  nx_flight_mode = 2;
+				  break;
+			  case 6:
+				  nx_flight_mode = 3;
+				  break;
+			  default :
+				  nx_flight_mode = 10;
+				  break;
+			  }
+		  }
+
+		  if(iBus.SwB == 2000)
+		  {
+			  nx_flight_mode = 3;
+		  }
+
 		  target_yaw = (float)XAVIER_rx.target_yaw / 100.f;
-		  if(target_yaw > 360) target_yaw = 360.f;
-		  if(target_yaw < 0) target_yaw = 0.0f;
+		  if(target_yaw > 360) target_yaw -= 360.f;
+		  if(target_yaw < 0) target_yaw += 360.0f;
 
 		  if(nx_flight_mode == 1) // Takeoff and move to mission spot
 		  {
@@ -739,7 +743,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  if (gps_pitch_adjust > GPS_PD_MAX) gps_pitch_adjust = GPS_PD_MAX;
 			  if (gps_pitch_adjust < GPS_PD_MIN) gps_pitch_adjust = GPS_PD_MIN;
 
-			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference , BNO080_Yaw, ICM20602.gyro_z);
+			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, target_yaw , BNO080_Yaw, ICM20602.gyro_z);
 
 			  if(takeoff_step == 0)
 			  {
@@ -760,6 +764,26 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  {
 			  Double_Altitude_PID_Calculation(&altitude, altitude_setpoint, actual_pressure_fast);
 
+			  go_to_waypoint((double)XAVIER_rx.lat, (double)XAVIER_rx.lon);
+
+			  if (lat_gps_float_adjust > 10) {
+				  lat_waypoint += 10;
+				  lat_gps_float_adjust -= 10;
+			  }
+			  if (lat_gps_float_adjust < -10) {
+				  lat_waypoint -= 10;
+				  lat_gps_float_adjust += 10;
+			  }
+
+			  if (lon_gps_float_adjust > 10) {
+				  lon_waypoint += 10;
+				  lon_gps_float_adjust -= 10;
+			  }
+			  if (lon_gps_float_adjust < -10) {
+				  lon_waypoint -= 10;
+				  lon_gps_float_adjust += 10;
+			  }
+
 			  Double_GPS_PID_Calculation(&lat, lat_waypoint, lat_gps);
 			  Double_GPS_PID_Calculation(&lon, lon_waypoint, lon_gps);
 
@@ -773,7 +797,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  if (gps_pitch_adjust > GPS_PD_MAX) gps_pitch_adjust = GPS_PD_MAX;
 			  if (gps_pitch_adjust < GPS_PD_MIN) gps_pitch_adjust = GPS_PD_MIN;
 
-			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference , BNO080_Yaw, ICM20602.gyro_z);
+			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, target_yaw , BNO080_Yaw, ICM20602.gyro_z);
 			  ccr1 = 84000 + takeoff_throttle - pitch.in.pid_result + roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
 			  ccr2 = 84000 + takeoff_throttle + pitch.in.pid_result + roll.in.pid_result + yaw_heading.in.pid_result + altitude.in.pid_result;
 			  ccr3 = 84000 + takeoff_throttle + pitch.in.pid_result - roll.in.pid_result - yaw_heading.in.pid_result + altitude.in.pid_result;
@@ -828,7 +852,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  if (gps_pitch_adjust > GPS_PD_MAX) gps_pitch_adjust = GPS_PD_MAX;
 			  if (gps_pitch_adjust < GPS_PD_MIN) gps_pitch_adjust = GPS_PD_MIN;
 
-			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, yaw_heading_reference , BNO080_Yaw, ICM20602.gyro_z);
+			  Double_Yaw_Heading_PID_Calculation(&yaw_heading, target_yaw , BNO080_Yaw, ICM20602.gyro_z);
 
 			  if(return_to_home_step == 5 || return_to_home_step == 6)
 			  {
@@ -900,10 +924,10 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  Reset_PID_Integrator(&altitude.out);
 			  Reset_PID_Integrator(&altitude.in);
 
-			  lat_waypoint = lat_gps + 1;
-			  lon_waypoint = lon_gps + 1;
-			  lat_gps_home = lat_gps + 2;
-			  lon_gps_home = lon_gps + 2;
+			  lat_waypoint = lat_gps + 2;
+			  lon_waypoint = lon_gps + 2;
+			  lat_gps_home = lat_gps + 1;
+			  lon_gps_home = lon_gps + 1;
 			  return_to_home_step = 0;
 			  takeoff_step = 0;
 			  Reset_PID_Integrator(&lat.in);
@@ -2529,7 +2553,11 @@ void return_to_home(void)
 		return_to_home_move_factor = 0.0;  //Return to Home speed
 
 		//Calculate gradient
-		if (return_to_home_lat_factor == 1 || return_to_home_lon_factor == 1)return_to_home_step = 1; //go to next step
+		if (return_to_home_lat_factor == 1 || return_to_home_lon_factor == 1)
+		{
+			return_to_home_step = 1; //go to next step
+			altitude_setpoint = actual_pressure_fast;
+		}
 
 		if (abs_double(lat_gps_home, lat_gps) >= abs_double(lon_gps_home, lon_gps))
 		{
@@ -2559,22 +2587,11 @@ void return_to_home(void)
 		}
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//Step - 1 increase the altitude to mission altitude above ground level
+	//Step - 1 altitude hold in current height
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
 	if (return_to_home_step == 1)
 	{
-		if(altitude.out.meas_value < (double)(mission_altitude + landing_altitude_change_condition) && altitude.out.meas_value > (double)(mission_altitude - landing_altitude_change_condition)) return_to_home_step = 2;
-
-		if(altitude_setpoint < mission_altitude)
-		{
-			if(altitude.out.error < landing_altitude_change_condition && altitude.out.error > -landing_altitude_change_condition) altitude_setpoint += landing_altitude_change;
-			if(altitude_setpoint > mission_altitude) altitude_setpoint = mission_altitude;
-		}
-		else
-		{
-			if(altitude.out.error < landing_altitude_change_condition && altitude.out.error > -landing_altitude_change_condition) altitude_setpoint -= landing_altitude_change;
-			if(altitude_setpoint < mission_altitude) altitude_setpoint = mission_altitude;
-		}
+		if(altitude.out.error < landing_altitude_change_condition && altitude.out.error > -landing_altitude_change_condition) return_to_home_step = 2;
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//Step 2 - Return to the home position
