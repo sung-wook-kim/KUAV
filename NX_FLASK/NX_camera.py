@@ -414,12 +414,78 @@ class NX(BaseCamera):
 
                 # 금지구역 모드
                 else:
-                    # self.mode = 4
-                    #
-                    # new_gps_lat = self.drone_data.lat_drone + 1  # 계산필요
-                    # new_gps_lon = self.drone_data.lon_drone + 1  # 계산필요
-                    #
-                    # target_yaw = self.img_dy  # yolo를 통해 인식
+                    self.mode = 4
+
+                    # AVOID1
+                    if (self.AVOID_Tangent_flag == False) and (NO_FLY_RADIUS + 3 >= math.sqrt(
+                            (self.H_x - self.AVOID_LAT[0]) ** 2 + (self.H_y - self.no_fly_center[1]) ** 2)):  # 사람 금지구역 in
+                        self.AVOID_Tangent_flag = True
+
+                    # 드론 & tangent_point distance <= 2 : 드론이 금지구역에 근접
+                    elif (self.AVOID_Tangent_flag == True) and (NO_FLY_RADIUS + 4> sqrt((self.no_fly_center[0] - D_x) ** 2 +
+                                                                                        (self.no_fly_center[1] - D_y) ** 2)):
+                        self.AVOID_Tangent_flag = False
+
+                    if self.AVOID_Tangent_flag == True:
+                        # circle_tangent_point
+                        b = math.sqrt((self.no_fly_center[0] - D_x) ** 2 + (self.no_fly_center[1] - D_y) ** 2)  # hypot() also works here
+                        # print((NO_FLY_RADIUS + 3) / b)
+                        th = acos((NO_FLY_RADIUS + 3) / b)  # angle theta
+                        d = atan2(self.no_fly_center[0] - D_y, self.no_fly_center[0] - D_x)  # direction angle of point P from C
+                        d1 = d + th  # direction angle of point T1 from C
+                        d2 = d - th  # direction angle of point T2 from C
+
+                        T1x = self.no_fly_center[0] + (NO_FLY_RADIUS + 3) * cos(d1)
+                        T1y = self.no_fly_center[1] + (NO_FLY_RADIUS + 3) * sin(d1)
+                        T2x = self.no_fly_center[0] + (NO_FLY_RADIUS + 3) * cos(d2)
+                        T2y = self.no_fly_center[1] + (NO_FLY_RADIUS + 3) * sin(d2)
+                        self.T1 = (T1x, T1y); self.T2 = (T2x, T2y)
+                        # line_circle_intersection
+
+                        H_p = Point(H_x, H_y)
+                        c = H_p.buffer(self.following_distance).boundary
+                        l = LineString([(D_x, D_y), (self.T1)])
+                        i = c.intersection(l)
+                        # if len(i.geoms) == 2:
+                        #             #     length_1 = math.sqrt((D_x - i.geoms[0].coords[0][0]) ** 2 + (D_y - i.geoms[0].coords[0][1]) ** 2)
+                        #             #     length_2 = math.sqrt((D_x - i.geoms[1].coords[0][0]) ** 2 + (D_y - i.geoms[1].coords[0][1]) ** 2)
+                        #             #     tangent_tracking_point = i.geoms[0].coords[0] if length_1 <= length_2 else i.geoms[1].coords[0]
+                        #             # else:
+                        #             #     tangent_tracking_point = i.geoms[0].coords[0]  # tuple has x , y
+                        # print(i)
+                        if isinstance(i,Point):
+                            tangent_tracking_point = self.T1
+                            self.simPlotPoints([airsim.Vector3r(tangent_tracking_point[0], tangent_tracking_point[1], self.hovering_altitude)], duration=4,
+                                            color_rgba=[1.0, 0, 1.0, 0.5])
+                            target_x, target_y = [i.x, i.y]
+
+                    elif NO_FLY_RADIUS + 3 >= math.sqrt(
+                            (target_x - self.no_fly_center[0]) ** 2 + (target_y - self.no_fly_center[1]) ** 2):
+                        target_x, target_y = get_intersections([H_x, H_y], self.following_distance, self.no_fly_center,
+                                                            NO_FLY_RADIUS + 3)[0]  # no fly radius # H : 현재 사람 위치
+
+
+                    
+
+                    if self.human_detect == True:
+                        self.mode = 3  # 추적모드
+
+                        real_dist = math.sqrt(
+                            (self.drone_data.D_x - self.H_x) ** 2 + (self.drone_data.D_y - self.H_y) ** 2)
+                        error_dist = real_dist - self.following_distance
+
+                        target_y = self.drone_data.D_y + (self.H_y - self.drone_data.D_y) * ((error_dist) / real_dist)
+                        target_x = self.drone_data.D_x + (self.H_x - self.drone_data.D_x) * ((error_dist) / real_dist)
+
+                        new_gps_lat, new_gps_lon = get_location_metres(self.drone_data.home_lat_lon, [target_x,target_y])
+
+                        target_yaw = math.atan2((self.H_y - self.drone_data.D_y),(self.H_x - self.drone_data.D_x))# yolo를 통해 인식
+                        # print("mode 3 : " , self.mode)
+                    
+                    new_gps_lat = self.drone_data.lat_drone + 1  # 계산필요
+                    new_gps_lon = self.drone_data.lon_drone + 1  # 계산필요
+                    
+                    target_yaw = self.img_dy  # yolo를 통해 인식
                     pass
 
                 ## 1번 , 6번 수행중이라면
