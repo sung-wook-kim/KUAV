@@ -8,7 +8,7 @@ if os.environ.get('CAMERA'):
     Camera = import_module('camera_' + os.environ['CAMERA']).Camera
 else:
     #from NX_camera import NX
-    from gimbal_test import NX
+    from NX_camera import NX
 
 app = Flask(__name__)
 

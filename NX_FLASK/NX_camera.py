@@ -95,7 +95,7 @@ class NX(BaseCamera):
 
     def frames(self):
         out, weights, imgsz, stride = \
-            'inference/output', './visdrone_trained_model/weights/best.pt', 640, 32
+            'inference/output', '/visdrone_trained_model/weights/best.pt', 640, 32
         # source = 'test.mp4'
         source = 0
         device = torch_utils.select_device()
@@ -213,6 +213,7 @@ class NX(BaseCamera):
                                     (self.img_human_foot[0] - 30, self.img_human_foot[1]), fontFace,
                                     fontScale, (255, 0, 255), thickness)
                 print('%sDone. (%.3fs)' % (s, t2 - t1), self.img_human_center)
+                cv2.imwrite(out, im0)
             yield cv2.imencode('.jpg', im0)[1].tobytes()
 
     def connectGIMBAL(self):
