@@ -689,6 +689,8 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 		  {
 			  switch(XAVIER_rx.mode)
 			  {
+			  case 0:
+				  nx_flight_mode = 10;
 			  case 1:
 				  nx_flight_mode = 1;
 				  break;
@@ -708,14 +710,17 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 				  nx_flight_mode = 3;
 				  break;
 			  default :
-				  nx_flight_mode = 10;
+				  nx_flight_mode = 2;
 				  break;
 			  }
 		  }
 
 		  target_yaw = (float)XAVIER_rx.target_yaw / 100.f;
-		  if(target_yaw > 360) target_yaw -= 360.f;
-		  if(target_yaw < 0) target_yaw += 360.0f;
+		  while(target_yaw > 360 || target_yaw < 0)
+		  {
+			  if(target_yaw > 360) target_yaw -= 360.f;
+			  if(target_yaw < 0) target_yaw += 360.0f;
+		  }
 
 		  if(nx_flight_mode == 1) // Takeoff and move to mission spot
 		  {
@@ -936,7 +941,6 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  Reset_PID_Integrator(&lon.out);
 		  }
 	  }
-
 
 	  if(iBus.LV < 1030 || motor_arming_flag == 0)
 	  {
