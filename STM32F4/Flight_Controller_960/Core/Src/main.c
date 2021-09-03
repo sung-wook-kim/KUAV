@@ -128,7 +128,7 @@ const float takeoff_altitude_change = 0.6f;
 const float landing_altitude_change_condition = 0.15f;
 const float landing_altitude_change = 0.3f;
 const float altitude_turning_point = 3.f;
-const float mission_altitude = 5.f;
+const float mission_altitude = 10.f;
 
 // Gps Value
 #define DECLINATION 8.88F
@@ -676,11 +676,16 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 
 //		   Select flight mode
 //		   0 : manual mode  10 : takeoff -> move to mission location  2~5 : gps hold  6 : move to gps_home -> landing
-		  if(iBus.SwD != 2000)
+		  if(iBus.SwA == 2000)
 		  {
 			  nx_flight_mode = 10;
 		  }
-		  else
+
+		  if(iBus.SwA == 2000 && iBus.SwB == 2000)
+		  {
+			  nx_flight_mode = 3;
+		  }
+		  else if(iBus.SwA == 2000 && iBus.SwD == 2000)
 		  {
 			  switch(XAVIER_rx.mode)
 			  {
@@ -706,11 +711,6 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 				  nx_flight_mode = 10;
 				  break;
 			  }
-		  }
-
-		  if(iBus.SwB == 2000)
-		  {
-			  nx_flight_mode = 3;
 		  }
 
 		  target_yaw = (float)XAVIER_rx.target_yaw / 100.f;
@@ -2155,10 +2155,10 @@ void Encode_Msg_Nx(unsigned char* nx_tx_buf)
 	nx_tx_buf[29] = (int)BNO080_Pitch >> 8;
 	nx_tx_buf[30] = (int)BNO080_Pitch;
 
-	nx_tx_buf[31] = (int)BNO080_Yaw >> 24;
-	nx_tx_buf[32] = (int)BNO080_Yaw >> 16;
-	nx_tx_buf[33] = (int)BNO080_Yaw >> 8;
-	nx_tx_buf[34] = (int)BNO080_Yaw;
+	nx_tx_buf[31] = (int)(BNO080_Yaw * 100) >> 24;
+	nx_tx_buf[32] = (int)(BNO080_Yaw * 100) >> 16;
+	nx_tx_buf[33] = (int)(BNO080_Yaw * 100) >> 8;
+	nx_tx_buf[34] = (int)(BNO080_Yaw * 100);
 
 	nx_tx_buf[35] = (int)(actual_pressure_fast * 100.f) >> 24;
 	nx_tx_buf[36] = (int)(actual_pressure_fast * 100.f) >> 16;
@@ -2748,7 +2748,7 @@ void Takeoff(void)
 
 		if(altitude.out.error < takeoff_altitude_change_condition && altitude.out.error > -takeoff_altitude_change_condition) altitude_setpoint += takeoff_altitude_change;
 	}
-	if(takeoff_step == 2) // using barometer, takeoff drone by 5m
+	if(takeoff_step == 2) // using barometer, takeoff drone by mission altitude
 	{
 		if(altitude_setpoint == mission_altitude)
 		{
@@ -2768,7 +2768,7 @@ void Takeoff(void)
 	}
 	if(takeoff_step == 3) //Wait for stabilization
 	{
-		if(altitude.out.error < 0.1 && altitude.out.error > -0.1 && altitude.out.error_deriv_filt < 0.1 && altitude.out.error_deriv_filt > -0.1)
+		if(altitude.out.error < 0.1 && altitude.out.error > -0.1 && altitude.out.error_deriv_filt < 0.2 && altitude.out.error_deriv_filt > -0.2)
 		{
 			takeoff_step = 4;
 			mission_start_lat = lat_gps + 300;
