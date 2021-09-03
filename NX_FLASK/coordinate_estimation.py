@@ -90,7 +90,7 @@ H_x, H_y = prev_H_x, prev_H_y = 1,0
 
 target_i = [453, 276]
 while (True):
-    min_len = 0.05
+    min_len = 0.1
     j += 1
 
     # read image and sensor date together
