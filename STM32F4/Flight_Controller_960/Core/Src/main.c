@@ -998,7 +998,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  tim7_200ms_flag = 0;
 
 			  Encode_Msg_Mission(&telemetry_tx_buf[0]);
-			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 137);
+			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 149);
 
 			  Encode_Msg_Nx(&nx_tx_buf[0]);
 			  HAL_UART_Transmit_DMA(&huart6, &nx_tx_buf[0], 47);
@@ -2063,17 +2063,32 @@ void Encode_Msg_Mission(unsigned char* telemetry_tx_buf)
 	telemetry_tx_buf[131] = (int)BNO080_Yaw >> 8;
 	telemetry_tx_buf[132] = (int)BNO080_Yaw;
 
+	telemetry_tx_buf[133] = (int)ICM20602.gyro_x >> 24;
+	telemetry_tx_buf[134] = (int)ICM20602.gyro_x >> 16;
+	telemetry_tx_buf[135] = (int)ICM20602.gyro_x >> 8;
+	telemetry_tx_buf[136] = (int)ICM20602.gyro_x;
+
+	telemetry_tx_buf[137] = (int)ICM20602.gyro_y >> 24;
+	telemetry_tx_buf[138] = (int)ICM20602.gyro_y >> 16;
+	telemetry_tx_buf[139] = (int)ICM20602.gyro_y >> 8;
+	telemetry_tx_buf[140] = (int)ICM20602.gyro_y;
+
+	telemetry_tx_buf[141] = (int)ICM20602.gyro_z >> 24;
+	telemetry_tx_buf[142] = (int)ICM20602.gyro_z >> 16;
+	telemetry_tx_buf[143] = (int)ICM20602.gyro_z >> 8;
+	telemetry_tx_buf[144] = (int)ICM20602.gyro_z;
+
 	chksum_mission = 0xffffffff;
 
-	for(int i=0; i< 133; i++)
+	for(int i=0; i< 145; i++)
 	{
 		chksum_mission = chksum_mission - telemetry_tx_buf[i];
 	}
 
-	telemetry_tx_buf[133] = chksum_mission >> 24;
-	telemetry_tx_buf[134] = chksum_mission >> 16;
-	telemetry_tx_buf[135] = chksum_mission >> 8;
-	telemetry_tx_buf[136] = chksum_mission;
+	telemetry_tx_buf[145] = chksum_mission >> 24;
+	telemetry_tx_buf[146] = chksum_mission >> 16;
+	telemetry_tx_buf[147] = chksum_mission >> 8;
+	telemetry_tx_buf[148] = chksum_mission;
 }
 
 void Encode_Msg_Nx(unsigned char* nx_tx_buf)
