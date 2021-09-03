@@ -7,6 +7,7 @@ ser = serial.Serial('COM4', 115200, timeout=1)
 ---------------960---------------
 Roll Pitch : 5 0 2 40 0 15
 Yaw : 35 0.6 0.1 6 0 0.1
+35 0.6 0.1 5.4 0 0.1
 altitude : 1600 8 0 1.9 0 0.03
 GPS : 1.1   0.01   0.01   0.35  0  0.02
 Yaw Rate : 20 0 1.5
@@ -269,7 +270,7 @@ while True:
         for _ in range(3):
             for i in range(5):
                 ser.write(alt_li_in)
-                time.sleep(0.2)
+                # time.sleep(0.2)
             if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
                 if int(ser.read(1).hex(), 16) == 0x06:
                     drone_alt_in_p = struct.unpack('f',ser.read(4))
@@ -279,7 +280,7 @@ while True:
                     ser.reset_input_buffer()
             for i in range(5):
                 ser.write(alt_li_out)
-                time.sleep(0.2)
+                # time.sleep(0.2)
             if int(ser.read(1).hex(), 16) == 0x46 and int(ser.read(1).hex(), 16) == 0x43:
                 if int(ser.read(1).hex(), 16) == 0x07:
                     drone_alt_out_p = struct.unpack('f',ser.read(4))

@@ -998,7 +998,7 @@ HAL_UART_Transmit(&huart1, &telemetry_tx_buf[0], 19, 10);
 			  tim7_200ms_flag = 0;
 
 			  Encode_Msg_Mission(&telemetry_tx_buf[0]);
-			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 113);
+			  HAL_UART_Transmit_DMA(&huart1, &telemetry_tx_buf[0], 137);
 
 			  Encode_Msg_Nx(&nx_tx_buf[0]);
 			  HAL_UART_Transmit_DMA(&huart6, &nx_tx_buf[0], 47);
@@ -2033,19 +2033,47 @@ void Encode_Msg_Mission(unsigned char* telemetry_tx_buf)
 	telemetry_tx_buf[107] = (int)lon.in.pid_result >> 8;
 	telemetry_tx_buf[108] = (int)lon.in.pid_result;
 
+	telemetry_tx_buf[109] = (int)roll.in.pid_result >> 24;
+	telemetry_tx_buf[110] = (int)roll.in.pid_result >> 16;
+	telemetry_tx_buf[111] = (int)roll.in.pid_result >> 8;
+	telemetry_tx_buf[112] = (int)roll.in.pid_result;
 
+	telemetry_tx_buf[113] = (int)pitch.in.pid_result >> 24;
+	telemetry_tx_buf[114] = (int)pitch.in.pid_result >> 16;
+	telemetry_tx_buf[115] = (int)pitch.in.pid_result >> 8;
+	telemetry_tx_buf[116] = (int)pitch.in.pid_result;
+
+	telemetry_tx_buf[117] = (int)yaw_heading.in.pid_result >> 24;
+	telemetry_tx_buf[118] = (int)yaw_heading.in.pid_result >> 16;
+	telemetry_tx_buf[119] = (int)yaw_heading.in.pid_result >> 8;
+	telemetry_tx_buf[120] = (int)yaw_heading.in.pid_result;
+
+	telemetry_tx_buf[121] = (int)BNO080_Roll >> 24;
+	telemetry_tx_buf[122] = (int)BNO080_Roll >> 16;
+	telemetry_tx_buf[123] = (int)BNO080_Roll >> 8;
+	telemetry_tx_buf[124] = (int)BNO080_Roll;
+
+	telemetry_tx_buf[125] = (int)BNO080_Pitch >> 24;
+	telemetry_tx_buf[126] = (int)BNO080_Pitch >> 16;
+	telemetry_tx_buf[127] = (int)BNO080_Pitch >> 8;
+	telemetry_tx_buf[128] = (int)BNO080_Pitch;
+
+	telemetry_tx_buf[129] = (int)BNO080_Yaw >> 24;
+	telemetry_tx_buf[130] = (int)BNO080_Yaw >> 16;
+	telemetry_tx_buf[131] = (int)BNO080_Yaw >> 8;
+	telemetry_tx_buf[132] = (int)BNO080_Yaw;
 
 	chksum_mission = 0xffffffff;
 
-	for(int i=0; i< 109; i++)
+	for(int i=0; i< 133; i++)
 	{
 		chksum_mission = chksum_mission - telemetry_tx_buf[i];
 	}
 
-	telemetry_tx_buf[109] = chksum_mission >> 24;
-	telemetry_tx_buf[110] = chksum_mission >> 16;
-	telemetry_tx_buf[111] = chksum_mission >> 8;
-	telemetry_tx_buf[112] = chksum_mission;
+	telemetry_tx_buf[133] = chksum_mission >> 24;
+	telemetry_tx_buf[134] = chksum_mission >> 16;
+	telemetry_tx_buf[135] = chksum_mission >> 8;
+	telemetry_tx_buf[136] = chksum_mission;
 }
 
 void Encode_Msg_Nx(unsigned char* nx_tx_buf)
