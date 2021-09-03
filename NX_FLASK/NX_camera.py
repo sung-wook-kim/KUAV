@@ -135,7 +135,7 @@ class NX(BaseCamera):
         conf_thres = 0.4
         fontFace = cv2.FONT_HERSHEY_SIMPLEX
         fontScale = 0.5
-        thickness = 2
+        thickness = 1.5
         textSize, baseline = cv2.getTextSize("FPS", fontFace, fontScale, thickness)
 
         for path, img, im0s, vid_cap in dataset:
@@ -185,6 +185,8 @@ class NX(BaseCamera):
                         if int(cls) == 0:
                             H_x, H_y = CoordEstimator.est(drone_data=self.drone_data, foot=foot)
                             foot_len = math.sqrt((H_x - self.prev_H_x) ** 2 + (H_y - self.prev_H_y) ** 2)
+                            cv2.putText(im0, str(f"{H_x:.3f}, {H_y:.3f}"), (int(foot[0] - 60), int(foot[1]) - 2), fontFace,
+                                        fontScale, (0, 0, 0), thickness)
                             if min_len > foot_len:
                                 min_len = foot_len
                                 self.img_human_center = center
@@ -216,6 +218,8 @@ class NX(BaseCamera):
     def connectGIMBAL(self):
         target_pitch = 0
         while True:
+            if self.mode == 1:
+                target_pitch = 45
             if self.gimbal_plag == True:
                 self.gimbal_plag = False
                 pitch_gain = 0.01
@@ -298,12 +302,10 @@ class NX(BaseCamera):
         # Down(if roll pitch is zero, it is same with Downward) -> Z -> yaw direction
         new_gps_lat = 0
         new_gps_lon = 0
-        start_target_yaw = 0
-        mode2_iter = 0
-        mode2_yaw_dir = 1
         mode_echo = 0
         lat_prev = 0
         lon_prev = 0
+        target_yaw = 0
 
         while True:
             countSTM = self.serSTM.in_waiting
@@ -339,7 +341,7 @@ class NX(BaseCamera):
                         recvSTM[30])
                     self.drone_data.heading_angle = np.int32(
                         np.int32(recvSTM[31] << 24) + np.int32(recvSTM[32] << 16) + np.int32(recvSTM[33] << 8) +
-                        recvSTM[34])
+                        recvSTM[34])/100
 
                     self.drone_data.altitude = np.int32(
                         np.int32(recvSTM[35] << 24) + np.int32(recvSTM[36] << 16) + np.int32(recvSTM[37] << 8) +
@@ -411,12 +413,13 @@ class NX(BaseCamera):
 
                 # 금지구역 모드
                 else:
-                    self.mode = 4
-
-                    new_gps_lat = self.drone_data.lat_drone + 1  # 계산필요
-                    new_gps_lon = self.drone_data.lon_drone + 1  # 계산필요
-
-                    target_yaw = self.img_dy  # yolo를 통해 인식
+                    # self.mode = 4
+                    #
+                    # new_gps_lat = self.drone_data.lat_drone + 1  # 계산필요
+                    # new_gps_lon = self.drone_data.lon_drone + 1  # 계산필요
+                    #
+                    # target_yaw = self.img_dy  # yolo를 통해 인식
+                    pass
 
                 ## 1번 , 6번 수행중이라면
                 # 어차피 마지막에 덮어씌우게된다.
@@ -435,7 +438,7 @@ class NX(BaseCamera):
 
                     new_gps_lat, new_gps_lon = get_location_metres(self.drone_data.home_lat_lon, [target_x, target_y])
                     start_target_yaw = math.atan2(self.H_y, self.H_x)
-                    target_yaw = start_target_yaw
+                    target_yaw_prev = target_yaw = start_target_yaw
                     self.mode = 1
 
                 if self.plag_RTH == True:
@@ -461,6 +464,7 @@ class NX(BaseCamera):
                 new_lon_third = (new_gps_lon >> 8) & 0xff;
                 new_lon_fourth = new_gps_lon & 0xff
 
+                target_yaw = target_yaw_prev*0.5 + target_yaw * 0.5
                 if target_yaw < 0:
                     target_yaw +=360
                 target_yaw_100 = target_yaw*100
@@ -536,7 +540,7 @@ class CoordEstimator:
         newx = foot[0] + self.mapx_[min(int(foot[1]), self.h - 1), min(int(foot[0]), self.w - 1)]
         newy = foot[1] + self.mapy_[min(int(foot[1]), self.h - 1), min(int(foot[0]), self.w - 1)]
         xy_est = np.matmul(np.matmul(A, self.K_inv),
-                           np.array([min(newx + self.x, self.w), min(newy + self.y, self.h), 1]))
+                           np.array([min(newx, self.w), min(newy, self.h), 1]))
         xy_est = xy_est[0]
         xy_est = xy_est / xy_est[2]
         H_x, H_y = (xy_est[0], xy_est[1])

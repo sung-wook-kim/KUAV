@@ -13,7 +13,8 @@ import torch
 from PIL import Image, ExifTags
 from torch.utils.data import Dataset
 from tqdm import tqdm
-from general import xyxy2xywh, xywh2xyxy, torch_distributed_zero_first
+from utils.general import xyxy2xywh, xywh2xyxy, torch_distributed_zero_first
+from util import gstreamer_pipeline
 
 help_url = 'https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data'
 img_formats = ['.bmp', '.jpg', '.jpeg', '.png', '.tif', '.tiff', '.dng']
@@ -232,7 +233,9 @@ class LoadStreams:  # multiple IP or RTSP cameras
         for i, s in enumerate(sources):
             # Start the thread to read frames from the video stream
             print('%g/%g: %s... ' % (i + 1, n, s), end='')
-            cap = cv2.VideoCapture(" nvarguscamerasrc ! video/x-raw(memory:NVMM), width=1920, height=1080, format=(string)NV12, framerate=60/1 !  nvvidconv flip-method=2 ! video/x-raw, width=960, height=560, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink",cv2.CAP_GSTREAMER)
+            cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=2, capture_height=1920, capture_width=1080, display_height=960, display_width=540,
+                                                      framerate=30), cv2.CAP_GSTREAMER)
+            # cap = cv2.VideoCapture(" nvarguscamerasrc ! video/x-raw(memory:NVMM), width=1920, height=1080, format=(string)NV12, framerate=30/1 !  nvvidconv flip-method=2 ! video/x-raw, width=960, height=560, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink",cv2.CAP_GSTREAMER)
             #cap = cv2.VideoCapture(0)
             assert cap.isOpened(), 'Failed to open %s' % s
             w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
